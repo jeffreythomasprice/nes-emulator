@@ -902,13 +902,9 @@ func (cpu *CPU) _break(memory Memory) {
 func (cpu *CPU) oraXIndirect(memory Memory) {
 	addr := cpu.zeroPageIndirectXAddress(memory, memory.Read8(cpu.PC+1))
 	cpu.A |= memory.Read8(addr)
-	// TODO optimize
 	cpu.PC += 2
-	if (cpu.A & 0b1000_0000) != 0 {
-		cpu.P |= negativeFlagMask
-	} else {
-		cpu.P &= negativeFlagMaskInverse
-	}
+	cpu.updateNegativeFlag(cpu.A)
+	cpu.updateZeroFlag(cpu.A)
 	cpu.ClockCycles += 6
 }
 
@@ -936,13 +932,24 @@ func (cpu *CPU) pop16(memory Memory) uint16 {
 func (cpu *CPU) zeroPageIndirectXAddress(memory Memory, offset uint8) uint16 {
 	// using 8-bit math to keep overflows in the 0 page
 	newOffset := uint16(offset) + uint16(cpu.X)
-	newOffsetLow, newOffsetHigh := Split16(newOffset)
+	newOffsetLow, _ := Split16(newOffset)
 	low := memory.Read8(uint16(newOffsetLow))
-	high := memory.Read8(uint16(newOffsetLow) + 1)
-	if newOffsetHigh != 0 {
-		cpu.P |= overflowFlagMask
-	} else {
-		cpu.P &= overflowFlagMaskInverse
-	}
+	high := memory.Read8(uint16(newOffsetLow + 1))
 	return Combine16(low, high)
+}
+
+func (cpu *CPU) updateNegativeFlag(value uint8) {
+	if (value & 0b1000_0000) != 0 {
+		cpu.P |= negativeFlagMask
+	} else {
+		cpu.P &= negativeFlagMaskInverse
+	}
+}
+
+func (cpu *CPU) updateZeroFlag(value uint8) {
+	if value == 0 {
+		cpu.P |= zeroFlagMask
+	} else {
+		cpu.P &= zeroFlagMaskInverse
+	}
 }
