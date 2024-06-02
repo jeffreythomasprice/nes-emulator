@@ -4,71 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type testMemory struct {
-	t    *testing.T
-	data [65536]uint8
-}
-
-func newTestMemory(t *testing.T) *testMemory {
-	return &testMemory{
-		t: t,
-	}
-}
-
-var _ Memory = (*testMemory)(nil)
-
-// Read8 implements Memory.
-func (t *testMemory) Read8(addr uint16) uint8 {
-	result := t.data[addr]
-	t.t.Logf("reading memory from %04x = %02x", addr, result)
-	return result
-}
-
-// Write8 implements Memory.
-func (t *testMemory) Write8(addr uint16, value uint8) {
-	t.t.Logf("writing memory to %04x = %02x", addr, value)
-	t.data[addr] = value
-}
-
 type ramState struct {
 	Address uint16
 	Value   uint8
-}
-
-type cpuState struct {
-	PC  uint16      `json:"pc"`
-	SP  uint8       `json:"s"`
-	A   uint8       `json:"a"`
-	X   uint8       `json:"x"`
-	Y   uint8       `json:"y"`
-	P   uint8       `json:"p"`
-	RAM []*ramState `json:"ram"`
-}
-
-type Mode int
-
-const (
-	ModeRead Mode = iota
-	ModeWrite
-)
-
-type cycle struct {
-	Address uint16
-	Value   uint8
-	Mode    Mode
-}
-
-type instructionTest struct {
-	Name    string   `json:"name"`
-	Initial cpuState `json:"initial"`
-	Final   cpuState `json:"final"`
-	Cycles  []*cycle `json:"cycles"`
 }
 
 func (r *ramState) UnmarshalJSON(data []byte) error {
@@ -88,7 +34,50 @@ func (r *ramState) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (c *cycle) UnmarshalJSON(data []byte) error {
+type systemState struct {
+	PC  uint16      `json:"pc"`
+	SP  uint8       `json:"s"`
+	A   uint8       `json:"a"`
+	X   uint8       `json:"x"`
+	Y   uint8       `json:"y"`
+	P   uint8       `json:"p"`
+	RAM []*ramState `json:"ram"`
+}
+
+func (state systemState) String() string {
+	memoryParts := make([]string, 0, len(state.RAM))
+	sort.Slice(state.RAM, func(i, j int) bool {
+		return state.RAM[i].Address < state.RAM[j].Address
+	})
+	for _, r := range state.RAM {
+		memoryParts = append(memoryParts, fmt.Sprintf("[%04x]=%02x", r.Address, r.Value))
+	}
+	return fmt.Sprintf(
+		"PC=%04x, SP=%02x, A=%02x, X=%02x, Y=%02x, P=%08b\n    %v",
+		state.PC,
+		state.SP,
+		state.A,
+		state.X,
+		state.Y,
+		state.P,
+		strings.Join(memoryParts, ", "),
+	)
+}
+
+type Mode int
+
+const (
+	ModeRead Mode = iota
+	ModeWrite
+)
+
+type memoryOperation struct {
+	Address uint16
+	Value   uint8
+	Mode    Mode
+}
+
+func (op *memoryOperation) UnmarshalJSON(data []byte) error {
 	temp := make([]json.RawMessage, 0, 3)
 	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
@@ -96,10 +85,10 @@ func (c *cycle) UnmarshalJSON(data []byte) error {
 	if len(temp) != 3 {
 		return fmt.Errorf("expected exactly 3 elements in array for cycle, got %v, %v\n", len(temp), temp)
 	}
-	if err := json.Unmarshal(temp[0], &c.Address); err != nil {
+	if err := json.Unmarshal(temp[0], &op.Address); err != nil {
 		return err
 	}
-	if err := json.Unmarshal(temp[1], &c.Value); err != nil {
+	if err := json.Unmarshal(temp[1], &op.Value); err != nil {
 		return err
 	}
 	var mode string
@@ -108,13 +97,57 @@ func (c *cycle) UnmarshalJSON(data []byte) error {
 	}
 	switch mode {
 	case "read":
-		c.Mode = ModeRead
+		op.Mode = ModeRead
 	case "write":
-		c.Mode = ModeWrite
+		op.Mode = ModeWrite
 	default:
 		return fmt.Errorf("invalid mode: %v", mode)
 	}
 	return nil
+}
+
+type instructionTest struct {
+	Name    string             `json:"name"`
+	Initial systemState        `json:"initial"`
+	Final   systemState        `json:"final"`
+	Cycles  []*memoryOperation `json:"cycles"`
+}
+
+type testMemory struct {
+	t      *testing.T
+	data   [65536]uint8
+	cycles []*memoryOperation
+}
+
+func newTestMemory(t *testing.T) *testMemory {
+	return &testMemory{
+		t: t,
+	}
+}
+
+var _ Memory = (*testMemory)(nil)
+
+// Read8 implements Memory.
+func (t *testMemory) Read8(addr uint16) uint8 {
+	result := t.data[addr]
+	t.t.Logf("reading memory from %04x = %02x", addr, result)
+	t.cycles = append(t.cycles, &memoryOperation{
+		Address: addr,
+		Value:   result,
+		Mode:    ModeRead,
+	})
+	return result
+}
+
+// Write8 implements Memory.
+func (t *testMemory) Write8(addr uint16, value uint8) {
+	t.t.Logf("writing memory to %04x = %02x", addr, value)
+	t.cycles = append(t.cycles, &memoryOperation{
+		Address: addr,
+		Value:   value,
+		Mode:    ModeWrite,
+	})
+	t.data[addr] = value
 }
 
 func getInstructionTestFile(instruction uint8) ([]*instructionTest, error) {
@@ -136,6 +169,9 @@ func runTestForInstruction(t *testing.T, instruction uint8) {
 		t.Run(
 			fmt.Sprintf("instruction=%02x, test name=%v", instruction, test.Name),
 			func(t *testing.T) {
+				t.Logf("initial state  = %v\n", test.Initial)
+				t.Logf("expected state = %v\n", test.Final)
+
 				var cpu CPU
 				cpu.PC = test.Initial.PC
 				cpu.SP = test.Initial.SP
@@ -150,17 +186,18 @@ func runTestForInstruction(t *testing.T, instruction uint8) {
 
 				cpu.Tick(memory)
 
-				assert.Equal(t, cpu.PC, test.Final.PC, "program counter")
-				assert.Equal(t, cpu.SP, test.Final.SP, "stack pointer")
-				assert.Equal(t, cpu.A, test.Final.A, "accumulator")
-				assert.Equal(t, cpu.X, test.Final.X, "X index")
-				assert.Equal(t, cpu.Y, test.Final.Y, "Y index")
-				assert.Equal(t, cpu.P, test.Final.P, "flags register")
+				assert.Equal(t, test.Final.PC, cpu.PC, "program counter")
+				assert.Equal(t, test.Final.SP, cpu.SP, "stack pointer")
+				assert.Equal(t, test.Final.A, cpu.A, "accumulator")
+				assert.Equal(t, test.Final.X, cpu.X, "X index")
+				assert.Equal(t, test.Final.Y, cpu.Y, "Y index")
+				assert.Equal(t, test.Final.P, cpu.P, "flags register")
 				for _, ram := range test.Final.RAM {
-					assert.Equal(t, memory.Read8(ram.Address), ram.Value, "ram at %04x should be %02x", ram.Address, ram.Value)
+					assert.Equal(t, ram.Value, memory.Read8(ram.Address), "ram at %04x should be %02x", ram.Address, ram.Value)
 				}
-
-				// TODO validate per-cycle stuff?
+				assert.Equal(t, uint64(len(test.Cycles)), cpu.ClockCycles, "clock")
+				// TODO test exact per-cycle memory access
+				// assert.Equal(t, test.Cycles, memory.cycles, "memory access operations")
 			},
 		)
 	}
@@ -169,4 +206,5 @@ func runTestForInstruction(t *testing.T, instruction uint8) {
 func TestFoo(t *testing.T) {
 	// TODO should do all files in dir
 	runTestForInstruction(t, 0x00)
+	runTestForInstruction(t, 0x01)
 }

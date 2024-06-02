@@ -900,13 +900,14 @@ func (cpu *CPU) _break(memory Memory) {
 }
 
 func (cpu *CPU) oraXIndirect(memory Memory) {
-	addr := Read16(memory, uint16(cpu.X))
+	addr := cpu.zeroPageIndirectXAddress(memory, memory.Read8(cpu.PC+1))
 	cpu.A |= memory.Read8(addr)
 	// TODO optimize
+	cpu.PC += 2
 	if (cpu.A & 0b1000_0000) != 0 {
-		cpu.P |= overflowFlagMask | negativeFlagMask
+		cpu.P |= negativeFlagMask
 	} else {
-		cpu.P &= overflowFlagMaskInverse & negativeFlagMaskInverse
+		cpu.P &= negativeFlagMaskInverse
 	}
 	cpu.ClockCycles += 6
 }
@@ -930,4 +931,18 @@ func (cpu *CPU) pop16(memory Memory) uint16 {
 	high := cpu.pop8(memory)
 	low := cpu.pop8(memory)
 	return (uint16(high) << 8) | uint16(low)
+}
+
+func (cpu *CPU) zeroPageIndirectXAddress(memory Memory, offset uint8) uint16 {
+	// using 8-bit math to keep overflows in the 0 page
+	newOffset := uint16(offset) + uint16(cpu.X)
+	newOffsetLow, newOffsetHigh := Split16(newOffset)
+	low := memory.Read8(uint16(newOffsetLow))
+	high := memory.Read8(uint16(newOffsetLow) + 1)
+	if newOffsetHigh != 0 {
+		cpu.P |= overflowFlagMask
+	} else {
+		cpu.P &= overflowFlagMaskInverse
+	}
+	return Combine16(low, high)
 }

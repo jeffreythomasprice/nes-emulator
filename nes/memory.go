@@ -6,12 +6,21 @@ type Memory interface {
 }
 
 func Read16(memory Memory, addr uint16) uint16 {
-	low := uint16(memory.Read8(addr))
-	high := uint16(memory.Read8(addr + 1))
-	return (high << 8) | low
+	return Combine16(memory.Read8(addr), memory.Read8(addr+1))
 }
 
 func Write16(memory Memory, addr uint16, value uint16) {
-	memory.Write8(addr, uint8(value&0xff))
-	memory.Write8(addr+1, uint8((value&0xff00)>>8))
+	low, high := Split16(value)
+	memory.Write8(addr, low)
+	memory.Write8(addr+1, high)
+}
+
+func Split16(value uint16) (low uint8, high uint8) {
+	low = uint8(value & 0xff)
+	high = uint8((value & 0xff00) >> 8)
+	return
+}
+
+func Combine16(low uint8, high uint8) uint16 {
+	return uint16(low) | (uint16(high) << 8)
 }
