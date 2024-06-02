@@ -1,3 +1,6 @@
 [submodule "submodules/ProcessorTests"]
 	path = submodules/ProcessorTests
 	url = https://github.com/jeffreythomasprice/ProcessorTests
+[submodule "submodules/6502_65C02_functional_tests"]
+	path = submodules/6502_65C02_functional_tests
+	url = https://github.com/jeffreythomasprice/6502_65C02_functional_tests
