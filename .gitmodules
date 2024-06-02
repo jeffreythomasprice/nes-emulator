@@ -1,0 +1,3 @@
+[submodule "submodules/ProcessorTests"]
+	path = submodules/ProcessorTests
+	url = https://github.com/jeffreythomasprice/ProcessorTests

@@ -1,0 +1,6 @@
+- test roms
+	- originally: https://github.com/SingleStepTests/ProcessorTests/tree/main/nes6502
+	- forked: https://github.com/jeffreythomasprice/ProcessorTests
+- instruction set test cases
+	- originally: https://github.com/Klaus2m5/6502_65C02_functional_tests/tree/master
+	- forked: https://github.com/jeffreythomasprice/6502_65C02_functional_tests
