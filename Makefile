@@ -21,7 +21,7 @@ watch:
 	watchexec -r make run
 
 test:
-	go test .
+	go test ./...
 
 test-watch:
 	watchexec -r make test

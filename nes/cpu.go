@@ -1,10 +1,35 @@
 package nes
 
+const (
+	carryFlagMask               uint8 = 0b0000_0001
+	carryFlagMaskInverse        uint8 = 0b1111_1110
+	zeroFlagMask                uint8 = 0b0000_0010
+	zeroFlagMaskInverse         uint8 = 0b1111_1101
+	interruptDisableMask        uint8 = 0b0000_0100
+	interruptDisableMaskInverse uint8 = 0b1111_1011
+	decimalModeMask             uint8 = 0b0000_1000
+	decimalModeMaskInverse      uint8 = 0b1111_0111
+	breakCommandMask            uint8 = 0b0001_0000
+	breakCommandMaskInverse     uint8 = 0b1110_1111
+	overflowFlagMask            uint8 = 0b0100_0000
+	overflowFlagMaskInverse     uint8 = 0b1011_1111
+	negativeFlagMask            uint8 = 0b1000_0000
+	negativeFlagMaskInverse     uint8 = 0b0111_1111
+)
+
+const (
+	stackAddress uint16 = 0x0100
+
+	nonMaskableInterruptAddress      uint16 = 0xfffa
+	resetInterruptAddress            uint16 = 0xfffc
+	interruptRequestInterruptAddress uint16 = 0xfffe
+)
+
 type CPU struct {
 	// program counter
 	PC uint16
 	// stack pointer
-	SP uint16
+	SP uint8
 	// accumulator
 	A uint8
 	// index register
@@ -13,6 +38,8 @@ type CPU struct {
 	Y uint8
 	// processor status
 	P uint8
+	// total clock cycles
+	ClockCycles uint64
 }
 
 func (cpu *CPU) Tick(memory Memory) {
@@ -25,17 +52,17 @@ func (cpu *CPU) Tick(memory Memory) {
 			load next addr from interrupt table, priority: reset, NMI, IRQ
 		}
 	*/
-	cpu.executeInstruction(memory.Read(cpu.PC))
+	cpu.executeInstruction(memory, memory.Read8(cpu.PC))
 }
 
-func (cpu *CPU) executeInstruction(instruction uint8) {
+func (cpu *CPU) executeInstruction(memory Memory, instruction uint8) {
 	switch instruction {
 	// BRK impl
 	case 0b000_000_00:
-		// TODO
+		cpu._break(memory)
 	// ORA X, ind
 	case 0b000_000_01:
-		// TODO
+		cpu.oraXIndirect(memory)
 	// illegal
 	case 0b000_000_10:
 		// TODO
@@ -862,4 +889,45 @@ func (cpu *CPU) executeInstruction(instruction uint8) {
 	case 0b111_111_11:
 		// TODO
 	}
+}
+
+func (cpu *CPU) _break(memory Memory) {
+	cpu.push16(memory, cpu.PC+2)
+	cpu.push8(memory, cpu.P|breakCommandMask)
+	cpu.P |= interruptDisableMask
+	cpu.PC = Read16(memory, interruptRequestInterruptAddress)
+	cpu.ClockCycles += 7
+}
+
+func (cpu *CPU) oraXIndirect(memory Memory) {
+	addr := Read16(memory, uint16(cpu.X))
+	cpu.A |= memory.Read8(addr)
+	// TODO optimize
+	if (cpu.A & 0b1000_0000) != 0 {
+		cpu.P |= overflowFlagMask | negativeFlagMask
+	} else {
+		cpu.P &= overflowFlagMaskInverse & negativeFlagMaskInverse
+	}
+	cpu.ClockCycles += 6
+}
+
+func (cpu *CPU) push8(memory Memory, value uint8) {
+	memory.Write8(stackAddress+uint16(cpu.SP), value)
+	cpu.SP--
+}
+
+func (cpu *CPU) push16(memory Memory, value uint16) {
+	cpu.push8(memory, uint8((value&0xff00)>>8))
+	cpu.push8(memory, uint8(value&0xff))
+}
+
+func (cpu *CPU) pop8(memory Memory) uint8 {
+	cpu.SP++
+	return memory.Read8(stackAddress + uint16(cpu.SP))
+}
+
+func (cpu *CPU) pop16(memory Memory) uint16 {
+	high := cpu.pop8(memory)
+	low := cpu.pop8(memory)
+	return (uint16(high) << 8) | uint16(low)
 }
