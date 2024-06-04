@@ -58,108 +58,110 @@ func (cpu *CPU) Tick(memory Memory) {
 func (cpu *CPU) executeInstruction(memory Memory, instruction uint8) {
 	switch instruction {
 	// BRK impl
-	case 0b000_000_00:
+	case 0x00:
 		cpu._break(memory)
 	// ORA X, ind
-	case 0b000_000_01:
+	case 0x01:
 		cpu.oraXIndirect(memory)
 	// illegal
-	case 0b000_000_10:
+	case 0x02:
 		cpu.illegal(0, 3)
 	// illegal
-	case 0b000_000_11:
-		cpu.illegal(0, 2)
+	case 0x03:
+		cpu.sloXIndirect(memory)
 
 	// illegal
-	case 0b000_001_00:
-		// TODO
+	case 0x04:
+		cpu.illegal(2, 3)
 	// ORA zpg
-	case 0b000_001_01:
-		// TODO
+	case 0x05:
+		cpu.oraFixedZeroPage(memory)
 	// ASL zpg
-	case 0b000_001_10:
+	case 0x06:
 		// TODO
 	// illegal
-	case 0b000_001_11:
+	case 0x07:
 		// TODO
 
 	// PHP impl
-	case 0b000_010_00:
+	case 0x08:
 		// TODO
 	// ORA #
-	case 0b000_010_01:
+	case 0x09:
 		// TODO
 	// ASL A
-	case 0b000_010_10:
+	case 0x0a:
 		// TODO
 	// illegal
-	case 0b000_010_11:
+	case 0x0b:
 		// TODO
 
 	// illegal
-	case 0b000_011_00:
+	case 0x0c:
 		// TODO
 	// ORA abs
-	case 0b000_011_01:
+	case 0x0d:
 		// TODO
 	// ASL abs
-	case 0b000_011_10:
+	case 0x0e:
 		// TODO
 	// illegal
-	case 0b000_011_11:
+	case 0x0f:
 		// TODO
 
 	// BPL rel
-	case 0b000_100_00:
+	case 0x10:
 		// TODO
 	// ORA ind,Y
-	case 0b000_100_01:
+	case 0x11:
 		// TODO
 	// illegal
-	case 0b000_100_10:
+	case 0x12:
 		// TODO
 	// illegal
-	case 0b000_100_11:
+	case 0x13:
 		// TODO
 
 	// illegal
-	case 0b000_101_00:
+	case 0x14:
 		// TODO
 	// ORA zpg,X
-	case 0b000_101_01:
+	case 0x15:
 		// TODO
 	// ASL zpg,X
-	case 0b000_101_10:
+	case 0x16:
 		// TODO
 	// illegal
-	case 0b000_101_11:
+	case 0x17:
 		// TODO
 
 	// CLC impl
-	case 0b000_110_00:
+	case 0x18:
 		// TODO
 	// ORA abs,Y
-	case 0b000_110_01:
+	case 0x19:
 		// TODO
 	// illegal
-	case 0b000_110_10:
+	case 0x1a:
 		// TODO
 	// illegal
-	case 0b000_110_11:
+	case 0x1b:
 		// TODO
 
 	// illegal
-	case 0b000_111_00:
+	case 0x1c:
 		// TODO
 	// ORA abs,X
-	case 0b000_111_01:
+	case 0x1d:
 		// TODO
 	// ASL abs,X
-	case 0b000_111_10:
+	case 0x1e:
 		// TODO
 	// illegal
-	case 0b000_111_11:
+	case 0x1f:
 		// TODO
+
+		// TODO replace binary constants with hex
 
 	// JSR abs
 	case 0b001_000_00:
@@ -905,12 +907,34 @@ func (cpu *CPU) _break(memory Memory) {
 }
 
 func (cpu *CPU) oraXIndirect(memory Memory) {
-	addr := cpu.zeroPageIndirectXAddress(memory, memory.Read8(cpu.PC+1))
+	addr := cpu.zeroPageIndirect(memory, memory.Read8(cpu.PC+1), cpu.X)
 	cpu.A |= memory.Read8(addr)
-	cpu.PC += 2
 	cpu.updateNegativeFlag(cpu.A)
 	cpu.updateZeroFlag(cpu.A)
+	cpu.PC += 2
 	cpu.ClockCycles += 6
+}
+
+func (cpu *CPU) oraFixedZeroPage(memory Memory) {
+	addr := uint16(memory.Read8(cpu.PC + 1))
+	cpu.A |= memory.Read8(addr)
+	cpu.updateNegativeFlag(cpu.A)
+	cpu.updateZeroFlag(cpu.A)
+	cpu.PC += 2
+	cpu.ClockCycles += 3
+}
+
+func (cpu *CPU) sloXIndirect(memory Memory) {
+	addr := cpu.zeroPageIndirect(memory, memory.Read8(cpu.PC+1), cpu.X)
+	value := memory.Read8(addr)
+	newValue := value << 1
+	memory.Write8(addr, newValue)
+	cpu.A |= newValue
+	cpu.updateNegativeFlag(cpu.A)
+	cpu.updateZeroFlag(cpu.A)
+	cpu.updateCarryFlag(newValue, value)
+	cpu.PC += 2
+	cpu.ClockCycles += 8
 }
 
 func (cpu *CPU) push8(memory Memory, value uint8) {
@@ -934,14 +958,16 @@ func (cpu *CPU) pop16(memory Memory) uint16 {
 	return (uint16(high) << 8) | uint16(low)
 }
 
-func (cpu *CPU) zeroPageIndirectXAddress(memory Memory, offset uint8) uint16 {
+func (cpu *CPU) zeroPageIndirect(memory Memory, offset1, offset2 uint8) uint16 {
 	// using 8-bit math to keep overflows in the 0 page
-	newOffset := uint16(offset) + uint16(cpu.X)
+	newOffset := uint16(offset1) + uint16(offset2)
 	newOffsetLow, _ := Split16(newOffset)
 	low := memory.Read8(uint16(newOffsetLow))
 	high := memory.Read8(uint16(newOffsetLow + 1))
 	return Combine16(low, high)
 }
+
+// TODO update methods that modify flags?
 
 func (cpu *CPU) updateNegativeFlag(value uint8) {
 	if (value & 0b1000_0000) != 0 {
@@ -956,5 +982,13 @@ func (cpu *CPU) updateZeroFlag(value uint8) {
 		cpu.P |= zeroFlagMask
 	} else {
 		cpu.P &= zeroFlagMaskInverse
+	}
+}
+
+func (cpu *CPU) updateCarryFlag(value uint8, prevValue uint8) {
+	if value < prevValue {
+		cpu.P |= carryFlagMask
+	} else {
+		cpu.P &= carryFlagMaskInverse
 	}
 }

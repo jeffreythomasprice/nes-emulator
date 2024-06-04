@@ -209,4 +209,6 @@ func TestFoo(t *testing.T) {
 	runTestForInstruction(t, 0x01)
 	runTestForInstruction(t, 0x02)
 	runTestForInstruction(t, 0x03)
+	runTestForInstruction(t, 0x04)
+	runTestForInstruction(t, 0x05)
 }
