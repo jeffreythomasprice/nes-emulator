@@ -65,10 +65,10 @@ func (cpu *CPU) executeInstruction(memory Memory, instruction uint8) {
 		cpu.oraXIndirect(memory)
 	// illegal
 	case 0b000_000_10:
-		// TODO
+		cpu.illegal(0, 3)
 	// illegal
 	case 0b000_000_11:
-		// TODO
+		cpu.illegal(0, 2)
 
 	// illegal
 	case 0b000_001_00:
@@ -889,6 +889,11 @@ func (cpu *CPU) executeInstruction(memory Memory, instruction uint8) {
 	case 0b111_111_11:
 		// TODO
 	}
+}
+
+func (cpu *CPU) illegal(pcOffset uint16, cycleCount uint64) {
+	cpu.PC += pcOffset
+	cpu.ClockCycles += cycleCount
 }
 
 func (cpu *CPU) _break(memory Memory) {
