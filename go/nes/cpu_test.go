@@ -151,7 +151,7 @@ func (t *testMemory) Write8(addr uint16, value uint8) {
 }
 
 func getInstructionTestFile(instruction uint8) ([]*instructionTest, error) {
-	bytes, err := os.ReadFile(fmt.Sprintf("../submodules/ProcessorTests/nes6502/v1/%02x.json", instruction))
+	bytes, err := os.ReadFile(fmt.Sprintf("../../submodules/ProcessorTests/nes6502/v1/%02x.json", instruction))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file for instruction %02x: %w", instruction, err)
 	}
