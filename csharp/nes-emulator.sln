@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NesEmulator", "NesEmulator\NesEmulator.csproj", "{277B2728-D21F-4141-856B-F0D37B930AFE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NesEmulatorTests", "NesEmulatorTests\NesEmulatorTests.csproj", "{A851A697-C768-4A12-A4AD-653F4AE4784E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{277B2728-D21F-4141-856B-F0D37B930AFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{277B2728-D21F-4141-856B-F0D37B930AFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{277B2728-D21F-4141-856B-F0D37B930AFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{277B2728-D21F-4141-856B-F0D37B930AFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A851A697-C768-4A12-A4AD-653F4AE4784E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A851A697-C768-4A12-A4AD-653F4AE4784E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A851A697-C768-4A12-A4AD-653F4AE4784E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A851A697-C768-4A12-A4AD-653F4AE4784E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
