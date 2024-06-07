@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using NesEmulator;
@@ -10,17 +11,16 @@ public class InstructionSetTests
     public record class TestCase
     {
         [JsonPropertyName("name")]
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         [JsonPropertyName("initial")]
-        public CPUAndMemoryState Initial { get; set; }
+        public required CPUAndMemoryState Initial { get; set; }
 
         [JsonPropertyName("final")]
-        public CPUAndMemoryState Final { get; set; }
+        public required CPUAndMemoryState Final { get; set; }
 
-        // TODO convert to a sensible record
         [JsonPropertyName("cycles")]
-        public object[] Cycles { get; set; }
+        public required Cycle[] Cycles { get; set; }
     }
 
     public record class CPUAndMemoryState
@@ -43,9 +43,120 @@ public class InstructionSetTests
         [JsonPropertyName("p")]
         public byte Flags { get; set; }
 
-        // TODO convert to a sensible record
         [JsonPropertyName("ram")]
-        public UInt16[][] RAM { get; set; }
+        public required MemoryState[] RAM { get; set; }
+    }
+
+    public class MemoryStateConverter : JsonConverter<MemoryState>
+    {
+        public override MemoryState? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType != JsonTokenType.StartArray)
+            {
+                throw new JsonException("expected start of array");
+            }
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.Number)
+            {
+                throw new JsonException("expected number");
+            }
+            var address = reader.GetUInt16();
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.Number)
+            {
+                throw new JsonException("expected number");
+            }
+            var value = reader.GetByte();
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.EndArray)
+            {
+                throw new JsonException("expected end of array");
+            }
+            return new MemoryState
+            {
+                Address = address,
+                Value = value,
+            };
+        }
+
+        public override void Write(Utf8JsonWriter writer, MemoryState value, JsonSerializerOptions options)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    [JsonConverter(typeof(MemoryStateConverter))]
+    public record class MemoryState
+    {
+        public UInt16 Address { get; set; }
+
+        public byte Value { get; set; }
+    }
+
+    public class CycleConverter : JsonConverter<Cycle>
+    {
+        public override Cycle? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType != JsonTokenType.StartArray)
+            {
+                throw new JsonException("expected start of array");
+            }
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.Number)
+            {
+                throw new JsonException("expected number");
+            }
+            var address = reader.GetUInt16();
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.Number)
+            {
+                throw new JsonException("expected number");
+            }
+            var value = reader.GetByte();
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.String)
+            {
+                throw new JsonException("expected string");
+            }
+            var mode = reader.GetString();
+            reader.Read();
+            if (reader.TokenType != JsonTokenType.EndArray)
+            {
+                throw new JsonException("expected end of array");
+            }
+            return new Cycle
+            {
+                Address = address,
+                Value = value,
+                Mode = mode switch
+                {
+                    "read" => CycleMode.Read,
+                    "write" => CycleMode.Write,
+                    _ => throw new JsonException($"expected the exact string \"read\" or \"write\", got \"{mode}\"")
+                }
+            };
+        }
+
+        public override void Write(Utf8JsonWriter writer, Cycle value, JsonSerializerOptions options)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public enum CycleMode
+    {
+        Read,
+        Write
+    }
+
+    [JsonConverter(typeof(CycleConverter))]
+    public record class Cycle
+    {
+        public UInt16 Address { get; set; }
+
+        public byte Value { get; set; }
+
+        public CycleMode Mode { get; set; }
     }
 
     public class TestMemory : IMemory
@@ -65,8 +176,10 @@ public class InstructionSetTests
 
     [Theory]
     [MemberData(nameof(TestData))]
-    public void Tests(TestCase testCase)
+    public void Tests(string path, TestCase testCase)
     {
+        Console.WriteLine($"{path} - {testCase.Name}");
+
         var cpu = new CPU();
         cpu.PC = testCase.Initial.PC;
         cpu.SP = testCase.Initial.SP;
@@ -75,11 +188,16 @@ public class InstructionSetTests
         cpu.Y = testCase.Initial.Y;
         cpu.Flags = testCase.Initial.Flags;
 
-        // var memory = new TestMemory();
-        // foreach (var data in testCase.Initial.RAM)
-        // {
-        //     memory.Write8(data[0], data[1]);
-        // }
+        var memory = new TestMemory();
+        foreach (var data in testCase.Initial.RAM)
+        {
+            memory.Write8(data.Address, data.Value);
+        }
+
+        // TODO do one cpu step
+
+        // TODO check results
+        Console.WriteLine(string.Join(", ", testCase.Cycles.Select(x => $"{x.Address} - {x.Value} - {x.Mode}")));
     }
 
     public static IEnumerable<object[]> TestData
@@ -89,14 +207,11 @@ public class InstructionSetTests
             foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "*.json", SearchOption.AllDirectories))
             {
                 using var file = File.Open(path, FileMode.Open);
-                var results = JsonSerializer.Deserialize<TestCase[]>(file);
-                if (results == null)
-                {
-                    throw new NullReferenceException($"failed to load test data for file: {path}");
-                }
+                var results = JsonSerializer.Deserialize<TestCase[]>(file)
+                    ?? throw new NullReferenceException($"failed to load test data for file: {path}");
                 foreach (var result in results)
                 {
-                    yield return [result];
+                    yield return [path, result];
                 }
             }
         }
