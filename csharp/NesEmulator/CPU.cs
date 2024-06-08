@@ -181,6 +181,8 @@ public class CPU
 			case 0x0d: ORA_Absolute(memory); break;
 			case 0x0e: ASL_Absolute(memory); break;
 			case 0x0f: SLO_Absolute(memory); break;
+			case 0x10: BPL(memory); break;
+			case 0x11: ORA_Y_Indirect(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -200,6 +202,12 @@ public class CPU
 	{
 		var (_, value) = ZeroPageX(memory);
 		ORA_Common(value, 2, 6);
+	}
+
+	private void ORA_Y_Indirect(IMemory memory)
+	{
+		var (_, value, extraClock) = ZeroPageY(memory);
+		ORA_Common(value, 2, 5 + extraClock);
 	}
 
 	private void ORA_ZeroPageFixed(IMemory memory)
@@ -315,6 +323,33 @@ public class CPU
 		ClockCycles += 2;
 	}
 
+	private void BPL(IMemory memory)
+	{
+		// TODO common jump?
+		if (!NegativeFlag)
+		{
+			// high byte of address after the branch instruction
+			var high1 = (PC + 2) & 0xff00;
+			// do the jump
+			PC = (ushort)(PC + 2 + (sbyte)memory.Read8((ushort)(PC + 1)));
+			// high byte of address of branch destination
+			var high2 = PC & 0xff00;
+			if (high1 == high2)
+			{
+				ClockCycles += 3;
+			}
+			else
+			{
+				ClockCycles += 4;
+			}
+		}
+		else
+		{
+			PC += 2;
+			ClockCycles += 2;
+		}
+	}
+
 	private void Illegal(UInt16 pcOffset, UInt16 cycleCount)
 	{
 		PC += pcOffset;
@@ -362,6 +397,25 @@ public class CPU
 	{
 		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), X);
 		return (address, memory.Read8(address));
+	}
+
+	private (UInt16, byte, UInt64) ZeroPageY(IMemory memory)
+	{
+		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), 0);
+		var high1 = address & 0xff00;
+		address = (UInt16)(address + Y);
+		var high2 = address & 0xff00;
+		UInt64 extraClock;
+		// if adding Y pushes us into a new page it will take an extra clock cycle to resolve
+		if (high1 == high2)
+		{
+			extraClock = 0;
+		}
+		else
+		{
+			extraClock = 1;
+		}
+		return (address, memory.Read8(address), extraClock);
 	}
 
 	// TODO extension method on memory?

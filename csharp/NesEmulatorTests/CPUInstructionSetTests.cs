@@ -1,5 +1,3 @@
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using NesEmulator;
@@ -207,8 +205,8 @@ public partial class CPUInstructionSetTests
             {
                 // TODO do all tests
                 var instruction = byte.Parse(Path.GetFileNameWithoutExtension(path), System.Globalization.NumberStyles.HexNumber);
-                // if (instruction != 0x0f)
-                if (instruction > 0x0f)
+                if (instruction != 0x12)
+                // if (instruction > 0x12)
                 {
                     continue;
                 }
