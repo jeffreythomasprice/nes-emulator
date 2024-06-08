@@ -257,6 +257,14 @@ public class CPU
 			case 0x45: EOR_ZeroPage(memory); break;
 			case 0x46: LSR_ZeroPage(memory); break;
 			case 0x47: SRE_ZeroPage(memory); break;
+			case 0x48: PHA(memory); break;
+			case 0x49: EOR_Immediate(memory); break;
+			case 0x4a: LSR(); break;
+			case 0x4b: ALR(memory); break;
+			case 0x4c: JMP_Absolute(memory); break;
+			case 0x4d: EOR_Absolute(memory); break;
+			case 0x4e: LSR_Absolute(memory); break;
+			case 0x4f: SRE_Absolute(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -660,6 +668,12 @@ public class CPU
 		}
 	}
 
+	private void JMP_Absolute(IMemory memory)
+	{
+		PC = memory.Read16((ushort)(PC + 1));
+		ClockCycles += 3;
+	}
+
 	private void CLC()
 	{
 		CarryFlag = false;
@@ -715,6 +729,18 @@ public class CPU
 		EOR_Common(value, 2, 6);
 	}
 
+	private void EOR_Immediate(IMemory memory)
+	{
+		var value = memory.Read8((ushort)(PC + 1));
+		EOR_Common(value, 2, 2);
+	}
+
+	private void EOR_Absolute(IMemory memory)
+	{
+		var (_, value) = Absolute(memory);
+		EOR_Common(value, 3, 4);
+	}
+
 	private void EOR_Common(byte value, UInt16 pcOffset, UInt64 clock)
 	{
 		A ^= value;
@@ -736,6 +762,12 @@ public class CPU
 		SRE_Common(memory, address, value, 2, 8);
 	}
 
+	private void SRE_Absolute(IMemory memory)
+	{
+		var (address, value) = Absolute(memory);
+		SRE_Common(memory, address, value, 3, 6);
+	}
+
 	private void SRE_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
 	{
 		var newValue = (byte)(value >> 1);
@@ -748,10 +780,22 @@ public class CPU
 		ClockCycles += clock;
 	}
 
+	private void LSR()
+	{
+		A = LSR_Common(A, 1, 2);
+	}
+
 	private void LSR_ZeroPage(IMemory memory)
 	{
 		var (address, value) = ZeroPageFixed(memory);
 		var newValue = LSR_Common(value, 2, 5);
+		memory.Write8(address, newValue);
+	}
+
+	private void LSR_Absolute(IMemory memory)
+	{
+		var (address, value) = Absolute(memory);
+		var newValue = LSR_Common(value, 3, 6);
 		memory.Write8(address, newValue);
 	}
 
@@ -764,6 +808,24 @@ public class CPU
 		PC += pcOffset;
 		ClockCycles += clock;
 		return newValue;
+	}
+
+	private void PHA(IMemory memory)
+	{
+		Push8(memory, A);
+		PC += 1;
+		ClockCycles += 3;
+	}
+
+	private void ALR(IMemory memory)
+	{
+		var value = (byte)(A & memory.Read8((ushort)(PC + 1)));
+		A = (byte)(value >> 1);
+		NegativeFlag = (sbyte)A < 0;
+		ZeroFlag = A == 0;
+		CarryFlag = (value & 0b0000_0001) != 0;
+		PC += 2;
+		ClockCycles += 2;
 	}
 
 	private void NOP(UInt16 pcOffset, UInt16 clock)
