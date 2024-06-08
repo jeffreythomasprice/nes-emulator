@@ -167,22 +167,36 @@ public class CPU
 		{
 			case 0x00: Break(memory); break;
 			case 0x01: ORA_X_Indirect(memory); break;
-			case 0x02: Illegal(0, 3); break;
-			case 0x03: SLO_X_Indirect(memory); break;
-			case 0x04: Illegal(2, 3); break;
-			case 0x05: ORA_ZeroPageFixed(memory); break;
-			case 0x06: ASL_ZeroPageFixed(memory); break;
-			case 0x07: SLO_ZeroPageFixed(memory); break;
+			case 0x02: NOP(0, 3); break;
+			case 0x03: SLO_ZeroPage_Indirect_X(memory); break;
+			case 0x04: NOP(2, 3); break;
+			case 0x05: ORA_ZeroPage_Fixed(memory); break;
+			case 0x06: ASL_ZeroPage_Fixed(memory); break;
+			case 0x07: SLO_ZeroPageImmediate(memory); break;
 			case 0x08: PHP(memory); break;
 			case 0x09: ORA_Immediate(memory); break;
 			case 0x0a: ASL(memory); break;
 			case 0x0b: ANC_Immediate(memory); break;
-			case 0x0c: Illegal(3, 4); break;
+			case 0x0c: NOP(3, 4); break;
 			case 0x0d: ORA_Absolute(memory); break;
 			case 0x0e: ASL_Absolute(memory); break;
 			case 0x0f: SLO_Absolute(memory); break;
 			case 0x10: BPL(memory); break;
-			case 0x11: ORA_Y_Indirect(memory); break;
+			case 0x11: ORA_ZeroPage_Indirect_Y(memory); break;
+			case 0x12: NOP(0, 3); break;
+			case 0x13: SLO_ZeroPage_Indirect_Y(memory); break;
+			case 0x14: NOP(2, 4); break;
+			case 0x15: ORA_ZeroPage_X(memory); break;
+			case 0x16: ASL_ZeroPage_X(memory); break;
+			case 0x17: SLO_ZeroPage_X(memory); break;
+			case 0x18: CLC(); break;
+			case 0x19: ORA_Absolute_Y(memory); break;
+			case 0x1a: NOP(1, 2); break;
+			case 0x1b: SLO_Absolute_Y(memory); break;
+			case 0x1c: NOP_Absolute_X(memory); break;
+			case 0x1d: ORA_Absolute_X(memory); break;
+			case 0x1e: ASL_Absolute_X(memory); break;
+			case 0x1f: SLO_Absolute_X(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -200,17 +214,17 @@ public class CPU
 
 	private void ORA_X_Indirect(IMemory memory)
 	{
-		var (_, value) = ZeroPageX(memory);
+		var (_, value) = ZeroPageIndirectX(memory);
 		ORA_Common(value, 2, 6);
 	}
 
-	private void ORA_Y_Indirect(IMemory memory)
+	private void ORA_ZeroPage_Indirect_Y(IMemory memory)
 	{
-		var (_, value, extraClock) = ZeroPageY(memory);
+		var (_, value, extraClock) = ZeroPageIndirectY(memory);
 		ORA_Common(value, 2, 5 + extraClock);
 	}
 
-	private void ORA_ZeroPageFixed(IMemory memory)
+	private void ORA_ZeroPage_Fixed(IMemory memory)
 	{
 		var (_, value) = ZeroPageFixed(memory);
 		ORA_Common(value, 2, 3);
@@ -224,8 +238,26 @@ public class CPU
 
 	private void ORA_Absolute(IMemory memory)
 	{
-		var (address, value) = Absolute(memory);
+		var (_, value) = Absolute(memory);
 		ORA_Common(value, 3, 4);
+	}
+
+	private void ORA_ZeroPage_X(IMemory memory)
+	{
+		var (_, value) = ZeroPageX(memory);
+		ORA_Common(value, 2, 4);
+	}
+
+	private void ORA_Absolute_X(IMemory memory)
+	{
+		var (_, value, extraClock) = AbsoluteX(memory);
+		ORA_Common(value, 3, 4 + extraClock);
+	}
+
+	private void ORA_Absolute_Y(IMemory memory)
+	{
+		var (_, value, extraClock) = AbsoluteY(memory);
+		ORA_Common(value, 3, 4 + extraClock);
 	}
 
 	private void ORA_Common(byte newValue, UInt16 pcOffset, UInt64 clock)
@@ -237,13 +269,19 @@ public class CPU
 		ClockCycles += clock;
 	}
 
-	private void SLO_X_Indirect(IMemory memory)
+	private void SLO_ZeroPage_Indirect_X(IMemory memory)
 	{
-		var (address, value) = ZeroPageX(memory);
+		var (address, value) = ZeroPageIndirectX(memory);
 		SLO_Common(memory, address, value, 2, 8);
 	}
 
-	private void SLO_ZeroPageFixed(IMemory memory)
+	private void SLO_ZeroPage_Indirect_Y(IMemory memory)
+	{
+		var (address, value, _) = ZeroPageIndirectY(memory);
+		SLO_Common(memory, address, value, 2, 8);
+	}
+
+	private void SLO_ZeroPageImmediate(IMemory memory)
 	{
 		var (address, value) = ZeroPageFixed(memory);
 		SLO_Common(memory, address, value, 2, 5);
@@ -253,6 +291,24 @@ public class CPU
 	{
 		var (address, value) = Absolute(memory);
 		SLO_Common(memory, address, value, 3, 6);
+	}
+
+	private void SLO_ZeroPage_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageX(memory);
+		SLO_Common(memory, address, value, 2, 6);
+	}
+
+	private void SLO_Absolute_X(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteX(memory);
+		SLO_Common(memory, address, value, 3, 7);
+	}
+
+	private void SLO_Absolute_Y(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteY(memory);
+		SLO_Common(memory, address, value, 3, 7);
 	}
 
 	private void SLO_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
@@ -279,7 +335,7 @@ public class CPU
 		ClockCycles += 2;
 	}
 
-	private void ASL_ZeroPageFixed(IMemory memory)
+	private void ASL_ZeroPage_Fixed(IMemory memory)
 	{
 		var (address, value) = ZeroPageFixed(memory);
 		ASL_Common(memory, address, value, 2, 5);
@@ -289,6 +345,18 @@ public class CPU
 	{
 		var (address, value) = Absolute(memory);
 		ASL_Common(memory, address, value, 3, 6);
+	}
+
+	private void ASL_ZeroPage_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageX(memory);
+		ASL_Common(memory, address, value, 2, 6);
+	}
+
+	private void ASL_Absolute_X(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteX(memory);
+		ASL_Common(memory, address, value, 3, 7);
 	}
 
 	private void ASL_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
@@ -350,10 +418,24 @@ public class CPU
 		}
 	}
 
-	private void Illegal(UInt16 pcOffset, UInt16 cycleCount)
+	private void CLC()
+	{
+		CarryFlag = false;
+		PC += 1;
+		ClockCycles += 2;
+	}
+
+	private void NOP(UInt16 pcOffset, UInt16 cycleCount)
 	{
 		PC += pcOffset;
 		ClockCycles += cycleCount;
+	}
+
+	private void NOP_Absolute_X(IMemory memory)
+	{
+		var (_, _, extraClock) = AbsoluteX(memory);
+		PC += 3;
+		ClockCycles += 4 + extraClock;
 	}
 
 	private void Push8(IMemory memory, byte value)
@@ -387,6 +469,29 @@ public class CPU
 		return (address, memory.Read8(address));
 	}
 
+	private (UInt16, byte, UInt64) AbsoluteX(IMemory memory) => Absolute_Common(memory, X);
+
+	private (UInt16, byte, UInt64) AbsoluteY(IMemory memory) => Absolute_Common(memory, Y);
+
+	private (UInt16, byte, UInt64) Absolute_Common(IMemory memory, byte offset)
+	{
+		var address = memory.Read16((ushort)(PC + 1));
+		var high1 = address & 0xff00;
+		address += offset;
+		var high2 = address & 0xff00;
+		UInt64 extraClock;
+		// if adding Y pushes us into a new page it will take an extra clock cycle to resolve
+		if (high1 == high2)
+		{
+			extraClock = 0;
+		}
+		else
+		{
+			extraClock = 1;
+		}
+		return (address, memory.Read8(address), extraClock);
+	}
+
 	private (UInt16, byte) ZeroPageFixed(IMemory memory)
 	{
 		var address = (UInt16)memory.Read8((ushort)(PC + 1));
@@ -395,11 +500,17 @@ public class CPU
 
 	private (UInt16, byte) ZeroPageX(IMemory memory)
 	{
+		var address = (UInt16)((memory.Read8((ushort)(PC + 1)) + X) & 0xff);
+		return (address, memory.Read8(address));
+	}
+
+	private (UInt16, byte) ZeroPageIndirectX(IMemory memory)
+	{
 		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), X);
 		return (address, memory.Read8(address));
 	}
 
-	private (UInt16, byte, UInt64) ZeroPageY(IMemory memory)
+	private (UInt16, byte, UInt64) ZeroPageIndirectY(IMemory memory)
 	{
 		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), 0);
 		var high1 = address & 0xff00;
