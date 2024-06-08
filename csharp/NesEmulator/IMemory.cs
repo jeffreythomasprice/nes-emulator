@@ -10,7 +10,7 @@ public interface IMemory
 		AssertAddress(address);
 		var low = Read8(address);
 		var high = Read8((UInt16)(address + 1));
-		return (UInt16)(((UInt16)low) | (((UInt16)high) << (UInt16)8));
+		return (UInt16)(low | (high << 8));
 	}
 
 	public void Write16(UInt16 address)

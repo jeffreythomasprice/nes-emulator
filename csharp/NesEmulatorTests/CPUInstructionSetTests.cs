@@ -6,7 +6,7 @@ using NesEmulator;
 
 namespace NesEmulatorTests;
 
-public class InstructionSetTests
+public partial class CPUInstructionSetTests
 {
     public record class TestCase
     {
@@ -159,21 +159,6 @@ public class InstructionSetTests
         public CycleMode Mode { get; set; }
     }
 
-    public class TestMemory : IMemory
-    {
-        private readonly byte[] data = new byte[0x10000];
-
-        public byte Read8(ushort address)
-        {
-            return data[address];
-        }
-
-        public void Write8(ushort address, byte value)
-        {
-            data[address] = value;
-        }
-    }
-
     [Theory]
     [MemberData(nameof(TestData))]
     public void Tests(string path, TestCase testCase)
@@ -194,17 +179,30 @@ public class InstructionSetTests
             memory.Write8(data.Address, data.Value);
         }
 
-        // TODO do one cpu step
+        cpu.Step(memory);
 
-        // TODO check results
-        Console.WriteLine(string.Join(", ", testCase.Cycles.Select(x => $"{x.Address} - {x.Value} - {x.Mode}")));
+        Assert.Equal(testCase.Final.PC, cpu.PC);
+        Assert.Equal(testCase.Final.SP, cpu.SP);
+        Assert.Equal(testCase.Final.A, cpu.A);
+        Assert.Equal(testCase.Final.X, cpu.X);
+        Assert.Equal(testCase.Final.Y, cpu.Y);
+        Assert.Equal(testCase.Final.Flags, cpu.Flags);
+
+        foreach (var data in testCase.Final.RAM)
+        {
+            Assert.Equal(data.Value, memory.Read8(data.Address));
+        }
+
+        Assert.Equal(testCase.Cycles.Length, cpu.ClockCycles);
+        // TODO test exact per-cycle memory access
     }
 
     public static IEnumerable<object[]> TestData
     {
         get
         {
-            foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "*.json", SearchOption.AllDirectories))
+            // TODO do all tests
+            foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "05.json", SearchOption.AllDirectories))
             {
                 using var file = File.Open(path, FileMode.Open);
                 var results = JsonSerializer.Deserialize<TestCase[]>(file)
