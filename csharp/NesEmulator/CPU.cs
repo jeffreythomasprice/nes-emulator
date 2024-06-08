@@ -166,13 +166,13 @@ public class CPU
 		switch (instruction)
 		{
 			case 0x00: Break(memory); break;
-			case 0x01: ORA_X_Indirect(memory); break;
+			case 0x01: ORA_ZeroPage_Indirect_X(memory); break;
 			case 0x02: NOP(0, 3); break;
 			case 0x03: SLO_ZeroPage_Indirect_X(memory); break;
 			case 0x04: NOP(2, 3); break;
 			case 0x05: ORA_ZeroPage_Fixed(memory); break;
 			case 0x06: ASL_ZeroPage_Fixed(memory); break;
-			case 0x07: SLO_ZeroPageImmediate(memory); break;
+			case 0x07: SLO_ZeroPage_Immediate(memory); break;
 			case 0x08: PHP(memory); break;
 			case 0x09: ORA_Immediate(memory); break;
 			case 0x0a: ASL(memory); break;
@@ -197,6 +197,14 @@ public class CPU
 			case 0x1d: ORA_Absolute_X(memory); break;
 			case 0x1e: ASL_Absolute_X(memory); break;
 			case 0x1f: SLO_Absolute_X(memory); break;
+			case 0x20: JSR(memory); break;
+			case 0x21: AND_ZeroPage_Indirect_X(memory); break;
+			case 0x22: NOP(0, 3); break;
+			case 0x23: RLA_ZeroPage_Indirect_X(memory); break;
+			case 0x24: BIT_ZeroPage_Immediate(memory); break;
+			case 0x25: AND_ZeroPage(memory); break;
+			case 0x26: ROL_ZeroPage(memory); break;
+			case 0x27: RLA_ZeroPage(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -212,7 +220,7 @@ public class CPU
 		ClockCycles += 7;
 	}
 
-	private void ORA_X_Indirect(IMemory memory)
+	private void ORA_ZeroPage_Indirect_X(IMemory memory)
 	{
 		var (_, value) = ZeroPageIndirectX(memory);
 		ORA_Common(value, 2, 6);
@@ -281,7 +289,7 @@ public class CPU
 		SLO_Common(memory, address, value, 2, 8);
 	}
 
-	private void SLO_ZeroPageImmediate(IMemory memory)
+	private void SLO_ZeroPage_Immediate(IMemory memory)
 	{
 		var (address, value) = ZeroPageFixed(memory);
 		SLO_Common(memory, address, value, 2, 5);
@@ -391,6 +399,63 @@ public class CPU
 		ClockCycles += 2;
 	}
 
+	private void AND_ZeroPage(IMemory memory)
+	{
+		var (_, value) = ZeroPageFixed(memory);
+		AND_Common(value, 2, 3);
+	}
+
+	private void AND_ZeroPage_Indirect_X(IMemory memory)
+	{
+		var (_, value) = ZeroPageIndirectX(memory);
+		AND_Common(value, 2, 6);
+	}
+
+	private void AND_Common(byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		A &= value;
+		NegativeFlag = (sbyte)A < 0;
+		ZeroFlag = A == 0;
+		PC += pcOffset;
+		ClockCycles += clock;
+	}
+
+	private void RLA_ZeroPage(IMemory memory)
+	{
+		var (address, value) = ZeroPageFixed(memory);
+		RLA_Common(memory, address, value, 2, 5);
+	}
+
+	private void RLA_ZeroPage_Indirect_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageIndirectX(memory);
+		RLA_Common(memory, address, value, 2, 8);
+	}
+
+	private void RLA_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		var newValue = (byte)((byte)(value << 1) | (CarryFlag ? 1 : 0));
+		memory.Write8(address, newValue);
+		A &= newValue;
+		NegativeFlag = (sbyte)A < 0;
+		ZeroFlag = A == 0;
+		CarryFlag = (value & 0b1000_0000) != 0;
+		PC += pcOffset;
+		ClockCycles += clock;
+	}
+
+	private void ROL_ZeroPage(IMemory memory)
+	{
+		var (address, value) = ZeroPageFixed(memory);
+		var newValue = (byte)((byte)(value << 1) | (CarryFlag ? 1 : 0));
+		memory.Write8(address, newValue);
+		NegativeFlag = (sbyte)newValue < 0;
+		ZeroFlag = newValue == 0;
+		CarryFlag = (value & 0b1000_0000) != 0;
+		PC += 2;
+		ClockCycles += 5;
+	}
+
 	private void BPL(IMemory memory)
 	{
 		// TODO common jump?
@@ -423,6 +488,24 @@ public class CPU
 		CarryFlag = false;
 		PC += 1;
 		ClockCycles += 2;
+	}
+
+	private void JSR(IMemory memory)
+	{
+		var address = memory.Read16((ushort)(PC + 1));
+		Push16(memory, (ushort)(PC + 2));
+		PC = address;
+		ClockCycles += 6;
+	}
+
+	private void BIT_ZeroPage_Immediate(IMemory memory)
+	{
+		var (_, value) = ZeroPageFixed(memory);
+		OverflowFlag = (OverflowFlagMask & value) != 0;
+		NegativeFlag = (NegativeFlagMask & value) != 0;
+		ZeroFlag = (value & A) == 0;
+		PC += 2;
+		ClockCycles += 3;
 	}
 
 	private void NOP(UInt16 pcOffset, UInt16 cycleCount)
