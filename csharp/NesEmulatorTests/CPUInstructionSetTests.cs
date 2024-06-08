@@ -165,13 +165,15 @@ public partial class CPUInstructionSetTests
     {
         Console.WriteLine($"{path} - {testCase.Name}");
 
-        var cpu = new CPU();
-        cpu.PC = testCase.Initial.PC;
-        cpu.SP = testCase.Initial.SP;
-        cpu.A = testCase.Initial.A;
-        cpu.X = testCase.Initial.X;
-        cpu.Y = testCase.Initial.Y;
-        cpu.Flags = testCase.Initial.Flags;
+        var cpu = new CPU
+        {
+            PC = testCase.Initial.PC,
+            SP = testCase.Initial.SP,
+            A = testCase.Initial.A,
+            X = testCase.Initial.X,
+            Y = testCase.Initial.Y,
+            Flags = testCase.Initial.Flags
+        };
 
         var memory = new TestMemory();
         foreach (var data in testCase.Initial.RAM)
@@ -193,7 +195,7 @@ public partial class CPUInstructionSetTests
             Assert.Equal(data.Value, memory.Read8(data.Address));
         }
 
-        Assert.Equal(testCase.Cycles.Length, cpu.ClockCycles);
+        Assert.Equal((UInt64)testCase.Cycles.Length, cpu.ClockCycles);
         // TODO test exact per-cycle memory access
     }
 
@@ -201,9 +203,16 @@ public partial class CPUInstructionSetTests
     {
         get
         {
-            // TODO do all tests
-            foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "03.json", SearchOption.AllDirectories))
+            foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "*.json", SearchOption.AllDirectories))
             {
+                // TODO do all tests
+                var instruction = byte.Parse(Path.GetFileNameWithoutExtension(path), System.Globalization.NumberStyles.HexNumber);
+                // if (instruction != 0x0f)
+                if (instruction > 0x0f)
+                {
+                    continue;
+                }
+
                 using var file = File.Open(path, FileMode.Open);
                 var results = JsonSerializer.Deserialize<TestCase[]>(file)
                     ?? throw new NullReferenceException($"failed to load test data for file: {path}");

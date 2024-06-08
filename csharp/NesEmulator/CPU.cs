@@ -25,7 +25,7 @@ public class CPU
 	public byte Y;
 	public byte Flags;
 
-	public UInt16 ClockCycles = 0;
+	public UInt64 ClockCycles = 0;
 
 	public bool CarryFlag
 	{
@@ -170,7 +170,17 @@ public class CPU
 			case 0x02: Illegal(0, 3); break;
 			case 0x03: SLO_X_Indirect(memory); break;
 			case 0x04: Illegal(2, 3); break;
-			case 0x05: ORA_FixedZeroPage(memory); break;
+			case 0x05: ORA_ZeroPageFixed(memory); break;
+			case 0x06: ASL_ZeroPageFixed(memory); break;
+			case 0x07: SLO_ZeroPageFixed(memory); break;
+			case 0x08: PHP(memory); break;
+			case 0x09: ORA_Immediate(memory); break;
+			case 0x0a: ASL(memory); break;
+			case 0x0b: ANC_Immediate(memory); break;
+			case 0x0c: Illegal(3, 4); break;
+			case 0x0d: ORA_Absolute(memory); break;
+			case 0x0e: ASL_Absolute(memory); break;
+			case 0x0f: SLO_Absolute(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -188,36 +198,121 @@ public class CPU
 
 	private void ORA_X_Indirect(IMemory memory)
 	{
-		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), X);
-		A |= memory.Read8(address);
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		PC += 2;
-		ClockCycles += 6;
+		var (_, value) = ZeroPageX(memory);
+		ORA_Common(value, 2, 6);
 	}
 
-	private void ORA_FixedZeroPage(IMemory memory)
+	private void ORA_ZeroPageFixed(IMemory memory)
 	{
-		var address = (UInt16)memory.Read8((ushort)(PC + 1));
-		A |= memory.Read8(address);
+		var (_, value) = ZeroPageFixed(memory);
+		ORA_Common(value, 2, 3);
+	}
+
+	private void ORA_Immediate(IMemory memory)
+	{
+		var value = memory.Read8((ushort)(PC + 1));
+		ORA_Common(value, 2, 2);
+	}
+
+	private void ORA_Absolute(IMemory memory)
+	{
+		var (address, value) = Absolute(memory);
+		ORA_Common(value, 3, 4);
+	}
+
+	private void ORA_Common(byte newValue, UInt16 pcOffset, UInt64 clock)
+	{
+		A |= newValue;
 		NegativeFlag = (sbyte)A < 0;
 		ZeroFlag = A == 0;
-		PC += 2;
-		ClockCycles += 3;
+		PC += pcOffset;
+		ClockCycles += clock;
 	}
 
 	private void SLO_X_Indirect(IMemory memory)
 	{
-		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), X);
-		var value = memory.Read8(address);
+		var (address, value) = ZeroPageX(memory);
+		SLO_Common(memory, address, value, 2, 8);
+	}
+
+	private void SLO_ZeroPageFixed(IMemory memory)
+	{
+		var (address, value) = ZeroPageFixed(memory);
+		SLO_Common(memory, address, value, 2, 5);
+	}
+
+	private void SLO_Absolute(IMemory memory)
+	{
+		var (address, value) = Absolute(memory);
+		SLO_Common(memory, address, value, 3, 6);
+	}
+
+	private void SLO_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
+	{
 		var newValue = (byte)(value << 1);
 		memory.Write8(address, newValue);
 		A |= newValue;
 		NegativeFlag = (sbyte)A < 0;
 		ZeroFlag = A == 0;
 		CarryFlag = newValue < value;
+		PC += pcOffset;
+		ClockCycles += clock;
+	}
+
+	private void ASL(IMemory memory)
+	{
+		var value = A;
+		var newValue = (byte)(value << 1);
+		A = newValue;
+		NegativeFlag = (sbyte)newValue < 0;
+		ZeroFlag = newValue == 0;
+		CarryFlag = newValue < value;
+		PC += 1;
+		ClockCycles += 2;
+	}
+
+	private void ASL_ZeroPageFixed(IMemory memory)
+	{
+		var (address, value) = ZeroPageFixed(memory);
+		ASL_Common(memory, address, value, 2, 5);
+	}
+
+	private void ASL_Absolute(IMemory memory)
+	{
+		var (address, value) = Absolute(memory);
+		ASL_Common(memory, address, value, 3, 6);
+	}
+
+	private void ASL_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		var newValue = (byte)(value << 1);
+		memory.Write8(address, newValue);
+		NegativeFlag = (sbyte)newValue < 0;
+		ZeroFlag = newValue == 0;
+		CarryFlag = newValue < value;
+		PC += pcOffset;
+		ClockCycles += clock;
+	}
+
+	private void PHP(IMemory memory)
+	{
+		BreakCommandFlag = true;
+		Push8(memory, Flags);
+		BreakCommandFlag = false;
+		PC += 1;
+		ClockCycles += 3;
+	}
+
+	private void ANC_Immediate(IMemory memory)
+	{
+		var value = memory.Read8((ushort)(PC + 1));
+		var newValue = (byte)(A & value);
+		A = newValue;
+		NegativeFlag = (sbyte)newValue < 0;
+		ZeroFlag = newValue == 0;
+		CarryFlag = (newValue & 0b1000_0000) != 0;
 		PC += 2;
-		ClockCycles += 8;
+		ClockCycles += 2;
 	}
 
 	private void Illegal(UInt16 pcOffset, UInt16 cycleCount)
@@ -249,6 +344,24 @@ public class CPU
 		var high = Pop8(memory);
 		var low = Pop8(memory);
 		return (ushort)((high << 8) | low);
+	}
+
+	private (UInt16, byte) Absolute(IMemory memory)
+	{
+		var address = memory.Read16((ushort)(PC + 1));
+		return (address, memory.Read8(address));
+	}
+
+	private (UInt16, byte) ZeroPageFixed(IMemory memory)
+	{
+		var address = (UInt16)memory.Read8((ushort)(PC + 1));
+		return (address, memory.Read8(address));
+	}
+
+	private (UInt16, byte) ZeroPageX(IMemory memory)
+	{
+		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), X);
+		return (address, memory.Read8(address));
 	}
 
 	// TODO extension method on memory?
