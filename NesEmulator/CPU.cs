@@ -9,6 +9,7 @@ public class CPU
 	private const byte InterruptDisableFlagMask = 0b0000_0100;
 	private const byte DecimalModeFlagMask = 0b0000_1000;
 	private const byte BreakCommandFlagMask = 0b0001_0000;
+	private const byte UnusedFlagMask = 0b0010_0000;
 	private const byte OverflowFlagMask = 0b0100_0000;
 	private const byte NegativeFlagMask = 0b1000_0000;
 
@@ -122,6 +123,25 @@ public class CPU
 		}
 	}
 
+	public bool UnusedFlag
+	{
+		get => (Flags & UnusedFlagMask) != 0;
+		set
+		{
+			if (value)
+			{
+				Flags |= UnusedFlagMask;
+			}
+			else
+			{
+				unchecked
+				{
+					Flags &= (byte)(~UnusedFlagMask);
+				}
+			}
+		}
+	}
+
 	public bool OverflowFlag
 	{
 		get => (Flags & OverflowFlagMask) != 0;
@@ -205,6 +225,30 @@ public class CPU
 			case 0x25: AND_ZeroPage(memory); break;
 			case 0x26: ROL_ZeroPage(memory); break;
 			case 0x27: RLA_ZeroPage(memory); break;
+			case 0x28: PLP(memory); break;
+			case 0x29: AND_Immediate(memory); break;
+			case 0x2a: ROL(); break;
+			case 0x2b: ANC_Immediate(memory); break;
+			case 0x2c: BIT_Absolute(memory); break;
+			case 0x2d: AND_Absolute(memory); break;
+			case 0x2e: ROL_Absolute(memory); break;
+			case 0x2f: RLA_Absolute(memory); break;
+			case 0x30: BMI(memory); break;
+			case 0x31: AND_ZeroPage_Indirect_Y(memory); break;
+			case 0x32: NOP(0, 3); break;
+			case 0x33: RLA_ZeroPage_Indirect_Y(memory); break;
+			case 0x34: NOP(2, 4); break;
+			case 0x35: AND_ZeroPage_X(memory); break;
+			case 0x36: ROL_ZeroPage_X(memory); break;
+			case 0x37: RLA_ZeroPage_X(memory); break;
+			case 0x38: SEC(memory); break;
+			case 0x39: AND_Absolute_Y(memory); break;
+			case 0x3a: NOP(1, 2); break;
+			case 0x3b: RLA_Absolute_Y(memory); break;
+			case 0x3c: NOP_Absolute_X(memory); break;
+			case 0x3d: AND_Absolute_X(memory); break;
+			case 0x3e: ROL_Absolute_X(memory); break;
+			case 0x3f: RLA_Absolute_X(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -387,6 +431,15 @@ public class CPU
 		ClockCycles += 3;
 	}
 
+	private void PLP(IMemory memory)
+	{
+		Flags = Pop8(memory);
+		BreakCommandFlag = false;
+		UnusedFlag = true;
+		PC += 1;
+		ClockCycles += 4;
+	}
+
 	private void ANC_Immediate(IMemory memory)
 	{
 		var value = memory.Read8((ushort)(PC + 1));
@@ -405,10 +458,46 @@ public class CPU
 		AND_Common(value, 2, 3);
 	}
 
+	private void AND_ZeroPage_X(IMemory memory)
+	{
+		var (_, value) = ZeroPageX(memory);
+		AND_Common(value, 2, 4);
+	}
+
 	private void AND_ZeroPage_Indirect_X(IMemory memory)
 	{
 		var (_, value) = ZeroPageIndirectX(memory);
 		AND_Common(value, 2, 6);
+	}
+
+	private void AND_ZeroPage_Indirect_Y(IMemory memory)
+	{
+		var (_, value, extraClock) = ZeroPageIndirectY(memory);
+		AND_Common(value, 2, 5 + extraClock);
+	}
+
+	private void AND_Immediate(IMemory memory)
+	{
+		var value = memory.Read8((ushort)(PC + 1));
+		AND_Common(value, 2, 2);
+	}
+
+	private void AND_Absolute(IMemory memory)
+	{
+		var (_, value) = Absolute(memory);
+		AND_Common(value, 3, 4);
+	}
+
+	private void AND_Absolute_X(IMemory memory)
+	{
+		var (_, value, extraClock) = AbsoluteX(memory);
+		AND_Common(value, 3, 4 + extraClock);
+	}
+
+	private void AND_Absolute_Y(IMemory memory)
+	{
+		var (_, value, extraClock) = AbsoluteY(memory);
+		AND_Common(value, 3, 4 + extraClock);
 	}
 
 	private void AND_Common(byte value, UInt16 pcOffset, UInt64 clock)
@@ -426,10 +515,40 @@ public class CPU
 		RLA_Common(memory, address, value, 2, 5);
 	}
 
+	private void RLA_ZeroPage_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageX(memory);
+		RLA_Common(memory, address, value, 2, 6);
+	}
+
 	private void RLA_ZeroPage_Indirect_X(IMemory memory)
 	{
 		var (address, value) = ZeroPageIndirectX(memory);
 		RLA_Common(memory, address, value, 2, 8);
+	}
+
+	private void RLA_ZeroPage_Indirect_Y(IMemory memory)
+	{
+		var (address, value, _) = ZeroPageIndirectY(memory);
+		RLA_Common(memory, address, value, 2, 8);
+	}
+
+	private void RLA_Absolute(IMemory memory)
+	{
+		var (address, value) = Absolute(memory);
+		RLA_Common(memory, address, value, 3, 6);
+	}
+
+	private void RLA_Absolute_X(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteX(memory);
+		RLA_Common(memory, address, value, 3, 7);
+	}
+
+	private void RLA_Absolute_Y(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteY(memory);
+		RLA_Common(memory, address, value, 3, 7);
 	}
 
 	private void RLA_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
@@ -444,22 +563,63 @@ public class CPU
 		ClockCycles += clock;
 	}
 
+	private void ROL()
+	{
+		A = ROL_Common(A, 1, 2);
+	}
+
 	private void ROL_ZeroPage(IMemory memory)
 	{
 		var (address, value) = ZeroPageFixed(memory);
-		var newValue = (byte)((byte)(value << 1) | (CarryFlag ? 1 : 0));
+		var newValue = ROL_Common(value, 2, 5);
 		memory.Write8(address, newValue);
+	}
+
+	private void ROL_ZeroPage_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageX(memory);
+		var newValue = ROL_Common(value, 2, 6);
+		memory.Write8(address, newValue);
+	}
+
+	private void ROL_Absolute(IMemory memory)
+	{
+		var (address, value) = Absolute(memory);
+		var newValue = ROL_Common(value, 3, 6);
+		memory.Write8(address, newValue);
+	}
+
+	private void ROL_Absolute_X(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteX(memory);
+		var newValue = ROL_Common(value, 3, 7);
+		memory.Write8(address, newValue);
+	}
+
+	private byte ROL_Common(byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		var newValue = (byte)((byte)(value << 1) | (CarryFlag ? 1 : 0));
 		NegativeFlag = (sbyte)newValue < 0;
 		ZeroFlag = newValue == 0;
 		CarryFlag = (value & 0b1000_0000) != 0;
-		PC += 2;
-		ClockCycles += 5;
+		PC += pcOffset;
+		ClockCycles += clock;
+		return newValue;
 	}
 
 	private void BPL(IMemory memory)
 	{
-		// TODO common jump?
-		if (!NegativeFlag)
+		Branch_Common(memory, !NegativeFlag);
+	}
+
+	private void BMI(IMemory memory)
+	{
+		Branch_Common(memory, NegativeFlag);
+	}
+
+	private void Branch_Common(IMemory memory, bool condition)
+	{
+		if (condition)
 		{
 			// high byte of address after the branch instruction
 			var high1 = (PC + 2) & 0xff00;
@@ -490,6 +650,13 @@ public class CPU
 		ClockCycles += 2;
 	}
 
+	private void SEC(IMemory memory)
+	{
+		CarryFlag = true;
+		PC += 1;
+		ClockCycles += 2;
+	}
+
 	private void JSR(IMemory memory)
 	{
 		var address = memory.Read16((ushort)(PC + 1));
@@ -501,17 +668,28 @@ public class CPU
 	private void BIT_ZeroPage_Immediate(IMemory memory)
 	{
 		var (_, value) = ZeroPageFixed(memory);
+		BIT_Common(value, 2, 3);
+	}
+
+	private void BIT_Absolute(IMemory memory)
+	{
+		var (_, value) = Absolute(memory);
+		BIT_Common(value, 3, 4);
+	}
+
+	private void BIT_Common(byte value, UInt16 pcOffset, UInt64 clock)
+	{
 		OverflowFlag = (OverflowFlagMask & value) != 0;
 		NegativeFlag = (NegativeFlagMask & value) != 0;
 		ZeroFlag = (value & A) == 0;
-		PC += 2;
-		ClockCycles += 3;
+		PC += pcOffset;
+		ClockCycles += clock;
 	}
 
-	private void NOP(UInt16 pcOffset, UInt16 cycleCount)
+	private void NOP(UInt16 pcOffset, UInt16 clock)
 	{
 		PC += pcOffset;
-		ClockCycles += cycleCount;
+		ClockCycles += clock;
 	}
 
 	private void NOP_Absolute_X(IMemory memory)
