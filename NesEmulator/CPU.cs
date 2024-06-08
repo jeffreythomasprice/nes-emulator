@@ -241,7 +241,7 @@ public class CPU
 			case 0x35: AND_ZeroPage_X(memory); break;
 			case 0x36: ROL_ZeroPage_X(memory); break;
 			case 0x37: RLA_ZeroPage_X(memory); break;
-			case 0x38: SEC(memory); break;
+			case 0x38: SEC(); break;
 			case 0x39: AND_Absolute_Y(memory); break;
 			case 0x3a: NOP(1, 2); break;
 			case 0x3b: RLA_Absolute_Y(memory); break;
@@ -265,6 +265,22 @@ public class CPU
 			case 0x4d: EOR_Absolute(memory); break;
 			case 0x4e: LSR_Absolute(memory); break;
 			case 0x4f: SRE_Absolute(memory); break;
+			case 0x50: BVC(memory); break;
+			case 0x51: EOR_ZeroPage_Indirect_Y(memory); break;
+			case 0x52: NOP(0, 3); break;
+			case 0x53: SRE_ZeroPage_Indirect_Y(memory); break;
+			case 0x54: NOP(2, 4); break;
+			case 0x55: EOR_ZeroPage_X(memory); break;
+			case 0x56: LSR_ZeroPage_X(memory); break;
+			case 0x57: SRE_ZeroPage_X(memory); break;
+			case 0x58: CLI(); break;
+			case 0x59: EOR_Absolute_Y(memory); break;
+			case 0x5a: NOP(1, 2); break;
+			case 0x5b: SRE_Absolute_Y(memory); break;
+			case 0x5c: NOP_Absolute_X(memory); break;
+			case 0x5d: EOR_Absolute_X(memory); break;
+			case 0x5e: LSR_Absolute_X(memory); break;
+			case 0x5f: SRE_Absolute_X(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -642,6 +658,11 @@ public class CPU
 		Branch_Common(memory, NegativeFlag);
 	}
 
+	private void BVC(IMemory memory)
+	{
+		Branch_Common(memory, !OverflowFlag);
+	}
+
 	private void Branch_Common(IMemory memory, bool condition)
 	{
 		if (condition)
@@ -681,9 +702,16 @@ public class CPU
 		ClockCycles += 2;
 	}
 
-	private void SEC(IMemory memory)
+	private void SEC()
 	{
 		CarryFlag = true;
+		PC += 1;
+		ClockCycles += 2;
+	}
+
+	private void CLI()
+	{
+		InterruptDisableFlag = false;
 		PC += 1;
 		ClockCycles += 2;
 	}
@@ -723,10 +751,22 @@ public class CPU
 		EOR_Common(value, 2, 3);
 	}
 
+	private void EOR_ZeroPage_X(IMemory memory)
+	{
+		var (_, value) = ZeroPageX(memory);
+		EOR_Common(value, 2, 4);
+	}
+
 	private void EOR_ZeroPage_Indirect_X(IMemory memory)
 	{
 		var (_, value) = ZeroPageIndirectX(memory);
 		EOR_Common(value, 2, 6);
+	}
+
+	private void EOR_ZeroPage_Indirect_Y(IMemory memory)
+	{
+		var (_, value, extraClock) = ZeroPageIndirectY(memory);
+		EOR_Common(value, 2, 5 + extraClock);
 	}
 
 	private void EOR_Immediate(IMemory memory)
@@ -739,6 +779,18 @@ public class CPU
 	{
 		var (_, value) = Absolute(memory);
 		EOR_Common(value, 3, 4);
+	}
+
+	private void EOR_Absolute_X(IMemory memory)
+	{
+		var (_, value, extraClock) = AbsoluteX(memory);
+		EOR_Common(value, 3, 4 + extraClock);
+	}
+
+	private void EOR_Absolute_Y(IMemory memory)
+	{
+		var (_, value, extraClock) = AbsoluteY(memory);
+		EOR_Common(value, 3, 4 + extraClock);
 	}
 
 	private void EOR_Common(byte value, UInt16 pcOffset, UInt64 clock)
@@ -756,9 +808,21 @@ public class CPU
 		SRE_Common(memory, address, value, 2, 5);
 	}
 
+	private void SRE_ZeroPage_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageX(memory);
+		SRE_Common(memory, address, value, 2, 6);
+	}
+
 	private void SRE_ZeroPage_Indirect_X(IMemory memory)
 	{
 		var (address, value) = ZeroPageIndirectX(memory);
+		SRE_Common(memory, address, value, 2, 8);
+	}
+
+	private void SRE_ZeroPage_Indirect_Y(IMemory memory)
+	{
+		var (address, value, _) = ZeroPageIndirectY(memory);
 		SRE_Common(memory, address, value, 2, 8);
 	}
 
@@ -766,6 +830,18 @@ public class CPU
 	{
 		var (address, value) = Absolute(memory);
 		SRE_Common(memory, address, value, 3, 6);
+	}
+
+	private void SRE_Absolute_X(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteX(memory);
+		SRE_Common(memory, address, value, 3, 7);
+	}
+
+	private void SRE_Absolute_Y(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteY(memory);
+		SRE_Common(memory, address, value, 3, 7);
 	}
 
 	private void SRE_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
@@ -792,10 +868,24 @@ public class CPU
 		memory.Write8(address, newValue);
 	}
 
+	private void LSR_ZeroPage_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageX(memory);
+		var newValue = LSR_Common(value, 2, 6);
+		memory.Write8(address, newValue);
+	}
+
 	private void LSR_Absolute(IMemory memory)
 	{
 		var (address, value) = Absolute(memory);
 		var newValue = LSR_Common(value, 3, 6);
+		memory.Write8(address, newValue);
+	}
+
+	private void LSR_Absolute_X(IMemory memory)
+	{
+		var (address, value, _) = AbsoluteX(memory);
+		var newValue = LSR_Common(value, 3, 7);
 		memory.Write8(address, newValue);
 	}
 

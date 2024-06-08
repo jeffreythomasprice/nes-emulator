@@ -205,7 +205,7 @@ public partial class CPUInstructionSetTests
             {
                 // TODO do all tests
                 var instruction = byte.Parse(Path.GetFileNameWithoutExtension(path), System.Globalization.NumberStyles.HexNumber);
-                // if (instruction != 0x4f)
+                // if (instruction != 0x5f)
                 if (instruction > 0x4f)
                 {
                     continue;
