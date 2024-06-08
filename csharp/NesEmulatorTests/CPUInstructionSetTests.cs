@@ -202,7 +202,7 @@ public partial class CPUInstructionSetTests
         get
         {
             // TODO do all tests
-            foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "05.json", SearchOption.AllDirectories))
+            foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "03.json", SearchOption.AllDirectories))
             {
                 using var file = File.Open(path, FileMode.Open);
                 var results = JsonSerializer.Deserialize<TestCase[]>(file)

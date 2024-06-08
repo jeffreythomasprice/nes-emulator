@@ -208,19 +208,16 @@ public class CPU
 
 	private void SLO_X_Indirect(IMemory memory)
 	{
-		/*
-		addr := cpu.zeroPageIndirect(memory, memory.Read8(cpu.PC+1), cpu.X)
-		value := memory.Read8(addr)
-		newValue := value << 1
-		memory.Write8(addr, newValue)
-		cpu.A |= newValue
-		cpu.updateNegativeFlag(cpu.A)
-		cpu.updateZeroFlag(cpu.A)
-		cpu.updateCarryFlag(newValue, value)
-		cpu.PC += 2
-		cpu.ClockCycles += 8
-		*/
-		throw new NotImplementedException();
+		var address = ZeroPageIndirect(memory, memory.Read8((ushort)(PC + 1)), X);
+		var value = memory.Read8(address);
+		var newValue = (byte)(value << 1);
+		memory.Write8(address, newValue);
+		A |= newValue;
+		NegativeFlag = (sbyte)A < 0;
+		ZeroFlag = A == 0;
+		CarryFlag = newValue < value;
+		PC += 2;
+		ClockCycles += 8;
 	}
 
 	private void Illegal(UInt16 pcOffset, UInt16 cycleCount)
