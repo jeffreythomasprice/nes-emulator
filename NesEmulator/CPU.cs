@@ -185,7 +185,7 @@ public class CPU
 		var instruction = memory.Read8(PC);
 		switch (instruction)
 		{
-			case 0x00: Break(memory); break;
+			case 0x00: BRK(memory); break;
 			case 0x01: ORA_ZeroPage_Indirect_X(memory); break;
 			case 0x02: NOP(0, 3); break;
 			case 0x03: SLO_ZeroPage_Indirect_X(memory); break;
@@ -249,11 +249,19 @@ public class CPU
 			case 0x3d: AND_Absolute_X(memory); break;
 			case 0x3e: ROL_Absolute_X(memory); break;
 			case 0x3f: RLA_Absolute_X(memory); break;
+			case 0x40: RTI(memory); break;
+			case 0x41: EOR_ZeroPage_Indirect_X(memory); break;
+			case 0x42: NOP(0, 3); break;
+			case 0x43: SRE_ZeroPage_Indirect_X(memory); break;
+			case 0x44: NOP(2, 3); break;
+			case 0x45: EOR_ZeroPage(memory); break;
+			case 0x46: LSR_ZeroPage(memory); break;
+			case 0x47: SRE_ZeroPage(memory); break;
 				// TODO remaining instructions
 		}
 	}
 
-	private void Break(IMemory memory)
+	private void BRK(IMemory memory)
 	{
 		Push16(memory, (ushort)(PC + 2));
 		BreakCommandFlag = true;
@@ -262,6 +270,33 @@ public class CPU
 		InterruptDisableFlag = true;
 		PC = memory.Read16(InterruptRequestInterruptAddress);
 		ClockCycles += 7;
+	}
+
+	private void PHP(IMemory memory)
+	{
+		BreakCommandFlag = true;
+		Push8(memory, Flags);
+		BreakCommandFlag = false;
+		PC += 1;
+		ClockCycles += 3;
+	}
+
+	private void PLP(IMemory memory)
+	{
+		Flags = Pop8(memory);
+		BreakCommandFlag = false;
+		UnusedFlag = true;
+		PC += 1;
+		ClockCycles += 4;
+	}
+
+	private void RTI(IMemory memory)
+	{
+		Flags = Pop8(memory);
+		PC = Pop16(memory);
+		BreakCommandFlag = false;
+		UnusedFlag = true;
+		ClockCycles += 6;
 	}
 
 	private void ORA_ZeroPage_Indirect_X(IMemory memory)
@@ -420,24 +455,6 @@ public class CPU
 		CarryFlag = newValue < value;
 		PC += pcOffset;
 		ClockCycles += clock;
-	}
-
-	private void PHP(IMemory memory)
-	{
-		BreakCommandFlag = true;
-		Push8(memory, Flags);
-		BreakCommandFlag = false;
-		PC += 1;
-		ClockCycles += 3;
-	}
-
-	private void PLP(IMemory memory)
-	{
-		Flags = Pop8(memory);
-		BreakCommandFlag = false;
-		UnusedFlag = true;
-		PC += 1;
-		ClockCycles += 4;
 	}
 
 	private void ANC_Immediate(IMemory memory)
@@ -686,6 +703,69 @@ public class CPU
 		ClockCycles += clock;
 	}
 
+	private void EOR_ZeroPage(IMemory memory)
+	{
+		var (_, value) = ZeroPageFixed(memory);
+		EOR_Common(value, 2, 3);
+	}
+
+	private void EOR_ZeroPage_Indirect_X(IMemory memory)
+	{
+		var (_, value) = ZeroPageIndirectX(memory);
+		EOR_Common(value, 2, 6);
+	}
+
+	private void EOR_Common(byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		A ^= value;
+		NegativeFlag = (sbyte)A < 0;
+		ZeroFlag = A == 0;
+		PC += pcOffset;
+		ClockCycles += clock;
+	}
+
+	private void SRE_ZeroPage(IMemory memory)
+	{
+		var (address, value) = ZeroPageFixed(memory);
+		SRE_Common(memory, address, value, 2, 5);
+	}
+
+	private void SRE_ZeroPage_Indirect_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageIndirectX(memory);
+		SRE_Common(memory, address, value, 2, 8);
+	}
+
+	private void SRE_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		var newValue = (byte)(value >> 1);
+		memory.Write8(address, newValue);
+		A ^= newValue;
+		NegativeFlag = (sbyte)A < 0;
+		ZeroFlag = A == 0;
+		CarryFlag = (value & 0b0000_0001) != 0;
+		PC += pcOffset;
+		ClockCycles += clock;
+	}
+
+	private void LSR_ZeroPage(IMemory memory)
+	{
+		var (address, value) = ZeroPageFixed(memory);
+		var newValue = LSR_Common(value, 2, 5);
+		memory.Write8(address, newValue);
+	}
+
+	private byte LSR_Common(byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		var newValue = (byte)(value >> 1);
+		NegativeFlag = false;
+		ZeroFlag = newValue == 0;
+		CarryFlag = (value & 0b0000_0001) != 0;
+		PC += pcOffset;
+		ClockCycles += clock;
+		return newValue;
+	}
+
 	private void NOP(UInt16 pcOffset, UInt16 clock)
 	{
 		PC += pcOffset;
@@ -719,8 +799,8 @@ public class CPU
 
 	private UInt16 Pop16(IMemory memory)
 	{
-		var high = Pop8(memory);
 		var low = Pop8(memory);
+		var high = Pop8(memory);
 		return (ushort)((high << 8) | low);
 	}
 

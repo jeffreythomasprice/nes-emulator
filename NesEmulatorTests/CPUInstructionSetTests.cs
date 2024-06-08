@@ -201,12 +201,12 @@ public partial class CPUInstructionSetTests
     {
         get
         {
-            foreach (var path in Directory.GetFiles("../../../../../submodules/ProcessorTests/nes6502/v1", "*.json", SearchOption.AllDirectories))
+            foreach (var path in Directory.GetFiles("../../../../submodules/ProcessorTests/nes6502/v1", "*.json", SearchOption.AllDirectories))
             {
                 // TODO do all tests
                 var instruction = byte.Parse(Path.GetFileNameWithoutExtension(path), System.Globalization.NumberStyles.HexNumber);
-                // if (instruction != 0x3f)
-                if (instruction > 0x3f)
+                // if (instruction != 0x47)
+                if (instruction > 0x47)
                 {
                     continue;
                 }
