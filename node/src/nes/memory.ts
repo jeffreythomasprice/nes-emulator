@@ -1,5 +1,5 @@
 import { SExpr } from "../sexpr";
-import { fixAddress } from "./numbers";
+import { wrapToU16 } from "./numbers";
 
 export interface MemoryController {
 	readU8(address: SExpr): SExpr;
@@ -13,6 +13,6 @@ export interface MemoryController {
  */
 export class SingleBankAllRAMMemoryController implements MemoryController {
 	readU8(address: SExpr): SExpr {
-		return new SExpr(["i32.load8_u", fixAddress(address)]);
+		return new SExpr(["i32.load8_u", wrapToU16(address)]);
 	}
 }

@@ -1,10 +1,15 @@
+import { Logger, consoleLogger } from "./logger";
 import { Emulator } from "./nes";
 
+const logger = new Logger([consoleLogger]);
 (async () => {
-	const emulator = await Emulator.createEmulator(Buffer.alloc(64 * 1024));
+	const emulator = await Emulator.createEmulator({
+		initialMemory: Buffer.alloc(64 * 1024),
+		logger,
+	});
 	emulator.step();
 })()
 	.catch(e => {
-		console.error("fatal", e);
+		logger.fatal("fatal", e);
 		process.exit(1);
 	});

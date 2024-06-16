@@ -85,6 +85,7 @@ export class SExpr {
 					for (const item of remaining) {
 						result += item.toStringHelper(eachIndent, nextIndent);
 					}
+					result += currentIndent;
 					result += ")";
 					result += "\n";
 				}

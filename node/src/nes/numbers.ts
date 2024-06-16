@@ -1,8 +1,7 @@
-import { toHexStringU16 } from "../formatting";
 import { SExpr } from "../sexpr";
-import { MemoryModel } from "./memory-model";
 import { U16SExpr, U8SExpr } from "./typed-sexpr";
 
+// TODO needed?
 export function wrapToU16(value: SExpr): U16SExpr {
 	if (value instanceof U16SExpr) {
 		return value;
@@ -15,12 +14,4 @@ export function wrapToU16(value: SExpr): U16SExpr {
 		value,
 		"0xffff",
 	]));
-}
-
-export function fixAddress(value: SExpr): SExpr {
-	return new SExpr([
-		"i32.add",
-		wrapToU16(value),
-		toHexStringU16(MemoryModel.MEMORY_BANK_START),
-	]);
 }

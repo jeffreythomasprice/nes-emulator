@@ -141,4 +141,22 @@ comment before the first element`,
 	stuff
 )`);
 	});
+
+	it("multiple nested lists", () => {
+		expect(new SExpr([
+			"a",
+			[
+				"b",
+				[
+					"c",
+					"d"
+				]
+			]
+		]).toString())
+			.toBe(`(a
+	(b
+		(c d)
+	)
+)`);
+	});
 });
