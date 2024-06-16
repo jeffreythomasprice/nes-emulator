@@ -281,6 +281,10 @@ public class CPU
 			case 0x5d: EOR_Absolute_X(memory); break;
 			case 0x5e: LSR_Absolute_X(memory); break;
 			case 0x5f: SRE_Absolute_X(memory); break;
+			case 0x60: RTS(memory); break;
+			case 0x61: ADC_ZeroPage_Indirect_X(memory); break;
+			case 0x62: NOP(0, 3); break;
+			case 0x63: RRA_ZeroPage_Indirect_X(memory); break;
 				// TODO remaining instructions
 		}
 	}
@@ -321,6 +325,19 @@ public class CPU
 		BreakCommandFlag = false;
 		UnusedFlag = true;
 		ClockCycles += 6;
+	}
+
+	private void RTS(IMemory memory)
+	{
+		PC = (ushort)(Pop16(memory) + 1);
+		ClockCycles += 6;
+	}
+
+	private void PHA(IMemory memory)
+	{
+		Push8(memory, A);
+		PC += 1;
+		ClockCycles += 3;
 	}
 
 	private void ORA_ZeroPage_Indirect_X(IMemory memory)
@@ -900,13 +917,6 @@ public class CPU
 		return newValue;
 	}
 
-	private void PHA(IMemory memory)
-	{
-		Push8(memory, A);
-		PC += 1;
-		ClockCycles += 3;
-	}
-
 	private void ALR(IMemory memory)
 	{
 		var value = (byte)(A & memory.Read8((ushort)(PC + 1)));
@@ -916,6 +926,43 @@ public class CPU
 		CarryFlag = (value & 0b0000_0001) != 0;
 		PC += 2;
 		ClockCycles += 2;
+	}
+
+	private void ADC_ZeroPage_Indirect_X(IMemory memory)
+	{
+		var (_, value) = ZeroPageIndirectX(memory);
+		ADC_Common(value, 2, 6);
+	}
+
+	private void ADC_Common(byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		var newValue = A + value + (CarryFlag ? 1 : 0);
+		var oldA = A;
+		A = (byte)newValue;
+		NegativeFlag = (sbyte)A < 0;
+		ZeroFlag = A == 0;
+		CarryFlag = (newValue & 0b1_0000_0000) != 0;
+		var valueSignBit = value & 0b1000_0000;
+		var oldASignBit = oldA & 0b1000_0000;
+		var newSignBit = newValue & 0b1000_0000;
+		OverflowFlag = valueSignBit == oldASignBit && valueSignBit != newSignBit;
+		PC += pcOffset;
+		ClockCycles += clock;
+	}
+
+	private void RRA_ZeroPage_Indirect_X(IMemory memory)
+	{
+		var (address, value) = ZeroPageIndirectX(memory);
+		RRA_Common(address, value, 2, 8);
+	}
+
+	private void RRA_Common(UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
+	{
+		var rorNewValue = (byte)((value >> 1) | (CarryFlag ? 0b1000_0000 : 0));
+		var adcNewValue = A + value + (CarryFlag ? 1 : 0);
+		// TODO JEFF but what now?
+		PC += pcOffset;
+		ClockCycles += clock;
 	}
 
 	private void NOP(UInt16 pcOffset, UInt16 clock)
