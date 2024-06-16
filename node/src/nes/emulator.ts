@@ -1,16 +1,32 @@
 import wabt from "wabt";
+import { toBinaryStringU8, toHexStringU16, toHexStringU8 } from "../formatting";
 import { Logger } from "../logger";
 import { SExpr } from "../sexpr";
 import { CPURegisterNames } from "./cpu";
+import { MemoryController } from "./memory";
 
 const BLOCK_SIZE_IN_BYTES = 64 * 1024;
 
 export class Emulator {
-	private _step: () => void;
+	private exports: {
+		[CPURegisterNames.PC]: WebAssembly.Global<"i32">;
+		[CPURegisterNames.SP]: WebAssembly.Global<"i32">;
+		[CPURegisterNames.A]: WebAssembly.Global<"i32">;
+		[CPURegisterNames.X]: WebAssembly.Global<"i32">;
+		[CPURegisterNames.Y]: WebAssembly.Global<"i32">;
+		[CPURegisterNames.FLAGS]: WebAssembly.Global<"i32">;
+		step: () => void;
+	};
+	private readonly memory: Uint8Array;
 
 	static async createEmulator(
-		{ initialMemory, logger }: {
+		{
+			initialMemory,
+			memoryController,
+			logger,
+		}: {
 			initialMemory: Buffer;
+			memoryController: MemoryController;
 			logger: Logger;
 		}
 	): Promise<Emulator> {
@@ -47,6 +63,10 @@ export class Emulator {
 			].map(name => [
 				"global",
 				name,
+				[
+					"export",
+					`"${name}"`,
+				],
 				"i32",
 				[
 					"i32.const",
@@ -87,19 +107,78 @@ export class Emulator {
 			}
 		);
 
-		return new Emulator(instance);
+		return new Emulator(logger, instance, memory, memoryController);
 	}
 
-	private constructor(private readonly instance: WebAssembly.Instance
+	private constructor(
+		private readonly logger: Logger,
+		private readonly instance: WebAssembly.Instance,
+		memory: WebAssembly.Memory,
+		private readonly memoryController: MemoryController,
 	) {
-		this._step = this.instance.exports.step as typeof this._step;
+		this.exports = this.instance.exports as typeof this.exports;
+		this.memory = new Uint8Array(memory.buffer);
 	}
 
 	step() {
-		this._step();
+		try {
+			this.exports.step();
+		} catch (err) {
+			this.logger.error([
+				`pc=${toHexStringU16(this.pc)} (memory[pc]=${toHexStringU8(this.getMemoryU8(this.pc))})`,
+				`sp=${toHexStringU8(this.sp)}`,
+				`sa=${toHexStringU8(this.a)}`,
+				`x=${toHexStringU8(this.x)}`,
+				` y=${toHexStringU8(this.y)}`,
+				`flags=${toBinaryStringU8(this.flags)}`,
+				// TODO parse out individual flags
+			].join(", "));
+			throw err;
+		}
 	}
 
-	/*
-	TODO various accessors, read registers and flags out of memory
-	*/
+	get pc(): number {
+		return this.exports.$pc.value;
+	}
+
+	// TODO setter
+
+	get sp(): number {
+		return this.exports.$sp.value;
+	}
+
+	// TODO setter
+
+	get a(): number {
+		return this.exports.$a.value;
+	}
+
+	// TODO setter
+
+	get x(): number {
+		return this.exports.$x.value;
+	}
+
+	// TODO setter
+
+	get y(): number {
+		return this.exports.$y.value;
+	}
+
+	// TODO setter
+
+	get flags(): number {
+		return this.exports.$flags.value;
+	}
+
+	// TODO setter
+
+	// TODO getters and setters for individual flags
+
+	getMemoryU8(address: number): number {
+		return this.memoryController.readU8FromMemory(this.memory, address);
+	}
+
+	// TODO getMemoryU16
+	// TODO setters for memory
 }

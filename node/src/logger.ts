@@ -7,6 +7,15 @@ export enum LogLevel {
 	FATAL,
 }
 
+const LOG_LEVEL_STRINGS = {
+	[LogLevel.TRACE]: "TRACE",
+	[LogLevel.DEBUG]: "DEBUG",
+	[LogLevel.INFO]: "INFO ",
+	[LogLevel.WARN]: "WARN ",
+	[LogLevel.ERROR]: "ERROR",
+	[LogLevel.FATAL]: "FATAL",
+} as const;
+
 export type LogFunc = (level: LogLevel, message: string) => void;
 
 export class Logger {
@@ -54,6 +63,7 @@ export class Logger {
 }
 
 export const consoleLogger: LogFunc = (level, message) => {
+	message = `${new Date().toISOString()} [${LOG_LEVEL_STRINGS[level]}]: ${message}`;
 	if (level <= LogLevel.INFO) {
 		console.log(message);
 	} else {

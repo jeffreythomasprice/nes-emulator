@@ -1,10 +1,11 @@
 import { Logger, consoleLogger } from "./logger";
-import { Emulator } from "./nes";
+import { Emulator, SingleBankAllRAMMemoryController } from "./nes";
 
 const logger = new Logger([consoleLogger]);
 (async () => {
 	const emulator = await Emulator.createEmulator({
 		initialMemory: Buffer.alloc(64 * 1024),
+		memoryController: new SingleBankAllRAMMemoryController(),
 		logger,
 	});
 	emulator.step();
