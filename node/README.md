@@ -6,22 +6,19 @@ npm run test:watch
 TODO precommit, tests, build, lint
 
 
-TODO misc notes
+TODO proper ast system
 
-types of node?
+ASTNode
+- toDebugAST
+- toWATAST
 
-memory controller stuff, read/write u8/u16
-cpu registers, read/write
-flags
-push/pop u8/u16
-read u8 at pc and increment pc
-interpret instruction:
-	read next u8
-	switch on that, and do some other instruction
-a type of node for each instruction
-
-
-
-memory model:
-cpu registers
-each bank of memory
+writing a WAT AST to string:
+- sequence of nodes
+- node types
+	- comment
+	- open, close paren
+	- string
+- series of strings in between parens can all be on one line
+- otherwise every element on it's own line
+- except for first string after the open paren, can be on same line
+- comments have to be on their own lines
