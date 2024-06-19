@@ -1,5 +1,5 @@
 import { Logger, consoleLogger } from "./logger";
-import { Emulator, SingleBankAllRAMMemoryController } from "./nes";
+import { Emulator, SingleBankAllRAMMemoryController } from "./nes/node";
 
 const logger = new Logger([consoleLogger]);
 (async () => {
