@@ -21,6 +21,22 @@ export abstract class Statement extends Node {
 	abstract get statementType(): string;
 }
 
+abstract class UnaryOp extends Statement {
+	constructor(
+		readonly statementType: string,
+		readonly node: Node,
+	) {
+		super();
+	}
+
+	createSexpr(): sexpr.Node {
+		return new sexpr.List(
+			this.statementType,
+			this.node.createSexpr(),
+		);
+	}
+}
+
 abstract class BinaryOp extends Statement {
 	constructor(
 		readonly statementType: string,
@@ -247,8 +263,149 @@ TODO memory statements
 
 grow
 size
-lead
-store
+*/
+
+export class I32Load extends UnaryOp {
+	constructor(value: Node) {
+		super("i32.load", value);
+	}
+}
+
+export class I64Load extends UnaryOp {
+	constructor(value: Node) {
+		super("i64.load", value);
+	}
+}
+
+export class F32Load extends UnaryOp {
+	constructor(value: Node) {
+		super("f32.load", value);
+	}
+}
+
+export class F64Load extends UnaryOp {
+	constructor(value: Node) {
+		super("f64.load", value);
+	}
+}
+
+export class I32LoadS8 extends UnaryOp {
+	constructor(value: Node) {
+		super("i32.load8_s", value);
+	}
+}
+
+export class I32LoadU8 extends UnaryOp {
+	constructor(value: Node) {
+		super("i32.load8_u", value);
+	}
+}
+
+export class I32LoadS16 extends UnaryOp {
+	constructor(value: Node) {
+		super("i32.load16_s", value);
+	}
+}
+
+export class I32LoadU16 extends UnaryOp {
+	constructor(value: Node) {
+		super("i32.load16_u", value);
+	}
+}
+
+export class I64LoadS8 extends UnaryOp {
+	constructor(value: Node) {
+		super("i64.load8_s", value);
+	}
+}
+
+export class I64LoadU8 extends UnaryOp {
+	constructor(value: Node) {
+		super("i64.load8_u", value);
+	}
+}
+
+export class I64LoadS16 extends UnaryOp {
+	constructor(value: Node) {
+		super("i64.load16_s", value);
+	}
+}
+
+export class I64LoadU16 extends UnaryOp {
+	constructor(value: Node) {
+		super("i64.load16_u", value);
+	}
+}
+
+export class I64LoadS32 extends UnaryOp {
+	constructor(value: Node) {
+		super("i64.load32_s", value);
+	}
+}
+
+export class I64LoadU32 extends UnaryOp {
+	constructor(value: Node) {
+		super("i64.load32_u", value);
+	}
+}
+
+export class I32Store extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("i32.store", offset, value)
+	}
+}
+
+export class I64Store extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("i64.store", offset, value)
+	}
+}
+
+export class F32Store extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("f32.store", offset, value)
+	}
+}
+
+export class F64Store extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("f64.store", offset, value)
+	}
+}
+
+export class I32Store8 extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("i32.store8", offset, value)
+	}
+}
+
+export class I32Store16 extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("i32.store16", offset, value)
+	}
+}
+
+export class I64Store8 extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("i64.store8", offset, value)
+	}
+}
+
+export class I64Store16 extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("i64.store16", offset, value)
+	}
+}
+
+export class I64Store32 extends BinaryOp {
+	constructor(offset: Node, value: Node) {
+		super("i64.store32", offset, value)
+	}
+}
+
+/*
+TODO memory statements
+
 copy
 fill
 */

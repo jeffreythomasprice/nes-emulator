@@ -1,5 +1,5 @@
+import { Function, I32LoadU8, LocalGet, Module, Statement, Node as WatNode } from "../wat";
 import { Memory, NES_MAX_ADDRESS, WEBASSEMBLY_PAGE_SIZE } from "./memory";
-import { Node } from "./node";
 
 class TestMemory extends Memory {
 	readonly memory: WebAssembly.Memory;
@@ -38,23 +38,98 @@ class TestMemory extends Memory {
 		this.writeU8(fixAddress(address + 1), (value & 0xff00) >> 8);
 	}
 
-	createReadU8Node(address: Node): Node {
-		throw new Error("Method not implemented.");
+	createReadU8Node(address: WatNode): Statement {
+		return new I32LoadU8(fixAddressNode(address));
 	}
 
-	createReadU16Node(address: Node): Node {
-		throw new Error("Method not implemented.");
+	createReadU16Node(address: WatNode): Statement {
+		// TODO implement me
 	}
 
-	createWriteU8Node(address: Node, value: Node): Node {
-		throw new Error("Method not implemented.");
+	createWriteU8Node(address: WatNode, value: WatNode): Statement {
+		// TODO implement me
 	}
 
-	createWriteU16Node(address: Node, value: Node): Node {
-		throw new Error("Method not implemented.");
+	createWriteU16Node(address: WatNode, value: WatNode): Statement {
+		// TODO implement me
 	}
 }
 
 function fixAddress(address: number): number {
 	return (address | 0) % (NES_MAX_ADDRESS + 1);
 }
+
+function fixAddressNode(address: WatNode): WatNode {
+	// TODO wrap to max address
+	return address;
+}
+
+describe(__filename, () => {
+	it("TODO rename me", () => {
+		const memory = new TestMemory();
+		const module = new Module(
+			new Function({
+				name: "readU8",
+				export: "readU8",
+				params: [
+					{
+						name: "address",
+						type: "i32",
+					}
+				],
+				returnType: "i32",
+				statements: [
+					memory.createReadU8Node(new LocalGet("address")),
+				],
+			}),
+			new Function({
+				name: "readU16",
+				export: "readU16",
+				params: [
+					{
+						name: "address",
+						type: "i32",
+					}
+				],
+				returnType: "i32",
+				statements: [
+					memory.createReadU16Node(new LocalGet("address")),
+				],
+			}),
+			new Function({
+				name: "writeU8",
+				export: "writeU8",
+				params: [
+					{
+						name: "address",
+						type: "i32",
+					}, {
+						name: "value",
+						type: "i32",
+					},
+				],
+				statements: [
+					memory.createWriteU8Node(new LocalGet("address"), new LocalGet("value")),
+				],
+			}),
+			new Function({
+				name: "writeU16",
+				export: "writeU16",
+				params: [
+					{
+						name: "address",
+						type: "i32",
+					}, {
+						name: "value",
+						type: "i32",
+					},
+				],
+				statements: [
+					memory.createWriteU16Node(new LocalGet("address"), new LocalGet("value")),
+				],
+			}),
+		);
+
+		// TODO write some tests, proving that bytes copy back and forth both using memory directly and calling the wasm functions
+	});
+});

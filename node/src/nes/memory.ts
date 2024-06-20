@@ -1,4 +1,4 @@
-import { Node } from "./node";
+import * as wat from "../wat";
 
 export const WEBASSEMBLY_PAGE_SIZE = 65536;
 export const NES_MAX_ADDRESS = 0xffff;
@@ -9,8 +9,8 @@ export abstract class Memory {
 	abstract writeU8(address: number, value: number): void;
 	abstract writeU16(address: number, value: number): void;
 
-	abstract createReadU8Node(address: Node): Node;
-	abstract createReadU16Node(address: Node): Node;
-	abstract createWriteU8Node(address: Node, value: Node): Node;
-	abstract createWriteU16Node(address: Node, value: Node): Node;
+	abstract createReadU8Node(address: wat.Node): wat.Statement;
+	abstract createReadU16Node(address: wat.Node): wat.Statement;
+	abstract createWriteU8Node(address: wat.Node, value: wat.Node): wat.Statement;
+	abstract createWriteU16Node(address: wat.Node, value: wat.Node): wat.Statement;
 }
