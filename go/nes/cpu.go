@@ -64,173 +64,173 @@ func (c *CPU) Step(m Memory) {
 	case 0x0f:
 		c.sloAbsolute(m)
 	case 0x10:
-		// TODO impl
+		c.bpl(m)
 	case 0x11:
-		// TODO impl
+		c.oraZeroPageIndirectY(m)
 	case 0x12:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x13:
-		// TODO impl
+		c.sloZeroPageIndirectY(m)
 	case 0x14:
-		// TODO impl
+		c.nop(2, 4)
 	case 0x15:
-		// TODO impl
+		c.oraZeroPageX(m)
 	case 0x16:
-		// TODO impl
+		c.aslZeroPageX(m)
 	case 0x17:
-		// TODO impl
+		c.sloZeroPageX(m)
 	case 0x18:
-		// TODO impl
+		c.clc()
 	case 0x19:
-		// TODO impl
+		c.oraAbsoluteY(m)
 	case 0x1a:
-		// TODO impl
+		c.nop(1, 2)
 	case 0x1b:
-		// TODO impl
+		c.sloAbsoluteY(m)
 	case 0x1c:
-		// TODO impl
+		c.nopAbsoluteX(m)
 	case 0x1d:
-		// TODO impl
+		c.oraAbsoluteX(m)
 	case 0x1e:
-		// TODO impl
+		c.aslAbsoluteX(m)
 	case 0x1f:
-		// TODO impl
+		c.sloAbsoluteX(m)
 	case 0x20:
-		// TODO impl
+		c.jsr(m)
 	case 0x21:
-		// TODO impl
+		c.andZeroPageIndirectX(m)
 	case 0x22:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x23:
-		// TODO impl
+		c.rlaZeroPageIndirectY(m)
 	case 0x24:
-		// TODO impl
+		c.bitZeroPageImmediate(m)
 	case 0x25:
-		// TODO impl
+		c.andZeroPage(m)
 	case 0x26:
-		// TODO impl
+		c.rolZeroPage(m)
 	case 0x27:
-		// TODO impl
+		c.rlaZeroPage(m)
 	case 0x28:
-		// TODO impl
+		c.plp(m)
 	case 0x29:
-		// TODO impl
+		c.andImmediate(m)
 	case 0x2a:
-		// TODO impl
+		c.rol(m)
 	case 0x2b:
-		// TODO impl
+		c.ancImmediate(m)
 	case 0x2c:
-		// TODO impl
+		c.bitAbsolute(m)
 	case 0x2d:
-		// TODO impl
+		c.andAbsolute(m)
 	case 0x2e:
-		// TODO impl
+		c.rolAbsolute(m)
 	case 0x2f:
-		// TODO impl
+		c.rlaAbsolute(m)
 	case 0x30:
-		// TODO impl
+		c.bmi(m)
 	case 0x31:
-		// TODO impl
+		c.andZeroPageIndirectY(m)
 	case 0x32:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x33:
-		// TODO impl
+		c.rlaZeroPageIndirectY(m)
 	case 0x34:
-		// TODO impl
+		c.nop(2, 4)
 	case 0x35:
-		// TODO impl
+		c.andZeroPageX(m)
 	case 0x36:
-		// TODO impl
+		c.rolZeroPageX(m)
 	case 0x37:
-		// TODO impl
+		c.rlaZeroPageX(m)
 	case 0x38:
-		// TODO impl
+		c.sec()
 	case 0x39:
-		// TODO impl
+		c.andAbsoluteY(m)
 	case 0x3a:
-		// TODO impl
+		c.nop(1, 2)
 	case 0x3b:
-		// TODO impl
+		c.rlaAbsoluteY(m)
 	case 0x3c:
-		// TODO impl
+		c.nopAbsoluteX(m)
 	case 0x3d:
-		// TODO impl
+		c.andAbsoluteX(m)
 	case 0x3e:
-		// TODO impl
+		c.rolAbsoluteX(m)
 	case 0x3f:
-		// TODO impl
+		c.rlaAbsoluteX(m)
 	case 0x40:
-		// TODO impl
+		c.rti(m)
 	case 0x41:
-		// TODO impl
+		c.eorZeroPageIndirectX(m)
 	case 0x42:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x43:
-		// TODO impl
+		c.sreZeroPageIndirectX(m)
 	case 0x44:
-		// TODO impl
+		c.nop(2, 3)
 	case 0x45:
-		// TODO impl
+		c.eorZeroPage(m)
 	case 0x46:
-		// TODO impl
+		c.lsrZeroPage(m)
 	case 0x47:
-		// TODO impl
+		c.sreZeroPage(m)
 	case 0x48:
-		// TODO impl
+		c.pha(m)
 	case 0x49:
-		// TODO impl
+		c.eorImmediate(m)
 	case 0x4a:
-		// TODO impl
+		c.lsr(m)
 	case 0x4b:
-		// TODO impl
+		c.alr(m)
 	case 0x4c:
-		// TODO impl
+		c.jmpAbsolute(m)
 	case 0x4d:
-		// TODO impl
+		c.eorAbsolute(m)
 	case 0x4e:
-		// TODO impl
+		c.lsrAbsolute(m)
 	case 0x4f:
-		// TODO impl
+		c.sreAbsolute(m)
 	case 0x50:
-		// TODO impl
+		c.bvc(m)
 	case 0x51:
-		// TODO impl
+		c.eorZeroPageIndirectY(m)
 	case 0x52:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x53:
-		// TODO impl
+		c.sreZeroPageIndirectY(m)
 	case 0x54:
-		// TODO impl
+		c.nop(2, 4)
 	case 0x55:
-		// TODO impl
+		c.eorZeroPageX(m)
 	case 0x56:
-		// TODO impl
+		c.lsrZeroPageX(m)
 	case 0x57:
-		// TODO impl
+		c.sreZeroPageX(m)
 	case 0x58:
-		// TODO impl
+		c.cli()
 	case 0x59:
-		// TODO impl
+		c.eorAbsoluteY(m)
 	case 0x5a:
-		// TODO impl
+		c.nop(1, 2)
 	case 0x5b:
-		// TODO impl
+		c.sreAbsoluteY(m)
 	case 0x5c:
-		// TODO impl
+		c.nopAbsoluteX(m)
 	case 0x5d:
-		// TODO impl
+		c.eorAbsoluteX(m)
 	case 0x5e:
-		// TODO impl
+		c.lsrAbsoluteX(m)
 	case 0x5f:
-		// TODO impl
+		c.sreAbsoluteX(m)
 	case 0x60:
-		// TODO impl
+		c.rta(m)
 	case 0x61:
-		// TODO impl
+		c.adcZeroPageIndirectX(m)
 	case 0x62:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x63:
-		// TODO impl
+		c.rraZeroPageIndirectX(m)
 	case 0x64:
 		// TODO impl
 	case 0x65:

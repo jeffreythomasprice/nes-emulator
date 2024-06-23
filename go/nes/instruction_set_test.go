@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -108,7 +109,9 @@ func TestInstructionSet(t *testing.T) {
 	for _, p := range paths {
 		// TODO do all the tests
 		name := path.Base(p)
-		if name[0:len(name)-len(path.Ext(p))] != "0f" {
+		instruction, err := strconv.ParseInt(name[0:len(name)-len(path.Ext(p))], 16, 32)
+		assert.NoError(t, err)
+		if instruction > 0x10 {
 			continue
 		}
 
