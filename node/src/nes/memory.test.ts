@@ -1,4 +1,4 @@
-import { Function, I32LoadU8, LocalGet, Module, Statement, Node as WatNode } from "../wat";
+import { Const, Function, I32Add, I32LoadU8, I32Store8, LeftShift, LocalGet, Module, Or, Remainder, RightShift, Statement, Node as WatNode } from "../wat";
 import { Memory, NES_MAX_ADDRESS, WEBASSEMBLY_PAGE_SIZE } from "./memory";
 
 class TestMemory extends Memory {
@@ -38,20 +38,38 @@ class TestMemory extends Memory {
 		this.writeU8(fixAddress(address + 1), (value & 0xff00) >> 8);
 	}
 
-	createReadU8Node(address: WatNode): Statement {
-		return new I32LoadU8(fixAddressNode(address));
+	createReadU8Nodes(address: WatNode): Statement[] {
+		return [
+			new I32LoadU8(fixAddressNode(address)),
+		];
 	}
 
-	createReadU16Node(address: WatNode): Statement {
-		// TODO implement me
+	createReadU16Nodes(address: WatNode): Statement[] {
+		return [
+			new Or(
+				this.createReadU8Nodes(address)[0],
+				new LeftShift(
+					this.createReadU8Nodes(new I32Add(address, new Const(1)))[0],
+					new Const(8),
+				),
+			),
+		];
 	}
 
-	createWriteU8Node(address: WatNode, value: WatNode): Statement {
-		// TODO implement me
+	createWriteU8Nodes(address: WatNode, value: WatNode): Statement[] {
+		return [
+			new I32Store8(fixAddressNode(address), value),
+		];
 	}
 
-	createWriteU16Node(address: WatNode, value: WatNode): Statement {
-		// TODO implement me
+	createWriteU16Nodes(address: WatNode, value: WatNode): Statement[] {
+		return [
+			this.createWriteU8Nodes(address, value)[0],
+			this.createWriteU8Nodes(
+				new I32Add(address, new Const(1)),
+				new RightShift(value, new Const(8)),
+			)[0],
+		];
 	}
 }
 
@@ -60,14 +78,14 @@ function fixAddress(address: number): number {
 }
 
 function fixAddressNode(address: WatNode): WatNode {
-	// TODO wrap to max address
-	return address;
+	return new Remainder(address, new Const(NES_MAX_ADDRESS + 1));
 }
 
 describe(__filename, () => {
 	it("TODO rename me", () => {
 		const memory = new TestMemory();
 		const module = new Module(
+			// TODO import memory
 			new Function({
 				name: "readU8",
 				export: "readU8",
@@ -79,7 +97,7 @@ describe(__filename, () => {
 				],
 				returnType: "i32",
 				statements: [
-					memory.createReadU8Node(new LocalGet("address")),
+					...memory.createReadU8Nodes(new LocalGet("address")),
 				],
 			}),
 			new Function({
@@ -93,7 +111,7 @@ describe(__filename, () => {
 				],
 				returnType: "i32",
 				statements: [
-					memory.createReadU16Node(new LocalGet("address")),
+					...memory.createReadU16Nodes(new LocalGet("address")),
 				],
 			}),
 			new Function({
@@ -109,7 +127,7 @@ describe(__filename, () => {
 					},
 				],
 				statements: [
-					memory.createWriteU8Node(new LocalGet("address"), new LocalGet("value")),
+					...memory.createWriteU8Nodes(new LocalGet("address"), new LocalGet("value")),
 				],
 			}),
 			new Function({
@@ -125,7 +143,7 @@ describe(__filename, () => {
 					},
 				],
 				statements: [
-					memory.createWriteU16Node(new LocalGet("address"), new LocalGet("value")),
+					...memory.createWriteU16Nodes(new LocalGet("address"), new LocalGet("value")),
 				],
 			}),
 		);

@@ -67,12 +67,75 @@ fn main() {
 
 #[cfg(test)]
 mod test {
-    use std::fs::{self, File};
+    use std::{
+        fmt::Debug,
+        fs::{self, File},
+    };
 
     use glob::glob;
     use serde::{Deserialize, Deserializer};
 
     use crate::{Flags, Memory, CPU};
+
+    struct TestResults {
+        total: u32,
+        failures: Vec<String>,
+    }
+
+    impl TestResults {
+        pub fn new() -> Self {
+            Self {
+                total: 0,
+                failures: Vec::new(),
+            }
+        }
+
+        pub fn assert(&self) {
+            if self.failures.len() > 0 {
+                for s in self.failures.iter() {
+                    assert!(false, "{s}");
+                }
+            }
+        }
+
+        pub fn test<F>(&mut self, f: F)
+        where
+            F: Fn() -> Result<(), String>,
+        {
+            if let Err(e) = f() {
+                self.failures.push(e);
+            }
+            self.total += 1;
+        }
+
+        pub fn eq<T>(&mut self, expected: T, actual: T)
+        where
+            T: Eq + Debug,
+        {
+            self.test(|| {
+                if expected != actual {
+                    Err(format!("expected {expected:?} != actual {actual:?}"))
+                } else {
+                    Ok(())
+                }
+            })
+        }
+
+        pub fn eq_s<T>(&mut self, expected: T, actual: T, message: &str)
+        where
+            T: Eq + Debug,
+        {
+            self.test(|| {
+                if expected != actual {
+                    Err(format!(
+                        "{message}, expected {expected:?} != actual {actual:?}"
+                    ))
+                } else {
+                    Ok(())
+                }
+            })
+        }
+    }
 
     struct TestMemory {
         data: [u8; 0x10000],
@@ -151,7 +214,7 @@ mod test {
     }
 
     impl TestCase {
-        fn perform_test(&self) {
+        fn perform_test(&self, results: &mut TestResults) {
             let mut cpu = CPU::new();
             cpu.pc = self.before.pc;
             cpu.sp = self.before.sp;
@@ -168,35 +231,35 @@ mod test {
             cpu.step();
 
             // TODO don't assert, collect pass and fail and report on all at once at the end?
-            assert_eq!(self.after.pc, cpu.pc, "pc");
-            assert_eq!(self.after.sp, cpu.sp, "sp");
-            assert_eq!(self.after.a, cpu.a, "a");
-            assert_eq!(self.after.x, cpu.x, "x");
-            assert_eq!(self.after.y, cpu.y, "y");
+            results.eq_s(self.after.pc, cpu.pc, "pc");
+            results.eq_s(self.after.sp, cpu.sp, "sp");
+            results.eq_s(self.after.a, cpu.a, "a");
+            results.eq_s(self.after.x, cpu.x, "x");
+            results.eq_s(self.after.y, cpu.y, "y");
             let after_flags: Flags = self.after.flags.into();
-            assert_eq!(after_flags.carry(), cpu.flags.carry(), "carry");
-            assert_eq!(after_flags.zero(), cpu.flags.zero(), "zero");
-            assert_eq!(
+            results.eq_s(after_flags.carry(), cpu.flags.carry(), "carry");
+            results.eq_s(after_flags.zero(), cpu.flags.zero(), "zero");
+            results.eq_s(
                 after_flags.interrupt_disable(),
                 cpu.flags.interrupt_disable(),
-                "interrupt_disable"
+                "interrupt_disable",
             );
-            assert_eq!(
+            results.eq_s(
                 after_flags.decimal_mode(),
                 cpu.flags.decimal_mode(),
-                "decimal_mode"
+                "decimal_mode",
             );
-            assert_eq!(
+            results.eq_s(
                 after_flags.break_command(),
                 cpu.flags.break_command(),
-                "break_command"
+                "break_command",
             );
-            assert_eq!(after_flags.unused(), cpu.flags.unused(), "unused");
-            assert_eq!(after_flags.overflow(), cpu.flags.overflow(), "overflow");
-            assert_eq!(after_flags.negative(), cpu.flags.negative(), "negative");
+            results.eq_s(after_flags.unused(), cpu.flags.unused(), "unused");
+            results.eq_s(after_flags.overflow(), cpu.flags.overflow(), "overflow");
+            results.eq_s(after_flags.negative(), cpu.flags.negative(), "negative");
 
             for after_mem in self.after.ram.iter() {
-                assert_eq!(after_mem.value, memory.read_u8(after_mem.address), "memory");
+                results.eq_s(after_mem.value, memory.read_u8(after_mem.address), "memory");
             }
 
             // TODO check that clock ticks match number of cycles
@@ -215,15 +278,19 @@ mod test {
                 .to_str()
                 .expect("failed to get real string out of file name");
 
+            let mut results = TestResults::new();
+
             // TODO do all tests
             if file_name == "00.json" {
                 let test_cases: Vec<TestCase> =
                     serde_json::from_reader(File::open(path.clone()).expect("failed to open file"))
                         .expect("failed to deserialize path");
                 for test_case in test_cases.iter() {
-                    test_case.perform_test();
+                    test_case.perform_test(&mut results);
                 }
             }
+
+            results.assert();
         }
     }
 }

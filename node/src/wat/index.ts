@@ -153,10 +153,35 @@ export class Function extends Node {
 	}
 }
 
+export class Const extends Node {
+	readonly value: sexpr.Node;
+
+	constructor(value: sexpr.NodeInitializer | number) {
+		super();
+		let resolvedNode: sexpr.Node | undefined;
+		if (typeof value === "number") {
+			resolvedNode = sexpr.node(value.toString());
+		} else {
+			resolvedNode = sexpr.node(value);
+		}
+		if (!resolvedNode) {
+			throw new Error(`failed to resolve input: ${value}`);
+		}
+		this.value = resolvedNode;
+	}
+
+	get type(): string {
+		return "Const";
+	}
+
+	createSexpr(): sexpr.Node {
+		return this.value;
+	}
+}
+
 /*
 TODO numeric statements
 
-const
 equal
 not equal
 greater than
@@ -195,7 +220,17 @@ TODO numeric statements
 subtraction
 multiplication
 division
-remainder
+*/
+
+export class Remainder extends BinaryOp {
+	constructor(left: Node, right: Node) {
+		super("rem", left, right);
+	}
+}
+
+/*
+TODO numeric statements
+
 extend
 wrap
 promote
@@ -213,11 +248,41 @@ absolute
 negate
 square root
 copy sign
-and
-or
+*/
+
+export class And extends BinaryOp {
+	constructor(left: Node, right: Node) {
+		super("and", left, right);
+	}
+}
+
+export class Or extends BinaryOp {
+	constructor(left: Node, right: Node) {
+		super("or", left, right);
+	}
+}
+
+/*
+TODO numeric statements
+
 xor
-left shift
-right shift
+*/
+
+export class LeftShift extends BinaryOp {
+	constructor(left: Node, right: Node) {
+		super("shl", left, right);
+	}
+}
+
+export class RightShift extends BinaryOp {
+	constructor(left: Node, right: Node) {
+		super("shr", left, right);
+	}
+}
+
+/*
+TODO numeric statements
+
 left rotate
 right rotate
 count leading zeros
