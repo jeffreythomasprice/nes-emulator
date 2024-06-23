@@ -564,268 +564,134 @@ func (c *CPU) php(m Memory) {
 	c.ClockTime += 3
 }
 
-/*
-TODO impl
-
-private void PHP(IMemory memory)
-	{
-		BreakCommandFlag = true;
-		Push8(memory, Flags);
-		BreakCommandFlag = false;
-		PC += 1;
-		ClockCycles += 3;
-	}
-
-	private void PLP(IMemory memory)
-	{
-		Flags = Pop8(memory);
-		BreakCommandFlag = false;
-		UnusedFlag = true;
-		PC += 1;
-		ClockCycles += 4;
-	}
-
-	private void RTI(IMemory memory)
-	{
-		Flags = Pop8(memory);
-		PC = Pop16(memory);
-		BreakCommandFlag = false;
-		UnusedFlag = true;
-		ClockCycles += 6;
-	}
-
-	private void RTS(IMemory memory)
-	{
-		PC = (ushort)(Pop16(memory) + 1);
-		ClockCycles += 6;
-	}
-
-	private void PHA(IMemory memory)
-	{
-		Push8(memory, A);
-		PC += 1;
-		ClockCycles += 3;
-	}
-*/
-
-func (c *CPU) oraZeroPageIndirectX(m Memory) {
-	_, value := c.zeroPageIndirectX(m)
-	c.oraCommon(value, 2, 6)
+func (c *CPU) plp(m Memory) {
+	c.Flags = c.pop8(m)
+	c.clearFlags(BreakCommandFlagMask)
+	c.setFlags(UnusedFlagMask)
+	c.PC += 1
+	c.ClockTime += 4
 }
 
-/*
-TODO impl
-
-	private void ORA_ZeroPage_Indirect_Y(IMemory memory)
-	{
-		var (_, value, extraClock) = ZeroPageIndirectY(memory);
-		ORA_Common(value, 2, 5 + extraClock);
-	}
-*/
-
-func (c *CPU) oraZeroPageFixed(m Memory) {
-	_, value := c.zeroPageFixed(m)
-	c.oraCommon(value, 2, 3)
+func (c *CPU) rti(m Memory) {
+	c.Flags = c.pop8(m)
+	c.PC = c.pop16(m)
+	c.clearFlags(BreakCommandFlagMask)
+	c.setFlags(UnusedFlagMask)
+	c.ClockTime += 6
 }
 
-/*
-TODO impl
+func (c *CPU) rta(m Memory) {
+	c.PC = c.pop16(m) + 1
+	c.ClockTime += 6
+}
 
-	private void ORA_ZeroPage_Fixed(IMemory memory)
-	{
-		var (_, value) = ZeroPageFixed(memory);
-		ORA_Common(value, 2, 3);
-	}
-*/
+func (c *CPU) pha(m Memory) {
+	c.push8(m, c.A)
+	c.PC += 1
+	c.ClockTime += 3
+}
 
 func (c *CPU) oraImmediate(m Memory) {
 	value := m.Read(c.PC + 1)
 	c.oraCommon(value, 2, 2)
 }
 
-/*
-TODO impl
-private void ORA_Immediate(IMemory memory)
-	{
-		var value = memory.Read8((ushort)(PC + 1));
-		ORA_Common(value, 2, 2);
-	}
-*/
-
 func (c *CPU) oraAbsolute(m Memory) {
 	_, value := c.absolute(m)
 	c.oraCommon(value, 3, 4)
 }
 
-/*
-TODO impl
-	private void ORA_Absolute(IMemory memory)
-	{
-		var (_, value) = Absolute(memory);
-		ORA_Common(value, 3, 4);
-	}
+func (c *CPU) oraZeroPageIndirectX(m Memory) {
+	_, value := c.zeroPageIndirectX(m)
+	c.oraCommon(value, 2, 6)
+}
 
-	private void ORA_ZeroPage_X(IMemory memory)
-	{
-		var (_, value) = ZeroPageX(memory);
-		ORA_Common(value, 2, 4);
-	}
+func (c *CPU) oraZeroPageIndirectY(m Memory) {
+	_, value, extraClock := c.zeroPageIndirectY(m)
+	c.oraCommon(value, 2, 5+extraClock)
+}
 
-	private void ORA_Absolute_X(IMemory memory)
-	{
-		var (_, value, extraClock) = AbsoluteX(memory);
-		ORA_Common(value, 3, 4 + extraClock);
-	}
+func (c *CPU) oraZeroPageFixed(m Memory) {
+	_, value := c.zeroPageFixed(m)
+	c.oraCommon(value, 2, 3)
+}
 
-	private void ORA_Absolute_Y(IMemory memory)
-	{
-		var (_, value, extraClock) = AbsoluteY(memory);
-		ORA_Common(value, 3, 4 + extraClock);
-	}
-*/
+func (c *CPU) oraZeroPageX(m Memory) {
+	_, value := c.zeroPageX(m)
+	c.oraCommon(value, 2, 4)
+}
+
+func (c *CPU) oraAbsoluteX(m Memory) {
+	_, value, extraClock := c.absoluteX(m)
+	c.oraCommon(value, 3, 4+extraClock)
+}
+
+func (c *CPU) oraAbsoluteY(m Memory) {
+	_, value, extraClock := c.absoluteY(m)
+	c.oraCommon(value, 3, 4+extraClock)
+}
 
 func (c *CPU) oraCommon(newValue uint8, pcOffset uint16, clock uint64) {
 	c.A |= newValue
-	if int8(c.A) < 0 {
-		c.setFlags(NegativeFlagMask)
-	} else {
-		c.clearFlags(NegativeFlagMask)
-	}
-	if c.A == 0 {
-		c.setFlags(ZeroFlagMask)
-	} else {
-		c.clearFlags(ZeroFlagMask)
-	}
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
 	c.PC += pcOffset
 	c.ClockTime += clock
 }
-
-/*
-TODO impl
-
-	private void ORA_Common(byte newValue, UInt16 pcOffset, UInt64 clock)
-	{
-		A |= newValue;
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
-*/
-
-func (c *CPU) sloZeroPageIndirectX(m Memory) {
-	address, value := c.zeroPageIndirectX(m)
-	c.sloCommon(m, address, value, 2, 8)
-}
-
-/*
-	private void SLO_ZeroPage_Indirect_Y(IMemory memory)
-	{
-		var (address, value, _) = ZeroPageIndirectY(memory);
-		SLO_Common(memory, address, value, 2, 8);
-	}
-*/
-
-func (c *CPU) sloZeroPageImmediate(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	c.sloCommon(m, address, value, 2, 5)
-}
-
-/*
-TODO impl
-
-	private void SLO_ZeroPage_Immediate(IMemory memory)
-	{
-		var (address, value) = ZeroPageFixed(memory);
-		SLO_Common(memory, address, value, 2, 5);
-	}
-*/
 
 func (c *CPU) sloAbsolute(m Memory) {
 	address, value := c.absolute(m)
 	c.sloCommon(m, address, value, 3, 6)
 }
 
-/*
-TODO impl
+func (c *CPU) sloAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	c.sloCommon(m, address, value, 3, 7)
+}
 
-	private void SLO_ZeroPage_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageX(memory);
-		SLO_Common(memory, address, value, 2, 6);
-	}
+func (c *CPU) sloAbsoluteY(m Memory) {
+	address, value, _ := c.absoluteY(m)
+	c.sloCommon(m, address, value, 3, 7)
+}
 
-	private void SLO_Absolute_X(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteX(memory);
-		SLO_Common(memory, address, value, 3, 7);
-	}
+func (c *CPU) sloZeroPageIndirectX(m Memory) {
+	address, value := c.zeroPageIndirectX(m)
+	c.sloCommon(m, address, value, 2, 8)
+}
 
-	private void SLO_Absolute_Y(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteY(memory);
-		SLO_Common(memory, address, value, 3, 7);
-	}
-*/
+func (c *CPU) sloZeroPageIndirectY(m Memory) {
+	address, value, _ := c.zeroPageIndirectY(m)
+	c.sloCommon(m, address, value, 2, 8)
+}
+
+func (c *CPU) sloZeroPageImmediate(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	c.sloCommon(m, address, value, 2, 5)
+}
+
+func (c *CPU) sloZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	c.sloCommon(m, address, value, 2, 6)
+}
 
 func (c *CPU) sloCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
 	newValue := value << 1
 	m.Write(address, newValue)
 	c.A |= newValue
-	if int8(c.A) < 0 {
-		c.setFlags(NegativeFlagMask)
-	} else {
-		c.clearFlags(NegativeFlagMask)
-	}
-	if c.A == 0 {
-		c.setFlags(ZeroFlagMask)
-	} else {
-		c.clearFlags(ZeroFlagMask)
-	}
-	if newValue < value {
-		c.setFlags(CarryFlagMask)
-	} else {
-		c.clearFlags(CarryFlagMask)
-	}
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.setFlagsTo(CarryFlagMask, newValue < value)
 	c.PC += pcOffset
 	c.ClockTime += clock
 }
-
-/*
-TODO impl
-
-	private void SLO_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var newValue = (byte)(value << 1);
-		memory.Write8(address, newValue);
-		A |= newValue;
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		CarryFlag = newValue < value;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
-*/
 
 func (c *CPU) asl(m Memory) {
 	value := c.A
 	newValue := value << 1
 	c.A = newValue
-	if int8(newValue) < 0 {
-		c.setFlags(NegativeFlagMask)
-	} else {
-		c.clearFlags(NegativeFlagMask)
-	}
-	if newValue == 0 {
-		c.setFlags(ZeroFlagMask)
-	} else {
-		c.clearFlags(ZeroFlagMask)
-	}
-	if newValue < value {
-		c.setFlags(CarryFlagMask)
-	} else {
-		c.clearFlags(CarryFlagMask)
-	}
+	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
+	c.setFlagsTo(ZeroFlagMask, newValue == 0)
+	c.setFlagsTo(CarryFlagMask, newValue < value)
 	c.PC += 1
 	c.ClockTime += 2
 }
@@ -840,562 +706,444 @@ func (c *CPU) aslAbsolute(m Memory) {
 	c.aslCommon(m, address, value, 3, 6)
 }
 
-/*
-TODO impl
+func (c *CPU) aslZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	c.aslCommon(m, address, value, 2, 6)
+}
 
-	private void ASL_ZeroPage_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageX(memory);
-		ASL_Common(memory, address, value, 2, 6);
-	}
-
-	private void ASL_Absolute_X(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteX(memory);
-		ASL_Common(memory, address, value, 3, 7);
-	}
-*/
+func (c *CPU) aslAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	c.aslCommon(m, address, value, 3, 7)
+}
 
 func (c *CPU) aslCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
 	newValue := value << 1
 	m.Write(address, newValue)
-	if int8(newValue) < 0 {
-		c.setFlags(NegativeFlagMask)
-	} else {
-		c.clearFlags(NegativeFlagMask)
-	}
-	if newValue == 0 {
-		c.setFlags(ZeroFlagMask)
-	} else {
-		c.clearFlags(ZeroFlagMask)
-	}
-	if newValue < value {
-		c.setFlags(CarryFlagMask)
-	} else {
-		c.clearFlags(CarryFlagMask)
-	}
+	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
+	c.setFlagsTo(ZeroFlagMask, newValue == 0)
+	c.setFlagsTo(CarryFlagMask, newValue < value)
 	c.PC += pcOffset
 	c.ClockTime += clock
 }
-
-/*
-TODO impl
-
-	private void ASL_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var newValue = (byte)(value << 1);
-		memory.Write8(address, newValue);
-		NegativeFlag = (sbyte)newValue < 0;
-		ZeroFlag = newValue == 0;
-		CarryFlag = newValue < value;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
-*/
 
 func (c *CPU) ancImmediate(m Memory) {
 	value := m.Read(c.PC + 1)
 	newValue := c.A & value
 	c.A = newValue
-	if int8(newValue) < 0 {
-		c.setFlags(NegativeFlagMask)
-	} else {
-		c.clearFlags(NegativeFlagMask)
-	}
-	if newValue == 0 {
-		c.setFlags(ZeroFlagMask)
-	} else {
-		c.clearFlags(ZeroFlagMask)
-	}
-	if (newValue & 0b1000_0000) != 0 {
-		c.setFlags(CarryFlagMask)
-	} else {
-		c.clearFlags(CarryFlagMask)
-	}
+	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
+	c.setFlagsTo(ZeroFlagMask, newValue == 0)
+	c.setFlagsTo(CarryFlagMask, (newValue&0b1000_0000) != 0)
 	c.PC += 2
 	c.ClockTime += 2
 }
 
-/*
-TODO impl
+func (c *CPU) andZeroPage(m Memory) {
+	_, value := c.zeroPageFixed(m)
+	c.andCommon(value, 2, 3)
+}
 
-	private void AND_ZeroPage(IMemory memory)
-	{
-		var (_, value) = ZeroPageFixed(memory);
-		AND_Common(value, 2, 3);
+func (c *CPU) andZeroPageX(m Memory) {
+	_, value := c.zeroPageX(m)
+	c.andCommon(value, 2, 4)
+}
+
+func (c *CPU) andZeroPageIndirectX(m Memory) {
+	_, value := c.zeroPageIndirectX(m)
+	c.andCommon(value, 2, 6)
+}
+
+func (c *CPU) andZeroPageIndirectY(m Memory) {
+	_, value, extraClock := c.zeroPageIndirectY(m)
+	c.andCommon(value, 2, 5+extraClock)
+}
+
+func (c *CPU) andImmediate(m Memory) {
+	value := m.Read(c.PC + 1)
+	c.andCommon(value, 2, 2)
+}
+
+func (c *CPU) andAbsolute(m Memory) {
+	_, value := c.absolute(m)
+	c.andCommon(value, 3, 4)
+}
+
+func (c *CPU) andAbsoluteX(m Memory) {
+	_, value, extraClock := c.absoluteX(m)
+	c.andCommon(value, 3, 4+extraClock)
+}
+
+func (c *CPU) andAbsoluteY(m Memory) {
+	_, value, extraClock := c.absoluteY(m)
+	c.andCommon(value, 3, 4+extraClock)
+}
+
+func (c *CPU) andCommon(value uint8, pcOffset uint16, clock uint64) {
+	c.A &= value
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
+
+func (c *CPU) rlaZeroPage(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	c.rlaCommon(m, address, value, 2, 5)
+}
+
+func (c *CPU) rlaZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	c.rlaCommon(m, address, value, 2, 6)
+}
+
+func (c *CPU) rlaZeroPageIndirectX(m Memory) {
+	address, value := c.zeroPageIndirectX(m)
+	c.rlaCommon(m, address, value, 2, 8)
+}
+
+func (c *CPU) rlaZeroPageIndirectY(m Memory) {
+	address, value, _ := c.zeroPageIndirectY(m)
+	c.rlaCommon(m, address, value, 2, 8)
+}
+
+func (c *CPU) rlaAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	c.rlaCommon(m, address, value, 3, 6)
+}
+
+func (c *CPU) rlaAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	c.rlaCommon(m, address, value, 3, 7)
+}
+
+func (c *CPU) rlaAbsoluteY(m Memory) {
+	address, value, _ := c.absoluteY(m)
+	c.rlaCommon(m, address, value, 3, 7)
+}
+
+func (c *CPU) rlaCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+	newValue := value << 1
+	if (c.Flags & CarryFlagMask) != 0 {
+		newValue += 1
 	}
+	c.A &= newValue
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.setFlagsTo(CarryFlagMask, (value&0b1000_0000) != 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
 
-	private void AND_ZeroPage_X(IMemory memory)
-	{
-		var (_, value) = ZeroPageX(memory);
-		AND_Common(value, 2, 4);
+func (c *CPU) rol(m Memory) {
+	c.A = c.rolCommon(c.A, 1, 2)
+}
+
+func (c *CPU) rolZeroPage(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	newValue := c.rolCommon(value, 2, 5)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rolZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	newValue := c.rolCommon(value, 2, 6)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rolAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	newValue := c.rolCommon(value, 3, 6)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rolAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	newValue := c.rolCommon(value, 3, 7)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rolCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
+	newValue := value << 1
+	if (c.Flags & CarryFlagMask) != 0 {
+		newValue += 1
 	}
+	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
+	c.setFlagsTo(ZeroFlagMask, newValue == 0)
+	c.setFlagsTo(CarryFlagMask, (newValue&0b1000_0000) != 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return newValue
+}
 
-	private void AND_ZeroPage_Indirect_X(IMemory memory)
-	{
-		var (_, value) = ZeroPageIndirectX(memory);
-		AND_Common(value, 2, 6);
-	}
+func (c *CPU) bpl(m Memory) {
+	c.branchCommon(m, (c.Flags&NegativeFlagMask) == 0)
+}
 
-	private void AND_ZeroPage_Indirect_Y(IMemory memory)
-	{
-		var (_, value, extraClock) = ZeroPageIndirectY(memory);
-		AND_Common(value, 2, 5 + extraClock);
-	}
+func (c *CPU) bmi(m Memory) {
+	c.branchCommon(m, (c.Flags&NegativeFlagMask) != 0)
+}
 
-	private void AND_Immediate(IMemory memory)
-	{
-		var value = memory.Read8((ushort)(PC + 1));
-		AND_Common(value, 2, 2);
-	}
+func (c *CPU) bvc(m Memory) {
+	c.branchCommon(m, (c.Flags&OverflowFlagMask) == 0)
+}
 
-	private void AND_Absolute(IMemory memory)
-	{
-		var (_, value) = Absolute(memory);
-		AND_Common(value, 3, 4);
-	}
-
-	private void AND_Absolute_X(IMemory memory)
-	{
-		var (_, value, extraClock) = AbsoluteX(memory);
-		AND_Common(value, 3, 4 + extraClock);
-	}
-
-	private void AND_Absolute_Y(IMemory memory)
-	{
-		var (_, value, extraClock) = AbsoluteY(memory);
-		AND_Common(value, 3, 4 + extraClock);
-	}
-
-	private void AND_Common(byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		A &= value;
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
-
-	private void RLA_ZeroPage(IMemory memory)
-	{
-		var (address, value) = ZeroPageFixed(memory);
-		RLA_Common(memory, address, value, 2, 5);
-	}
-
-	private void RLA_ZeroPage_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageX(memory);
-		RLA_Common(memory, address, value, 2, 6);
-	}
-
-	private void RLA_ZeroPage_Indirect_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageIndirectX(memory);
-		RLA_Common(memory, address, value, 2, 8);
-	}
-
-	private void RLA_ZeroPage_Indirect_Y(IMemory memory)
-	{
-		var (address, value, _) = ZeroPageIndirectY(memory);
-		RLA_Common(memory, address, value, 2, 8);
-	}
-
-	private void RLA_Absolute(IMemory memory)
-	{
-		var (address, value) = Absolute(memory);
-		RLA_Common(memory, address, value, 3, 6);
-	}
-
-	private void RLA_Absolute_X(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteX(memory);
-		RLA_Common(memory, address, value, 3, 7);
-	}
-
-	private void RLA_Absolute_Y(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteY(memory);
-		RLA_Common(memory, address, value, 3, 7);
-	}
-
-	private void RLA_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var newValue = (byte)((byte)(value << 1) | (CarryFlag ? 1 : 0));
-		memory.Write8(address, newValue);
-		A &= newValue;
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		CarryFlag = (value & 0b1000_0000) != 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
-
-	private void ROL()
-	{
-		A = ROL_Common(A, 1, 2);
-	}
-
-	private void ROL_ZeroPage(IMemory memory)
-	{
-		var (address, value) = ZeroPageFixed(memory);
-		var newValue = ROL_Common(value, 2, 5);
-		memory.Write8(address, newValue);
-	}
-
-	private void ROL_ZeroPage_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageX(memory);
-		var newValue = ROL_Common(value, 2, 6);
-		memory.Write8(address, newValue);
-	}
-
-	private void ROL_Absolute(IMemory memory)
-	{
-		var (address, value) = Absolute(memory);
-		var newValue = ROL_Common(value, 3, 6);
-		memory.Write8(address, newValue);
-	}
-
-	private void ROL_Absolute_X(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteX(memory);
-		var newValue = ROL_Common(value, 3, 7);
-		memory.Write8(address, newValue);
-	}
-
-	private byte ROL_Common(byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var newValue = (byte)((byte)(value << 1) | (CarryFlag ? 1 : 0));
-		NegativeFlag = (sbyte)newValue < 0;
-		ZeroFlag = newValue == 0;
-		CarryFlag = (value & 0b1000_0000) != 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-		return newValue;
-	}
-
-	private void BPL(IMemory memory)
-	{
-		Branch_Common(memory, !NegativeFlag);
-	}
-
-	private void BMI(IMemory memory)
-	{
-		Branch_Common(memory, NegativeFlag);
-	}
-
-	private void BVC(IMemory memory)
-	{
-		Branch_Common(memory, !OverflowFlag);
-	}
-
-	private void Branch_Common(IMemory memory, bool condition)
-	{
-		if (condition)
-		{
-			// high byte of address after the branch instruction
-			var high1 = (PC + 2) & 0xff00;
-			// do the jump
-			PC = (ushort)(PC + 2 + (sbyte)memory.Read8((ushort)(PC + 1)));
-			// high byte of address of branch destination
-			var high2 = PC & 0xff00;
-			if (high1 == high2)
-			{
-				ClockCycles += 3;
-			}
-			else
-			{
-				ClockCycles += 4;
-			}
+func (c *CPU) branchCommon(m Memory, condition bool) {
+	if condition {
+		// high byte of address after the branch instruction
+		high1 := (c.PC + 2) & 0xff00
+		// do the jump
+		c.PC = c.PC + 2 + uint16(m.Read(c.PC+1))
+		// high byte of address of branch destination
+		high2 := c.PC & 0xff00
+		if high1 == high2 {
+			c.ClockTime += 3
+		} else {
+			c.ClockTime += 4
 		}
-		else
-		{
-			PC += 2;
-			ClockCycles += 2;
-		}
+	} else {
+		c.PC += 2
+		c.ClockTime += 2
 	}
+}
 
-	private void JMP_Absolute(IMemory memory)
-	{
-		PC = memory.Read16((ushort)(PC + 1));
-		ClockCycles += 3;
-	}
+func (c *CPU) jmpAbsolute(m Memory) {
+	c.PC = Read16(m, c.PC+1)
+	c.ClockTime += 3
+}
 
-	private void CLC()
-	{
-		CarryFlag = false;
-		PC += 1;
-		ClockCycles += 2;
-	}
+func (c *CPU) clc() {
+	c.clearFlags(CarryFlagMask)
+	c.PC += 1
+	c.ClockTime += 2
+}
 
-	private void SEC()
-	{
-		CarryFlag = true;
-		PC += 1;
-		ClockCycles += 2;
-	}
+func (c *CPU) sec() {
+	c.setFlags(CarryFlagMask)
+	c.PC += 1
+	c.ClockTime += 2
+}
 
-	private void CLI()
-	{
-		InterruptDisableFlag = false;
-		PC += 1;
-		ClockCycles += 2;
-	}
+func (c *CPU) cli() {
+	c.clearFlags(InterruptDisableFlagMask)
+	c.PC += 1
+	c.ClockTime += 2
+}
 
-	private void JSR(IMemory memory)
-	{
-		var address = memory.Read16((ushort)(PC + 1));
-		Push16(memory, (ushort)(PC + 2));
-		PC = address;
-		ClockCycles += 6;
-	}
+func (c *CPU) jsr(m Memory) {
+	address := Read16(m, c.PC+1)
+	c.push16(m, c.PC+2)
+	c.PC = address
+	c.ClockTime += 6
+}
 
-	private void BIT_ZeroPage_Immediate(IMemory memory)
-	{
-		var (_, value) = ZeroPageFixed(memory);
-		BIT_Common(value, 2, 3);
-	}
+func (c *CPU) bitZeroPageImmediate(m Memory) {
+	_, value := c.zeroPageFixed(m)
+	c.bitCommon(value, 2, 3)
+}
 
-	private void BIT_Absolute(IMemory memory)
-	{
-		var (_, value) = Absolute(memory);
-		BIT_Common(value, 3, 4);
-	}
+func (c *CPU) bitAbsolute(m Memory) {
+	_, value := c.absolute(m)
+	c.bitCommon(value, 3, 4)
+}
 
-	private void BIT_Common(byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		OverflowFlag = (OverflowFlagMask & value) != 0;
-		NegativeFlag = (NegativeFlagMask & value) != 0;
-		ZeroFlag = (value & A) == 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
+func (c *CPU) bitCommon(value uint8, pcOffset uint16, clock uint64) {
+	c.setFlagsTo(OverflowFlagMask, (value&OverflowFlagMask) != 0)
+	c.setFlagsTo(NegativeFlagMask, (NegativeFlagMask&value) != 0)
+	c.setFlagsTo(ZeroFlagMask, (value&c.A) == 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
 
-	private void EOR_ZeroPage(IMemory memory)
-	{
-		var (_, value) = ZeroPageFixed(memory);
-		EOR_Common(value, 2, 3);
-	}
+func (c *CPU) eorZeroPage(m Memory) {
+	_, value := c.zeroPageFixed(m)
+	c.eorCommon(value, 2, 3)
+}
 
-	private void EOR_ZeroPage_X(IMemory memory)
-	{
-		var (_, value) = ZeroPageX(memory);
-		EOR_Common(value, 2, 4);
-	}
+func (c *CPU) eorZeroPageX(m Memory) {
+	_, value := c.zeroPageX(m)
+	c.eorCommon(value, 2, 4)
+}
 
-	private void EOR_ZeroPage_Indirect_X(IMemory memory)
-	{
-		var (_, value) = ZeroPageIndirectX(memory);
-		EOR_Common(value, 2, 6);
-	}
+func (c *CPU) eorZeroPageIndirectX(m Memory) {
+	_, value := c.zeroPageIndirectX(m)
+	c.eorCommon(value, 2, 6)
+}
 
-	private void EOR_ZeroPage_Indirect_Y(IMemory memory)
-	{
-		var (_, value, extraClock) = ZeroPageIndirectY(memory);
-		EOR_Common(value, 2, 5 + extraClock);
-	}
+func (c *CPU) eorZeroPageIndirectY(m Memory) {
+	_, value, extraClock := c.zeroPageIndirectY(m)
+	c.eorCommon(value, 2, 5+extraClock)
+}
 
-	private void EOR_Immediate(IMemory memory)
-	{
-		var value = memory.Read8((ushort)(PC + 1));
-		EOR_Common(value, 2, 2);
-	}
+func (c *CPU) eorImmediate(m Memory) {
+	value := m.Read(c.PC + 1)
+	c.eorCommon(value, 2, 2)
+}
 
-	private void EOR_Absolute(IMemory memory)
-	{
-		var (_, value) = Absolute(memory);
-		EOR_Common(value, 3, 4);
-	}
+func (c *CPU) eorAbsolute(m Memory) {
+	_, value := c.absolute(m)
+	c.eorCommon(value, 3, 4)
+}
 
-	private void EOR_Absolute_X(IMemory memory)
-	{
-		var (_, value, extraClock) = AbsoluteX(memory);
-		EOR_Common(value, 3, 4 + extraClock);
-	}
+func (c *CPU) eorAbsoluteX(m Memory) {
+	_, value, extraClock := c.absoluteX(m)
+	c.eorCommon(value, 3, 4+extraClock)
+}
 
-	private void EOR_Absolute_Y(IMemory memory)
-	{
-		var (_, value, extraClock) = AbsoluteY(memory);
-		EOR_Common(value, 3, 4 + extraClock);
-	}
+func (c *CPU) eorAbsoluteY(m Memory) {
+	_, value, extraClock := c.absoluteY(m)
+	c.eorCommon(value, 3, 4+extraClock)
+}
 
-	private void EOR_Common(byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		A ^= value;
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
+func (c *CPU) eorCommon(value uint8, pcOffset uint16, clock uint64) {
+	c.A ^= value
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
 
-	private void SRE_ZeroPage(IMemory memory)
-	{
-		var (address, value) = ZeroPageFixed(memory);
-		SRE_Common(memory, address, value, 2, 5);
-	}
+func (c *CPU) sreZeroPage(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	c.sreCommon(m, address, value, 2, 5)
+}
 
-	private void SRE_ZeroPage_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageX(memory);
-		SRE_Common(memory, address, value, 2, 6);
-	}
+func (c *CPU) sreZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	c.sreCommon(m, address, value, 2, 6)
+}
 
-	private void SRE_ZeroPage_Indirect_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageIndirectX(memory);
-		SRE_Common(memory, address, value, 2, 8);
-	}
+func (c *CPU) sreZeroPageIndirectX(m Memory) {
+	address, value := c.zeroPageIndirectX(m)
+	c.sreCommon(m, address, value, 2, 8)
+}
 
-	private void SRE_ZeroPage_Indirect_Y(IMemory memory)
-	{
-		var (address, value, _) = ZeroPageIndirectY(memory);
-		SRE_Common(memory, address, value, 2, 8);
-	}
+func (c *CPU) sreZeroPageIndirectY(m Memory) {
+	address, value, _ := c.zeroPageIndirectY(m)
+	c.sreCommon(m, address, value, 2, 8)
+}
 
-	private void SRE_Absolute(IMemory memory)
-	{
-		var (address, value) = Absolute(memory);
-		SRE_Common(memory, address, value, 3, 6);
-	}
+func (c *CPU) sreAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	c.sreCommon(m, address, value, 3, 6)
+}
 
-	private void SRE_Absolute_X(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteX(memory);
-		SRE_Common(memory, address, value, 3, 7);
-	}
+func (c *CPU) sreAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	c.sreCommon(m, address, value, 3, 7)
+}
 
-	private void SRE_Absolute_Y(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteY(memory);
-		SRE_Common(memory, address, value, 3, 7);
-	}
+func (c *CPU) sreAbsoluteY(m Memory) {
+	address, value, _ := c.absoluteY(m)
+	c.sreCommon(m, address, value, 3, 7)
+}
 
-	private void SRE_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var newValue = (byte)(value >> 1);
-		memory.Write8(address, newValue);
-		A ^= newValue;
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		CarryFlag = (value & 0b0000_0001) != 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
+func (c *CPU) sreCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+	newValue := value >> 1
+	m.Write(address, newValue)
+	c.A ^= newValue
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.setFlagsTo(CarryFlagMask, (value&0b0000_0001) != 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
 
-	private void LSR()
-	{
-		A = LSR_Common(A, 1, 2);
-	}
+func (c *CPU) lsr(m Memory) {
+	c.A = c.lsrCommon(c.A, 1, 2)
+}
 
-	private void LSR_ZeroPage(IMemory memory)
-	{
-		var (address, value) = ZeroPageFixed(memory);
-		var newValue = LSR_Common(value, 2, 5);
-		memory.Write8(address, newValue);
-	}
+func (c *CPU) lsrZeroPage(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	newValue := c.lsrCommon(value, 2, 5)
+	m.Write(address, newValue)
+}
 
-	private void LSR_ZeroPage_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageX(memory);
-		var newValue = LSR_Common(value, 2, 6);
-		memory.Write8(address, newValue);
-	}
+func (c *CPU) lsrZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	newValue := c.lsrCommon(value, 2, 6)
+	m.Write(address, newValue)
+}
 
-	private void LSR_Absolute(IMemory memory)
-	{
-		var (address, value) = Absolute(memory);
-		var newValue = LSR_Common(value, 3, 6);
-		memory.Write8(address, newValue);
-	}
+func (c *CPU) lsrAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	newValue := c.lsrCommon(value, 3, 6)
+	m.Write(address, newValue)
+}
 
-	private void LSR_Absolute_X(IMemory memory)
-	{
-		var (address, value, _) = AbsoluteX(memory);
-		var newValue = LSR_Common(value, 3, 7);
-		memory.Write8(address, newValue);
-	}
+func (c *CPU) lsrAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	newValue := c.lsrCommon(value, 3, 7)
+	m.Write(address, newValue)
+}
 
-	private byte LSR_Common(byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var newValue = (byte)(value >> 1);
-		NegativeFlag = false;
-		ZeroFlag = newValue == 0;
-		CarryFlag = (value & 0b0000_0001) != 0;
-		PC += pcOffset;
-		ClockCycles += clock;
-		return newValue;
-	}
+func (c *CPU) lsrCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
+	newValue := value >> 1
+	c.clearFlags(NegativeFlagMask)
+	c.setFlagsTo(ZeroFlagMask, newValue == 0)
+	c.setFlagsTo(CarryFlagMask, (value&0b0000_0001) != 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return newValue
+}
 
-	private void ALR(IMemory memory)
-	{
-		var value = (byte)(A & memory.Read8((ushort)(PC + 1)));
-		A = (byte)(value >> 1);
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		CarryFlag = (value & 0b0000_0001) != 0;
-		PC += 2;
-		ClockCycles += 2;
-	}
+func (c *CPU) alr(m Memory) {
+	value := c.A & m.Read(c.PC+1)
+	c.A = value >> 1
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.setFlagsTo(CarryFlagMask, (value&0b0000_0001) != 0)
+	c.PC += 2
+	c.ClockTime += 2
+}
 
-	private void ADC_ZeroPage_Indirect_X(IMemory memory)
-	{
-		var (_, value) = ZeroPageIndirectX(memory);
-		ADC_Common(value, 2, 6);
-	}
+func (c *CPU) adcZeroPageIndirectX(m Memory) {
+	_, value := c.zeroPageIndirectX(m)
+	c.adcCommon(value, 2, 6)
+}
 
-	private void ADC_Common(byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var newValue = A + value + (CarryFlag ? 1 : 0);
-		var oldA = A;
-		A = (byte)newValue;
-		NegativeFlag = (sbyte)A < 0;
-		ZeroFlag = A == 0;
-		CarryFlag = (newValue & 0b1_0000_0000) != 0;
-		var valueSignBit = value & 0b1000_0000;
-		var oldASignBit = oldA & 0b1000_0000;
-		var newSignBit = newValue & 0b1000_0000;
-		OverflowFlag = valueSignBit == oldASignBit && valueSignBit != newSignBit;
-		PC += pcOffset;
-		ClockCycles += clock;
+func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
+	newValue := c.A + value
+	if (c.Flags | CarryFlagMask) != 0 {
+		newValue++
 	}
+	oldA := c.A
+	c.A = newValue
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.setFlagsTo(CarryFlagMask, (newValue&0b1000_0000) != 0)
+	valueSignBit := value & 0b1000_0000
+	oldASignBit := oldA & 0b1000_0000
+	newSignBit := newValue & 0b1000_0000
+	c.setFlagsTo(OverflowFlagMask, valueSignBit == oldASignBit && valueSignBit != newSignBit)
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
 
-	private void RRA_ZeroPage_Indirect_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageIndirectX(memory);
-		RRA_Common(address, value, 2, 8);
-	}
+func (c *CPU) rraZeroPageIndirectX(m Memory) {
+	address, value := c.zeroPageIndirectX(m)
+	c.rraCommon(address, value, 2, 8)
+}
 
-	private void RRA_Common(UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
-	{
-		var rorNewValue = (byte)((value >> 1) | (CarryFlag ? 0b1000_0000 : 0));
-		var adcNewValue = A + value + (CarryFlag ? 1 : 0);
-		// TODO JEFF but what now?
-		PC += pcOffset;
-		ClockCycles += clock;
+func (c *CPU) rraCommon(address uint16, value uint8, pcOffset uint16, clock uint64) {
+	rorNewValue := value >> 1
+	adcNewValue := c.A + value
+	if (c.Flags | CarryFlagMask) != 0 {
+		rorNewValue |= 0b1000_0000
+		adcNewValue++
 	}
-
-	private void NOP(UInt16 pcOffset, UInt16 clock)
-	{
-		PC += pcOffset;
-		ClockCycles += clock;
-	}
-*/
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
 
 func (c *CPU) nop(pcOffset uint16, clock uint64) {
 	c.PC += pcOffset
 	c.ClockTime += clock
 }
 
-/*
-TODO impl
-
-	private void NOP_Absolute_X(IMemory memory)
-	{
-		var (_, _, extraClock) = AbsoluteX(memory);
-		PC += 3;
-		ClockCycles += 4 + extraClock;
-	}
-*/
+func (c *CPU) nopAbsoluteX(m Memory) {
+	_, _, extraClock := c.absoluteX(m)
+	c.PC += 3
+	c.ClockTime += 4 + extraClock
+}
 
 func (c *CPU) clearFlags(mask uint8) {
 	c.Flags &= ^mask
@@ -1403,6 +1151,14 @@ func (c *CPU) clearFlags(mask uint8) {
 
 func (c *CPU) setFlags(mask uint8) {
 	c.Flags |= mask
+}
+
+func (c *CPU) setFlagsTo(mask uint8, value bool) {
+	if value {
+		c.setFlags(mask)
+	} else {
+		c.clearFlags(mask)
+	}
 }
 
 func (c *CPU) push8(m Memory, value uint8) {
