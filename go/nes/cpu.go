@@ -44,25 +44,25 @@ func (c *CPU) Step(m Memory) {
 	case 0x05:
 		c.oraZeroPageFixed(m)
 	case 0x06:
-		// TODO impl
+		c.aslZeroPageFixed(m)
 	case 0x07:
-		// TODO impl
+		c.sloZeroPageImmediate(m)
 	case 0x08:
-		// TODO impl
+		c.php(m)
 	case 0x09:
-		// TODO impl
+		c.oraImmediate(m)
 	case 0x0a:
-		// TODO impl
+		c.asl(m)
 	case 0x0b:
-		// TODO impl
+		c.ancImmediate(m)
 	case 0x0c:
-		// TODO impl
+		c.nop(3, 4)
 	case 0x0d:
-		// TODO impl
+		c.oraAbsolute(m)
 	case 0x0e:
-		// TODO impl
+		c.aslAbsolute(m)
 	case 0x0f:
-		// TODO impl
+		c.sloAbsolute(m)
 	case 0x10:
 		// TODO impl
 	case 0x11:
@@ -556,6 +556,14 @@ func (c *CPU) brk(m Memory) {
 	c.ClockTime += 7
 }
 
+func (c *CPU) php(m Memory) {
+	c.setFlags(BreakCommandFlagMask)
+	c.push8(m, c.Flags)
+	c.clearFlags(BreakCommandFlagMask)
+	c.PC += 1
+	c.ClockTime += 3
+}
+
 /*
 TODO impl
 
@@ -628,13 +636,29 @@ TODO impl
 		var (_, value) = ZeroPageFixed(memory);
 		ORA_Common(value, 2, 3);
 	}
+*/
 
-	private void ORA_Immediate(IMemory memory)
+func (c *CPU) oraImmediate(m Memory) {
+	value := m.Read(c.PC + 1)
+	c.oraCommon(value, 2, 2)
+}
+
+/*
+TODO impl
+private void ORA_Immediate(IMemory memory)
 	{
 		var value = memory.Read8((ushort)(PC + 1));
 		ORA_Common(value, 2, 2);
 	}
+*/
 
+func (c *CPU) oraAbsolute(m Memory) {
+	_, value := c.absolute(m)
+	c.oraCommon(value, 3, 4)
+}
+
+/*
+TODO impl
 	private void ORA_Absolute(IMemory memory)
 	{
 		var (_, value) = Absolute(memory);
@@ -700,18 +724,30 @@ func (c *CPU) sloZeroPageIndirectX(m Memory) {
 		var (address, value, _) = ZeroPageIndirectY(memory);
 		SLO_Common(memory, address, value, 2, 8);
 	}
+*/
+
+func (c *CPU) sloZeroPageImmediate(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	c.sloCommon(m, address, value, 2, 5)
+}
+
+/*
+TODO impl
 
 	private void SLO_ZeroPage_Immediate(IMemory memory)
 	{
 		var (address, value) = ZeroPageFixed(memory);
 		SLO_Common(memory, address, value, 2, 5);
 	}
+*/
 
-	private void SLO_Absolute(IMemory memory)
-	{
-		var (address, value) = Absolute(memory);
-		SLO_Common(memory, address, value, 3, 6);
-	}
+func (c *CPU) sloAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	c.sloCommon(m, address, value, 3, 6)
+}
+
+/*
+TODO impl
 
 	private void SLO_ZeroPage_X(IMemory memory)
 	{
@@ -769,30 +805,43 @@ TODO impl
 		PC += pcOffset;
 		ClockCycles += clock;
 	}
+*/
 
-	private void ASL(IMemory memory)
-	{
-		var value = A;
-		var newValue = (byte)(value << 1);
-		A = newValue;
-		NegativeFlag = (sbyte)newValue < 0;
-		ZeroFlag = newValue == 0;
-		CarryFlag = newValue < value;
-		PC += 1;
-		ClockCycles += 2;
+func (c *CPU) asl(m Memory) {
+	value := c.A
+	newValue := value << 1
+	c.A = newValue
+	if int8(newValue) < 0 {
+		c.setFlags(NegativeFlagMask)
+	} else {
+		c.clearFlags(NegativeFlagMask)
 	}
+	if newValue == 0 {
+		c.setFlags(ZeroFlagMask)
+	} else {
+		c.clearFlags(ZeroFlagMask)
+	}
+	if newValue < value {
+		c.setFlags(CarryFlagMask)
+	} else {
+		c.clearFlags(CarryFlagMask)
+	}
+	c.PC += 1
+	c.ClockTime += 2
+}
 
-	private void ASL_ZeroPage_Fixed(IMemory memory)
-	{
-		var (address, value) = ZeroPageFixed(memory);
-		ASL_Common(memory, address, value, 2, 5);
-	}
+func (c *CPU) aslZeroPageFixed(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	c.aslCommon(m, address, value, 2, 5)
+}
 
-	private void ASL_Absolute(IMemory memory)
-	{
-		var (address, value) = Absolute(memory);
-		ASL_Common(memory, address, value, 3, 6);
-	}
+func (c *CPU) aslAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	c.aslCommon(m, address, value, 3, 6)
+}
+
+/*
+TODO impl
 
 	private void ASL_ZeroPage_X(IMemory memory)
 	{
@@ -805,6 +854,32 @@ TODO impl
 		var (address, value, _) = AbsoluteX(memory);
 		ASL_Common(memory, address, value, 3, 7);
 	}
+*/
+
+func (c *CPU) aslCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+	newValue := value << 1
+	m.Write(address, newValue)
+	if int8(newValue) < 0 {
+		c.setFlags(NegativeFlagMask)
+	} else {
+		c.clearFlags(NegativeFlagMask)
+	}
+	if newValue == 0 {
+		c.setFlags(ZeroFlagMask)
+	} else {
+		c.clearFlags(ZeroFlagMask)
+	}
+	if newValue < value {
+		c.setFlags(CarryFlagMask)
+	} else {
+		c.clearFlags(CarryFlagMask)
+	}
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
+
+/*
+TODO impl
 
 	private void ASL_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
 	{
@@ -816,18 +891,33 @@ TODO impl
 		PC += pcOffset;
 		ClockCycles += clock;
 	}
+*/
 
-	private void ANC_Immediate(IMemory memory)
-	{
-		var value = memory.Read8((ushort)(PC + 1));
-		var newValue = (byte)(A & value);
-		A = newValue;
-		NegativeFlag = (sbyte)newValue < 0;
-		ZeroFlag = newValue == 0;
-		CarryFlag = (newValue & 0b1000_0000) != 0;
-		PC += 2;
-		ClockCycles += 2;
+func (c *CPU) ancImmediate(m Memory) {
+	value := m.Read(c.PC + 1)
+	newValue := c.A & value
+	c.A = newValue
+	if int8(newValue) < 0 {
+		c.setFlags(NegativeFlagMask)
+	} else {
+		c.clearFlags(NegativeFlagMask)
 	}
+	if newValue == 0 {
+		c.setFlags(ZeroFlagMask)
+	} else {
+		c.clearFlags(ZeroFlagMask)
+	}
+	if (newValue & 0b1000_0000) != 0 {
+		c.setFlags(CarryFlagMask)
+	} else {
+		c.clearFlags(CarryFlagMask)
+	}
+	c.PC += 2
+	c.ClockTime += 2
+}
+
+/*
+TODO impl
 
 	private void AND_ZeroPage(IMemory memory)
 	{
