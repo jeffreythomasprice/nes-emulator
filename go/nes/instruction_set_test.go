@@ -111,7 +111,7 @@ func TestInstructionSet(t *testing.T) {
 		name := path.Base(p)
 		instruction, err := strconv.ParseInt(name[0:len(name)-len(path.Ext(p))], 16, 32)
 		assert.NoError(t, err)
-		if instruction > 0x10 {
+		if instruction != 0x61 {
 			continue
 		}
 

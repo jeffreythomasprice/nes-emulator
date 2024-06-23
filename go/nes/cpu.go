@@ -102,7 +102,7 @@ func (c *CPU) Step(m Memory) {
 	case 0x22:
 		c.nop(0, 3)
 	case 0x23:
-		c.rlaZeroPageIndirectY(m)
+		c.rlaZeroPageIndirectX(m)
 	case 0x24:
 		c.bitZeroPageImmediate(m)
 	case 0x25:
@@ -825,6 +825,7 @@ func (c *CPU) rlaCommon(m Memory, address uint16, value uint8, pcOffset uint16, 
 	if (c.Flags & CarryFlagMask) != 0 {
 		newValue += 1
 	}
+	m.Write(address, newValue)
 	c.A &= newValue
 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
@@ -868,7 +869,7 @@ func (c *CPU) rolCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
 	}
 	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
 	c.setFlagsTo(ZeroFlagMask, newValue == 0)
-	c.setFlagsTo(CarryFlagMask, (newValue&0b1000_0000) != 0)
+	c.setFlagsTo(CarryFlagMask, (value&0b1000_0000) != 0)
 	c.PC += pcOffset
 	c.ClockTime += clock
 	return newValue
@@ -891,7 +892,7 @@ func (c *CPU) branchCommon(m Memory, condition bool) {
 		// high byte of address after the branch instruction
 		high1 := (c.PC + 2) & 0xff00
 		// do the jump
-		c.PC = c.PC + 2 + uint16(m.Read(c.PC+1))
+		c.PC = uint16(int32(c.PC) + 2 + int32(int8(m.Read(c.PC+1))))
 		// high byte of address of branch destination
 		high2 := c.PC & 0xff00
 		if high1 == high2 {
@@ -1101,18 +1102,18 @@ func (c *CPU) adcZeroPageIndirectX(m Memory) {
 }
 
 func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
-	newValue := c.A + value
+	newValue := uint16(c.A) + uint16(value)
 	if (c.Flags | CarryFlagMask) != 0 {
 		newValue++
 	}
 	oldA := c.A
-	c.A = newValue
+	c.A = uint8(newValue)
 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
-	c.setFlagsTo(CarryFlagMask, (newValue&0b1000_0000) != 0)
+	c.setFlagsTo(CarryFlagMask, (newValue&0b1_0000_0000) != 0)
 	valueSignBit := value & 0b1000_0000
 	oldASignBit := oldA & 0b1000_0000
-	newSignBit := newValue & 0b1000_0000
+	newSignBit := uint8(newValue & 0b1000_0000)
 	c.setFlagsTo(OverflowFlagMask, valueSignBit == oldASignBit && valueSignBit != newSignBit)
 	c.PC += pcOffset
 	c.ClockTime += clock
@@ -1130,6 +1131,7 @@ func (c *CPU) rraCommon(address uint16, value uint8, pcOffset uint16, clock uint
 		rorNewValue |= 0b1000_0000
 		adcNewValue++
 	}
+	// TODO finish
 	c.PC += pcOffset
 	c.ClockTime += clock
 }
@@ -1218,7 +1220,7 @@ func (c *CPU) zeroPageFixed(m Memory) (address uint16, value uint8) {
 }
 
 func (c *CPU) zeroPageX(m Memory) (address uint16, value uint8) {
-	address = uint16(m.Read(c.PC+1)) + uint16(c.X)&0xff
+	address = (uint16(m.Read(c.PC+1)) + uint16(c.X)) & 0xff
 	value = m.Read(address)
 	return
 }
