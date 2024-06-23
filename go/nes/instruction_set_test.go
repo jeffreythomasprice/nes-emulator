@@ -108,7 +108,7 @@ func TestInstructionSet(t *testing.T) {
 	for _, p := range paths {
 		// TODO do all the tests
 		name := path.Base(p)
-		if name[0:len(name)-len(path.Ext(p))] != "01" {
+		if name[0:len(name)-len(path.Ext(p))] != "05" {
 			continue
 		}
 

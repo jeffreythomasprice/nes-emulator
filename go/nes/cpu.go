@@ -38,11 +38,11 @@ func (c *CPU) Step(m Memory) {
 	case 0x02:
 		c.nop(0, 3)
 	case 0x03:
-		// TODO impl
+		c.sloZeroPageIndirectX(m)
 	case 0x04:
-		// TODO impl
+		c.nop(2, 3)
 	case 0x05:
-		// TODO impl
+		c.oraZeroPageFixed(m)
 	case 0x06:
 		// TODO impl
 	case 0x07:
@@ -613,6 +613,15 @@ TODO impl
 		var (_, value, extraClock) = ZeroPageIndirectY(memory);
 		ORA_Common(value, 2, 5 + extraClock);
 	}
+*/
+
+func (c *CPU) oraZeroPageFixed(m Memory) {
+	_, value := c.zeroPageFixed(m)
+	c.oraCommon(value, 2, 3)
+}
+
+/*
+TODO impl
 
 	private void ORA_ZeroPage_Fixed(IMemory memory)
 	{
@@ -678,13 +687,14 @@ TODO impl
 		PC += pcOffset;
 		ClockCycles += clock;
 	}
+*/
 
-	private void SLO_ZeroPage_Indirect_X(IMemory memory)
-	{
-		var (address, value) = ZeroPageIndirectX(memory);
-		SLO_Common(memory, address, value, 2, 8);
-	}
+func (c *CPU) sloZeroPageIndirectX(m Memory) {
+	address, value := c.zeroPageIndirectX(m)
+	c.sloCommon(m, address, value, 2, 8)
+}
 
+/*
 	private void SLO_ZeroPage_Indirect_Y(IMemory memory)
 	{
 		var (address, value, _) = ZeroPageIndirectY(memory);
@@ -720,6 +730,33 @@ TODO impl
 		var (address, value, _) = AbsoluteY(memory);
 		SLO_Common(memory, address, value, 3, 7);
 	}
+*/
+
+func (c *CPU) sloCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+	newValue := value << 1
+	m.Write(address, newValue)
+	c.A |= newValue
+	if int8(c.A) < 0 {
+		c.setFlags(NegativeFlagMask)
+	} else {
+		c.clearFlags(NegativeFlagMask)
+	}
+	if c.A == 0 {
+		c.setFlags(ZeroFlagMask)
+	} else {
+		c.clearFlags(ZeroFlagMask)
+	}
+	if newValue < value {
+		c.setFlags(CarryFlagMask)
+	} else {
+		c.clearFlags(CarryFlagMask)
+	}
+	c.PC += pcOffset
+	c.ClockTime += clock
+}
+
+/*
+TODO impl
 
 	private void SLO_Common(IMemory memory, UInt16 address, byte value, UInt16 pcOffset, UInt64 clock)
 	{
