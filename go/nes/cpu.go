@@ -1,5 +1,7 @@
 package nes
 
+import "fmt"
+
 const (
 	CarryFlagMask            uint8 = 0b0000_0001
 	ZeroFlagMask             uint8 = 0b0000_0010
@@ -1102,12 +1104,17 @@ func (c *CPU) adcZeroPageIndirectX(m Memory) {
 }
 
 func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
+	fmt.Printf("TODO a        = %v = %02x = %08b\n", c.A, c.A, c.A)
+	fmt.Printf("TODO value    = %v = %02x = %08b\n", value, value, value)
+	fmt.Printf("TODO carry    = %v\n", c.Flags|CarryFlagMask)
 	newValue := uint16(c.A) + uint16(value)
-	if (c.Flags | CarryFlagMask) != 0 {
+	if (c.Flags & CarryFlagMask) != 0 {
 		newValue++
 	}
+	fmt.Printf("TODO newValue = %v = %04x = %016b\n", newValue, newValue, newValue)
 	oldA := c.A
 	c.A = uint8(newValue)
+	fmt.Printf("TODO a        = %v = %02x = %08b\n", c.A, c.A, c.A)
 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
 	c.setFlagsTo(CarryFlagMask, (newValue&0b1_0000_0000) != 0)
@@ -1127,7 +1134,7 @@ func (c *CPU) rraZeroPageIndirectX(m Memory) {
 func (c *CPU) rraCommon(address uint16, value uint8, pcOffset uint16, clock uint64) {
 	rorNewValue := value >> 1
 	adcNewValue := c.A + value
-	if (c.Flags | CarryFlagMask) != 0 {
+	if (c.Flags & CarryFlagMask) != 0 {
 		rorNewValue |= 0b1000_0000
 		adcNewValue++
 	}
