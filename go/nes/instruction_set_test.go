@@ -112,7 +112,7 @@ func TestInstructionSet(t *testing.T) {
 		assert.NoError(t, err)
 
 		// TODO do all the tests
-		if instruction != 0x6b {
+		if instruction >= 0x70 {
 			continue
 		}
 
@@ -125,7 +125,7 @@ func TestInstructionSet(t *testing.T) {
 
 		t.Logf("test file = %v, num test cases in file = %v", path.Base(p), len(testCases))
 		for i, testCase := range testCases {
-			t.Run(fmt.Sprintf("path = %v, instruction = %v, test case # = %v, name = %v", p, instruction, i, testCase.Name), func(t *testing.T) {
+			t.Run(fmt.Sprintf("path = %v, instruction = %02x, test case # = %v, name = %v", p, instruction, i, testCase.Name), func(t *testing.T) {
 				c := CPU{
 					PC:    testCase.Initial.PC,
 					SP:    testCase.Initial.SP,

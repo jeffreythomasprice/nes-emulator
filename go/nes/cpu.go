@@ -248,13 +248,13 @@ func (c *CPU) Step(m Memory) {
 	case 0x6b:
 		c.arrImmediate(m)
 	case 0x6c:
-		// TODO impl
+		c.jmpIndirect(m)
 	case 0x6d:
-		// TODO impl
+		c.adcAbsolute(m)
 	case 0x6e:
-		// TODO impl
+		c.rorAbsolute(m)
 	case 0x6f:
-		// TODO impl
+		c.rraAbsolute(m)
 	case 0x70:
 		// TODO impl
 	case 0x71:
@@ -919,6 +919,18 @@ func (c *CPU) jmpAbsolute(m Memory) {
 	c.ClockTime += 3
 }
 
+func (c *CPU) jmpIndirect(m Memory) {
+	address := Read16(m, c.PC+1)
+	if address&0xff == 0x0ff {
+		low := m.Read(address)
+		high := m.Read(address & 0xff00)
+		c.PC = uint16(low) | (uint16(high) << 8)
+	} else {
+		c.PC = Read16(m, address)
+	}
+	c.ClockTime += 5
+}
+
 func (c *CPU) clc() {
 	c.clearFlags(CarryFlagMask)
 	c.PC += 1
@@ -1109,6 +1121,11 @@ func (c *CPU) adcImmediate(m Memory) {
 	c.adcCommon(value, 2, 2)
 }
 
+func (c *CPU) adcAbsolute(m Memory) {
+	_, value := c.absolute(m)
+	c.adcCommon(value, 3, 4)
+}
+
 func (c *CPU) adcZeroPage(m Memory) {
 	_, value := c.zeroPageFixed(m)
 	c.adcCommon(value, 2, 3)
@@ -1135,6 +1152,12 @@ func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
 	c.setFlagsTo(OverflowFlagMask, valueSignBit == oldASignBit && valueSignBit != newSignBit)
 	c.PC += pcOffset
 	c.ClockTime += clock
+}
+
+func (c *CPU) rraAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	newValue := c.rraCommon(value, 3, 6)
+	m.Write(address, newValue)
 }
 
 func (c *CPU) rraZeroPage(m Memory) {
@@ -1177,6 +1200,12 @@ func (c *CPU) ror() {
 	c.A = c.rorCommon(c.A, 1, 2)
 }
 
+func (c *CPU) rorAbsolute(m Memory) {
+	address, value := c.absolute(m)
+	newValue := c.rorCommon(value, 3, 6)
+	m.Write(address, newValue)
+}
+
 func (c *CPU) rorZeroPage(m Memory) {
 	address, value := c.zeroPageFixed(m)
 	newValue := c.rorCommon(value, 2, 5)
@@ -1197,7 +1226,20 @@ func (c *CPU) rorCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
 }
 
 func (c *CPU) arrImmediate(m Memory) {
-	// TODO AND oper + ROR
+	immValue := m.Read(c.PC + 1)
+	newValue := c.A & immValue
+	c.setFlagsTo(OverflowFlagMask, (newValue^(newValue>>1))&0x40 != 0)
+	newCarry := newValue & 0b1000_0000
+	newValue >>= 1
+	if (c.Flags & CarryFlagMask) != 0 {
+		newValue |= 0b1000_0000
+	}
+	c.A = newValue
+	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
+	c.setFlagsTo(ZeroFlagMask, newValue == 0)
+	c.setFlagsTo(CarryFlagMask, newCarry != 0)
+	c.PC += 2
+	c.ClockTime += 2
 }
 
 func (c *CPU) nop(pcOffset uint16, clock uint64) {
