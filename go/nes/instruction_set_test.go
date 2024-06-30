@@ -107,11 +107,12 @@ func TestInstructionSet(t *testing.T) {
 
 	t.Logf("num test files = %v", len(paths))
 	for _, p := range paths {
-		// TODO do all the tests
 		name := path.Base(p)
 		instruction, err := strconv.ParseInt(name[0:len(name)-len(path.Ext(p))], 16, 32)
 		assert.NoError(t, err)
-		if instruction != 0x63 {
+
+		// TODO do all the tests
+		if instruction != 0x64 {
 			continue
 		}
 
@@ -124,7 +125,7 @@ func TestInstructionSet(t *testing.T) {
 
 		t.Logf("test file = %v, num test cases in file = %v", path.Base(p), len(testCases))
 		for i, testCase := range testCases {
-			t.Run(fmt.Sprintf("path = %v, test case # = %v, name = %v", p, i, testCase.Name), func(t *testing.T) {
+			t.Run(fmt.Sprintf("path = %v, instruction = %v, test case # = %v, name = %v", p, instruction, i, testCase.Name), func(t *testing.T) {
 				c := CPU{
 					PC:    testCase.Initial.PC,
 					SP:    testCase.Initial.SP,
@@ -146,7 +147,14 @@ func TestInstructionSet(t *testing.T) {
 				assert.Equal(t, testCase.Final.A, c.A, "A")
 				assert.Equal(t, testCase.Final.X, c.X, "X")
 				assert.Equal(t, testCase.Final.Y, c.Y, "Y")
-				assert.Equal(t, testCase.Final.Flags, c.Flags, "flags")
+				assert.Equal(t, testCase.Final.Flags&CarryFlagMask, c.Flags&CarryFlagMask, "carry flag")
+				assert.Equal(t, testCase.Final.Flags&ZeroFlagMask, c.Flags&ZeroFlagMask, "zero flag")
+				assert.Equal(t, testCase.Final.Flags&InterruptDisableFlagMask, c.Flags&InterruptDisableFlagMask, "interrupt disable flag")
+				assert.Equal(t, testCase.Final.Flags&DecimalModeFlagMask, c.Flags&DecimalModeFlagMask, "decimal mode flag")
+				assert.Equal(t, testCase.Final.Flags&BreakCommandFlagMask, c.Flags&BreakCommandFlagMask, "break command flag")
+				assert.Equal(t, testCase.Final.Flags&UnusedFlagMask, c.Flags&UnusedFlagMask, "unused flag")
+				assert.Equal(t, testCase.Final.Flags&OverflowFlagMask, c.Flags&OverflowFlagMask, "overflow flag")
+				assert.Equal(t, testCase.Final.Flags&NegativeFlagMask, c.Flags&NegativeFlagMask, "negative flag")
 				for _, x := range testCase.Final.RAM {
 					assert.Equal(t, x.Value, m.Read(x.Address), "address at %v", x.Address)
 				}
