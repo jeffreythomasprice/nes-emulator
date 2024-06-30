@@ -256,37 +256,37 @@ func (c *CPU) Step(m Memory) {
 	case 0x6f:
 		c.rraAbsolute(m)
 	case 0x70:
-		// TODO impl
+		c.bvs(m)
 	case 0x71:
-		// TODO impl
+		c.adcZeroPageIndirectY(m)
 	case 0x72:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x73:
-		// TODO impl
+		c.rraZeroPageIndirectY(m)
 	case 0x74:
-		// TODO impl
+		c.nop(2, 4)
 	case 0x75:
-		// TODO impl
+		c.adcZeroPageX(m)
 	case 0x76:
-		// TODO impl
+		c.rorZeroPageX(m)
 	case 0x77:
-		// TODO impl
+		c.rraZeroPageX(m)
 	case 0x78:
-		// TODO impl
+		c.sei()
 	case 0x79:
-		// TODO impl
+		c.adcAbsoluteY(m)
 	case 0x7a:
-		// TODO impl
+		c.nop(1, 2)
 	case 0x7b:
-		// TODO impl
+		c.rraAbsoluteY(m)
 	case 0x7c:
-		// TODO impl
+		c.nopAbsoluteX(m)
 	case 0x7d:
-		// TODO impl
+		c.adcAbsoluteX(m)
 	case 0x7e:
-		// TODO impl
+		c.rorAbsoluteX(m)
 	case 0x7f:
-		// TODO impl
+		c.rraAbsoluteX(m)
 	case 0x80:
 		// TODO impl
 	case 0x81:
@@ -895,6 +895,10 @@ func (c *CPU) bvc(m Memory) {
 	c.branchCommon(m, (c.Flags&OverflowFlagMask) == 0)
 }
 
+func (c *CPU) bvs(m Memory) {
+	c.branchCommon(m, (c.Flags&OverflowFlagMask) != 0)
+}
+
 func (c *CPU) branchCommon(m Memory, condition bool) {
 	if condition {
 		// high byte of address after the branch instruction
@@ -945,6 +949,12 @@ func (c *CPU) sec() {
 
 func (c *CPU) cli() {
 	c.clearFlags(InterruptDisableFlagMask)
+	c.PC += 1
+	c.ClockTime += 2
+}
+
+func (c *CPU) sei() {
+	c.setFlags(InterruptDisableFlagMask)
 	c.PC += 1
 	c.ClockTime += 2
 }
@@ -1126,14 +1136,34 @@ func (c *CPU) adcAbsolute(m Memory) {
 	c.adcCommon(value, 3, 4)
 }
 
+func (c *CPU) adcAbsoluteX(m Memory) {
+	_, value, extraClock := c.absoluteX(m)
+	c.adcCommon(value, 3, 4+extraClock)
+}
+
+func (c *CPU) adcAbsoluteY(m Memory) {
+	_, value, extraClock := c.absoluteY(m)
+	c.adcCommon(value, 3, 4+extraClock)
+}
+
 func (c *CPU) adcZeroPage(m Memory) {
 	_, value := c.zeroPageFixed(m)
 	c.adcCommon(value, 2, 3)
 }
 
+func (c *CPU) adcZeroPageX(m Memory) {
+	_, value := c.zeroPageX(m)
+	c.adcCommon(value, 2, 4)
+}
+
 func (c *CPU) adcZeroPageIndirectX(m Memory) {
 	_, value := c.zeroPageIndirectX(m)
 	c.adcCommon(value, 2, 6)
+}
+
+func (c *CPU) adcZeroPageIndirectY(m Memory) {
+	_, value, extraClock := c.zeroPageIndirectY(m)
+	c.adcCommon(value, 2, 5+extraClock)
 }
 
 func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
@@ -1160,14 +1190,38 @@ func (c *CPU) rraAbsolute(m Memory) {
 	m.Write(address, newValue)
 }
 
+func (c *CPU) rraAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	newValue := c.rraCommon(value, 3, 7)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rraAbsoluteY(m Memory) {
+	address, value, _ := c.absoluteY(m)
+	newValue := c.rraCommon(value, 3, 7)
+	m.Write(address, newValue)
+}
+
 func (c *CPU) rraZeroPage(m Memory) {
 	address, value := c.zeroPageFixed(m)
 	newValue := c.rraCommon(value, 2, 5)
 	m.Write(address, newValue)
 }
 
+func (c *CPU) rraZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	newValue := c.rraCommon(value, 2, 6)
+	m.Write(address, newValue)
+}
+
 func (c *CPU) rraZeroPageIndirectX(m Memory) {
 	address, value := c.zeroPageIndirectX(m)
+	newValue := c.rraCommon(value, 2, 8)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rraZeroPageIndirectY(m Memory) {
+	address, value, _ := c.zeroPageIndirectY(m)
 	newValue := c.rraCommon(value, 2, 8)
 	m.Write(address, newValue)
 }
@@ -1206,9 +1260,21 @@ func (c *CPU) rorAbsolute(m Memory) {
 	m.Write(address, newValue)
 }
 
+func (c *CPU) rorAbsoluteX(m Memory) {
+	address, value, _ := c.absoluteX(m)
+	newValue := c.rorCommon(value, 3, 7)
+	m.Write(address, newValue)
+}
+
 func (c *CPU) rorZeroPage(m Memory) {
 	address, value := c.zeroPageFixed(m)
 	newValue := c.rorCommon(value, 2, 5)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rorZeroPageX(m Memory) {
+	address, value := c.zeroPageX(m)
+	newValue := c.rorCommon(value, 2, 6)
 	m.Write(address, newValue)
 }
 
