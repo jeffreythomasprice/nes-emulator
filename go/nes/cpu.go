@@ -288,37 +288,37 @@ func (c *CPU) Step(m Memory) {
 	case 0x7f:
 		c.rraAbsoluteX(m)
 	case 0x80:
-		// TODO impl
+		c.nop(2, 2)
 	case 0x81:
-		// TODO impl
+		c.staZeroPageIndirectX(m)
 	case 0x82:
-		// TODO impl
+		c.nop(2, 2)
 	case 0x83:
-		// TODO impl
+		c.saxZeroPageIndirectX(m)
 	case 0x84:
-		// TODO impl
+		c.styZeroPage(m)
 	case 0x85:
-		// TODO impl
+		c.staZeroPage(m)
 	case 0x86:
-		// TODO impl
+		c.stxZeroPage(m)
 	case 0x87:
-		// TODO impl
+		c.saxZeroPage(m)
 	case 0x88:
-		// TODO impl
+		c.dey()
 	case 0x89:
-		// TODO impl
+		c.nop(2, 2)
 	case 0x8a:
-		// TODO impl
+		c.txa()
 	case 0x8b:
-		// TODO impl
+		c.xaaImmediate(m)
 	case 0x8c:
-		// TODO impl
+		c.styAbsolute(m)
 	case 0x8d:
-		// TODO impl
+		c.staAbsolute(m)
 	case 0x8e:
-		// TODO impl
+		c.stxAbsolute(m)
 	case 0x8f:
-		// TODO impl
+		c.saxAbsolute(m)
 	case 0x90:
 		// TODO impl
 	case 0x91:
@@ -959,6 +959,14 @@ func (c *CPU) sei() {
 	c.ClockTime += 2
 }
 
+func (c *CPU) dey() {
+	c.Y--
+	c.setFlagsTo(NegativeFlagMask, int8(c.Y) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.Y == 0)
+	c.PC += 1
+	c.ClockTime += 2
+}
+
 func (c *CPU) jsr(m Memory) {
 	address := Read16(m, c.PC+1)
 	c.push16(m, c.PC+2)
@@ -1305,6 +1313,109 @@ func (c *CPU) arrImmediate(m Memory) {
 	c.setFlagsTo(ZeroFlagMask, newValue == 0)
 	c.setFlagsTo(CarryFlagMask, newCarry != 0)
 	c.PC += 2
+	c.ClockTime += 2
+}
+
+func (c *CPU) staAbsolute(m Memory) {
+	address, _ := c.absolute(m)
+	newValue := c.staCommon(3, 4)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) staZeroPage(m Memory) {
+	address, _ := c.zeroPageFixed(m)
+	newValue := c.staCommon(2, 3)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) staZeroPageIndirectX(m Memory) {
+	address, _ := c.zeroPageIndirectX(m)
+	newValue := c.staCommon(2, 6)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) staCommon(pcOffset uint16, clock uint64) uint8 {
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return c.A
+}
+
+func (c *CPU) saxAbsolute(m Memory) {
+	address, _ := c.absolute(m)
+	newValue := c.saxCommon(3, 4)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) saxZeroPage(m Memory) {
+	address, _ := c.zeroPageFixed(m)
+	newValue := c.saxCommon(2, 3)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) saxZeroPageIndirectX(m Memory) {
+	address, _ := c.zeroPageIndirectX(m)
+	newValue := c.saxCommon(2, 6)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) saxCommon(pcOffset uint16, clock uint64) uint8 {
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return c.A & c.X
+}
+
+func (c *CPU) stxAbsolute(m Memory) {
+	address, _ := c.absolute(m)
+	newValue := c.stxCommon(3, 4)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) stxZeroPage(m Memory) {
+	address, _ := c.zeroPageFixed(m)
+	newValue := c.stxCommon(2, 3)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) stxCommon(pcOffset uint16, clock uint64) uint8 {
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return c.X
+}
+
+func (c *CPU) styAbsolute(m Memory) {
+	address, _ := c.absolute(m)
+	newValue := c.styCommon(3, 4)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) styZeroPage(m Memory) {
+	address, _ := c.zeroPageFixed(m)
+	newValue := c.styCommon(2, 3)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) styCommon(pcOffset uint16, clock uint64) uint8 {
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return c.Y
+}
+
+func (c *CPU) xaaImmediate(m Memory) {
+	value := m.Read(c.PC + 1)
+	c.A |= 0xee
+	c.A &= c.X
+	c.A &= value
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.PC += 2
+	c.ClockTime += 2
+}
+
+func (c *CPU) txa() {
+	c.A = c.X
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.PC += 1
 	c.ClockTime += 2
 }
 

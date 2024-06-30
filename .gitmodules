@@ -4,3 +4,6 @@
 [submodule "submodules/ProcessorTests"]
 	path = submodules/ProcessorTests
 	url = https://github.com/jeffreythomasprice/ProcessorTests
+[submodule "submodules/tetanes"]
+	path = submodules/tetanes
+	url = personal-github:jeffreythomasprice/tetanes.git

@@ -112,7 +112,7 @@ func TestInstructionSet(t *testing.T) {
 		assert.NoError(t, err)
 
 		// TODO do all the tests
-		if instruction >= 0x80 {
+		if instruction >= 0x90 {
 			continue
 		}
 
