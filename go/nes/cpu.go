@@ -1,5 +1,7 @@
 package nes
 
+import "fmt"
+
 const (
 	CarryFlagMask            uint8 = 0b0000_0001
 	ZeroFlagMask             uint8 = 0b0000_0010
@@ -52,7 +54,7 @@ func (c *CPU) Step(m Memory) {
 	case 0x09:
 		c.oraImmediate(m)
 	case 0x0a:
-		c.asl(m)
+		c.asl()
 	case 0x0b:
 		c.ancImmediate(m)
 	case 0x0c:
@@ -116,7 +118,7 @@ func (c *CPU) Step(m Memory) {
 	case 0x29:
 		c.andImmediate(m)
 	case 0x2a:
-		c.rol(m)
+		c.rol()
 	case 0x2b:
 		c.ancImmediate(m)
 	case 0x2c:
@@ -180,7 +182,7 @@ func (c *CPU) Step(m Memory) {
 	case 0x49:
 		c.eorImmediate(m)
 	case 0x4a:
-		c.lsr(m)
+		c.lsr()
 	case 0x4b:
 		c.alr(m)
 	case 0x4c:
@@ -320,13 +322,13 @@ func (c *CPU) Step(m Memory) {
 	case 0x8f:
 		c.saxAbsolute(m)
 	case 0x90:
-		// TODO impl
+		c.bcc(m)
 	case 0x91:
-		// TODO impl
+		c.staZeroPageIndirectY(m)
 	case 0x92:
-		// TODO impl
+		c.nop(0, 3)
 	case 0x93:
-		// TODO impl
+		c.ahxZeroPageIndirectY(m)
 	case 0x94:
 		// TODO impl
 	case 0x95:
@@ -693,7 +695,7 @@ func (c *CPU) sloCommon(m Memory, address uint16, value uint8, pcOffset uint16, 
 	c.ClockTime += clock
 }
 
-func (c *CPU) asl(m Memory) {
+func (c *CPU) asl() {
 	value := c.A
 	newValue := value << 1
 	c.A = newValue
@@ -842,7 +844,7 @@ func (c *CPU) rlaCommon(m Memory, address uint16, value uint8, pcOffset uint16, 
 	c.ClockTime += clock
 }
 
-func (c *CPU) rol(m Memory) {
+func (c *CPU) rol() {
 	c.A = c.rolCommon(c.A, 1, 2)
 }
 
@@ -897,6 +899,10 @@ func (c *CPU) bvc(m Memory) {
 
 func (c *CPU) bvs(m Memory) {
 	c.branchCommon(m, (c.Flags&OverflowFlagMask) != 0)
+}
+
+func (c *CPU) bcc(m Memory) {
+	c.branchCommon(m, (c.Flags&CarryFlagMask) == 0)
 }
 
 func (c *CPU) branchCommon(m Memory, condition bool) {
@@ -1086,7 +1092,7 @@ func (c *CPU) sreCommon(m Memory, address uint16, value uint8, pcOffset uint16, 
 	c.ClockTime += clock
 }
 
-func (c *CPU) lsr(m Memory) {
+func (c *CPU) lsr() {
 	c.A = c.lsrCommon(c.A, 1, 2)
 }
 
@@ -1334,6 +1340,12 @@ func (c *CPU) staZeroPageIndirectX(m Memory) {
 	m.Write(address, newValue)
 }
 
+func (c *CPU) staZeroPageIndirectY(m Memory) {
+	address, _, _ := c.zeroPageIndirectY(m)
+	newValue := c.staCommon(2, 6)
+	m.Write(address, newValue)
+}
+
 func (c *CPU) staCommon(pcOffset uint16, clock uint64) uint8 {
 	c.PC += pcOffset
 	c.ClockTime += clock
@@ -1417,6 +1429,29 @@ func (c *CPU) txa() {
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
 	c.PC += 1
 	c.ClockTime += 2
+}
+
+func (c *CPU) ahxZeroPageIndirectY(m Memory) {
+	address, value, _ := c.zeroPageIndirectY(m)
+	newValue := c.ahxCommon(m, address, value, 2, 6)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) ahxCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) uint8 {
+	fmt.Printf("TODO address = %04x\n", address)
+	fmt.Printf("TODO value = %02x\n", value)
+	fmt.Printf("TODO a = %02x\n", c.A)
+	fmt.Printf("TODO x = %02x\n", c.X)
+	// newValue := c.A & c.X & uint8((address+1)>>8)
+	newValue := c.A & c.X & (uint8(address >> 8))
+	fmt.Printf("TODO newValue = %02x\n", newValue)
+	// newValue := c.A & c.X & ((value - c.Y) + 1)
+	// newValue := c.A & c.X & (value + 1)
+	// newValue := c.A & c.X
+	// newValue := c.A & c.X & m.Read(uint16(uint8(address>>8)+1))
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return newValue
 }
 
 func (c *CPU) nop(pcOffset uint16, clock uint64) {
