@@ -232,21 +232,21 @@ func (c *CPU) Step(m Memory) {
 	case 0x63:
 		c.rraZeroPageIndirectX(m)
 	case 0x64:
-		// TODO impl
+		c.nop(2, 3)
 	case 0x65:
-		// TODO impl
+		c.adcZeroPage(m)
 	case 0x66:
-		// TODO impl
+		c.rorZeroPage(m)
 	case 0x67:
-		// TODO impl
+		c.rraZeroPage(m)
 	case 0x68:
-		// TODO impl
+		c.pla(m)
 	case 0x69:
-		// TODO impl
+		c.adcImmediate(m)
 	case 0x6a:
-		// TODO impl
+		c.ror()
 	case 0x6b:
-		// TODO impl
+		c.arrImmediate(m)
 	case 0x6c:
 		// TODO impl
 	case 0x6d:
@@ -589,6 +589,14 @@ func (c *CPU) pha(m Memory) {
 	c.push8(m, c.A)
 	c.PC += 1
 	c.ClockTime += 3
+}
+
+func (c *CPU) pla(m Memory) {
+	c.A = c.pop8(m)
+	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
+	c.setFlagsTo(ZeroFlagMask, c.A == 0)
+	c.PC += 1
+	c.ClockTime += 4
 }
 
 func (c *CPU) oraImmediate(m Memory) {
@@ -1096,6 +1104,16 @@ func (c *CPU) alr(m Memory) {
 	c.ClockTime += 2
 }
 
+func (c *CPU) adcImmediate(m Memory) {
+	value := m.Read(c.PC + 1)
+	c.adcCommon(value, 2, 2)
+}
+
+func (c *CPU) adcZeroPage(m Memory) {
+	_, value := c.zeroPageFixed(m)
+	c.adcCommon(value, 2, 3)
+}
+
 func (c *CPU) adcZeroPageIndirectX(m Memory) {
 	_, value := c.zeroPageIndirectX(m)
 	c.adcCommon(value, 2, 6)
@@ -1117,6 +1135,12 @@ func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
 	c.setFlagsTo(OverflowFlagMask, valueSignBit == oldASignBit && valueSignBit != newSignBit)
 	c.PC += pcOffset
 	c.ClockTime += clock
+}
+
+func (c *CPU) rraZeroPage(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	newValue := c.rraCommon(value, 2, 5)
+	m.Write(address, newValue)
 }
 
 func (c *CPU) rraZeroPageIndirectX(m Memory) {
@@ -1147,6 +1171,33 @@ func (c *CPU) rraCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
 	c.PC += pcOffset
 	c.ClockTime += clock
 	return rorNewValue
+}
+
+func (c *CPU) ror() {
+	c.A = c.rorCommon(c.A, 1, 2)
+}
+
+func (c *CPU) rorZeroPage(m Memory) {
+	address, value := c.zeroPageFixed(m)
+	newValue := c.rorCommon(value, 2, 5)
+	m.Write(address, newValue)
+}
+
+func (c *CPU) rorCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
+	newValue := value >> 1
+	if (c.Flags & CarryFlagMask) != 0 {
+		newValue |= 0b1000_0000
+	}
+	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
+	c.setFlagsTo(ZeroFlagMask, newValue == 0)
+	c.setFlagsTo(CarryFlagMask, (value&1) != 0)
+	c.PC += pcOffset
+	c.ClockTime += clock
+	return newValue
+}
+
+func (c *CPU) arrImmediate(m Memory) {
+	// TODO AND oper + ROR
 }
 
 func (c *CPU) nop(pcOffset uint16, clock uint64) {
