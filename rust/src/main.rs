@@ -1,4 +1,5 @@
 mod cpu;
+mod endians;
 mod flags;
 mod instruction_set_test_cases;
 mod memory;

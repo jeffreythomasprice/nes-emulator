@@ -81,7 +81,7 @@ mod test {
 
             // TODO do all tests
             let instruction = u8::from_str_radix(&file_name[0..2], 16).unwrap();
-            if instruction != 0x00 {
+            if instruction != 0x03 {
                 continue;
             }
 
@@ -110,7 +110,7 @@ mod test {
                     m.write8(x.address, x.value);
                 }
 
-                c.step();
+                c.step(&mut m);
 
                 test_results.eq(&test_case.expected.pc, &c.pc, "pc".to_string());
                 test_results.eq(&test_case.expected.sp, &c.sp, "sp".to_string());
