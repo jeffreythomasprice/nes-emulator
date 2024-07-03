@@ -108,40 +108,22 @@ impl CPU {
             0x3d => self.and_absolute_x(m),
             0x3e => self.rol_absolute_x(m),
             0x3f => self.rla_absolute_x(m),
-            // 	case 0x3f:
-            // 		c.rlaAbsoluteX(m)
-            // 	case 0x40:
-            // 		c.rti(m)
-            // 	case 0x41:
-            // 		c.eorZeroPageIndirectX(m)
-            // 	case 0x42:
-            // 		c.nop(0, 3)
-            // 	case 0x43:
-            // 		c.sreZeroPageIndirectX(m)
-            // 	case 0x44:
-            // 		c.nop(2, 3)
-            // 	case 0x45:
-            // 		c.eorZeroPage(m)
-            // 	case 0x46:
-            // 		c.lsrZeroPage(m)
-            // 	case 0x47:
-            // 		c.sreZeroPage(m)
-            // 	case 0x48:
-            // 		c.pha(m)
-            // 	case 0x49:
-            // 		c.eorImmediate(m)
-            // 	case 0x4a:
-            // 		c.lsr()
-            // 	case 0x4b:
-            // 		c.alr(m)
-            // 	case 0x4c:
-            // 		c.jmpAbsolute(m)
-            // 	case 0x4d:
-            // 		c.eorAbsolute(m)
-            // 	case 0x4e:
-            // 		c.lsrAbsolute(m)
-            // 	case 0x4f:
-            // 		c.sreAbsolute(m)
+            0x40 => self.rti(m),
+            0x41 => self.eor_zero_page_indirect_x(m),
+            0x42 => self.nop(-1, 3),
+            0x43 => self.sre_zero_page_indirect_x(m),
+            0x44 => self.nop(1, 3),
+            0x45 => self.eor_zero_page(m),
+            0x46 => self.lsr_zero_page(m),
+            0x47 => self.sre_zero_page(m),
+            0x48 => self.pha(m),
+            0x49 => self.eor_immediate(m),
+            0x4a => self.lsr(),
+            0x4b => self.alr(m),
+            0x4c => self.jmp_absolute(m),
+            0x4d => self.eor_absolute(m),
+            0x4e => self.lsr_absolute(m),
+            0x4f => self.sre_absolute(m),
             // 	case 0x50:
             // 		c.bvc(m)
             // 	case 0x51:
@@ -527,26 +509,32 @@ impl CPU {
         self.clock += 4;
     }
 
-    // TODO here
+    fn rti<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.flags = (Flags::from_bits_retain(self.pop8(m)) - Flags::BREAK_COMMAND_MASK)
+            | Flags::UNUSED_MASK;
+        self.pc = self.pop16(m);
+        self.clock += 6;
+    }
 
-    // func (c *CPU) rti(m Memory) {
-    // 	c.Flags = c.pop8(m)
-    // 	c.PC = c.pop16(m)
-    // 	c.clearFlags(BreakCommandFlagMask)
-    // 	c.setFlags(UnusedFlagMask)
-    // 	c.ClockTime += 6
-    // }
+    // TODO here
 
     // func (c *CPU) rta(m Memory) {
     // 	c.PC = c.pop16(m) + 1
     // 	c.ClockTime += 6
     // }
 
-    // func (c *CPU) pha(m Memory) {
-    // 	c.push8(m, c.A)
-    // 	c.PC += 1
-    // 	c.ClockTime += 3
-    // }
+    fn pha<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.push8(m, self.a);
+        self.clock += 3;
+    }
+
+    // TODO here
 
     // func (c *CPU) pla(m Memory) {
     // 	c.A = c.pop8(m)
@@ -1070,12 +1058,15 @@ impl CPU {
         }
     }
 
-    // TODO here
+    fn jmp_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.pc = self.read_next_u16(m);
+        self.clock += 3;
+    }
 
-    // func (c *CPU) jmpAbsolute(m Memory) {
-    // 	c.PC = Read16(m, c.PC+1)
-    // 	c.ClockTime += 3
-    // }
+    // TODO here
 
     // func (c *CPU) jmpIndirect(m Memory) {
     // 	address := Read16(m, c.PC+1)
@@ -1160,37 +1151,52 @@ impl CPU {
         self.clock += clock;
     }
 
+    fn eor_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.eor_common(value, 3);
+    }
+
     // TODO here
-
-    // func (c *CPU) eorZeroPage(m Memory) {
-    // 	_, value := c.zeroPageFixed(m)
-    // 	c.eorCommon(value, 2, 3)
-    // }
-
     // func (c *CPU) eorZeroPageX(m Memory) {
     // 	_, value := c.zeroPageX(m)
     // 	c.eorCommon(value, 2, 4)
     // }
 
-    // func (c *CPU) eorZeroPageIndirectX(m Memory) {
-    // 	_, value := c.zeroPageIndirectX(m)
-    // 	c.eorCommon(value, 2, 6)
-    // }
+    fn eor_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_indirect_x(m);
+        self.eor_common(value, 6);
+    }
+
+    // TODO here
 
     // func (c *CPU) eorZeroPageIndirectY(m Memory) {
     // 	_, value, extraClock := c.zeroPageIndirectY(m)
     // 	c.eorCommon(value, 2, 5+extraClock)
     // }
 
-    // func (c *CPU) eorImmediate(m Memory) {
-    // 	value := m.Read(c.PC + 1)
-    // 	c.eorCommon(value, 2, 2)
-    // }
+    fn eor_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.eor_common(value, 2);
+    }
 
-    // func (c *CPU) eorAbsolute(m Memory) {
-    // 	_, value := c.absolute(m)
-    // 	c.eorCommon(value, 3, 4)
-    // }
+    fn eor_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.eor_common(value, 4);
+    }
+
+    // TODO here
 
     // func (c *CPU) eorAbsoluteX(m Memory) {
     // 	_, value, extraClock := c.absoluteX(m)
@@ -1202,38 +1208,52 @@ impl CPU {
     // 	c.eorCommon(value, 3, 4+extraClock)
     // }
 
-    // func (c *CPU) eorCommon(value uint8, pcOffset uint16, clock uint64) {
-    // 	c.A ^= value
-    // 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
-    // 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
-    // 	c.PC += pcOffset
-    // 	c.ClockTime += clock
-    // }
+    fn eor_common(&mut self, value: u8, clock: u64) {
+        self.a ^= value;
+        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO_MASK, self.a == 0);
+        self.clock += clock;
+    }
 
-    // func (c *CPU) sreZeroPage(m Memory) {
-    // 	address, value := c.zeroPageFixed(m)
-    // 	c.sreCommon(m, address, value, 2, 5)
-    // }
+    fn sre_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        self.sre_common(m, address, value, 5);
+    }
+
+    // TODO here
 
     // func (c *CPU) sreZeroPageX(m Memory) {
     // 	address, value := c.zeroPageX(m)
     // 	c.sreCommon(m, address, value, 2, 6)
     // }
 
-    // func (c *CPU) sreZeroPageIndirectX(m Memory) {
-    // 	address, value := c.zeroPageIndirectX(m)
-    // 	c.sreCommon(m, address, value, 2, 8)
-    // }
+    fn sre_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_indirect_x(m);
+        self.sre_common(m, address, value, 8);
+    }
+
+    // TODO here
 
     // func (c *CPU) sreZeroPageIndirectY(m Memory) {
     // 	address, value, _ := c.zeroPageIndirectY(m)
     // 	c.sreCommon(m, address, value, 2, 8)
     // }
 
-    // func (c *CPU) sreAbsolute(m Memory) {
-    // 	address, value := c.absolute(m)
-    // 	c.sreCommon(m, address, value, 3, 6)
-    // }
+    fn sre_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        self.sre_common(m, address, value, 6);
+    }
+
+    // TODO here
 
     // func (c *CPU) sreAbsoluteX(m Memory) {
     // 	address, value, _ := c.absoluteX(m)
@@ -1245,26 +1265,34 @@ impl CPU {
     // 	c.sreCommon(m, address, value, 3, 7)
     // }
 
-    // func (c *CPU) sreCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
-    // 	newValue := value >> 1
-    // 	m.Write(address, newValue)
-    // 	c.A ^= newValue
-    // 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
-    // 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
-    // 	c.setFlagsTo(CarryFlagMask, (value&0b0000_0001) != 0)
-    // 	c.PC += pcOffset
-    // 	c.ClockTime += clock
-    // }
+    fn sre_common<M>(&mut self, m: &mut M, address: u16, value: u8, clock: u64)
+    where
+        M: Memory,
+    {
+        let new_value = value >> 1;
+        m.write8(address, new_value);
+        self.a ^= new_value;
+        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO_MASK, self.a == 0);
+        self.flags
+            .set(Flags::CARRY_MASK, (value & 0b0000_0001) != 0);
+        self.clock += clock;
+    }
 
-    // func (c *CPU) lsr() {
-    // 	c.A = c.lsrCommon(c.A, 1, 2)
-    // }
+    fn lsr(&mut self) {
+        self.a = self.lsr_common(self.a, 2);
+    }
 
-    // func (c *CPU) lsrZeroPage(m Memory) {
-    // 	address, value := c.zeroPageFixed(m)
-    // 	newValue := c.lsrCommon(value, 2, 5)
-    // 	m.Write(address, newValue)
-    // }
+    fn lsr_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        let new_value = self.lsr_common(value, 5);
+        m.write8(address, new_value);
+    }
+
+    // TODO here
 
     // func (c *CPU) lsrZeroPageX(m Memory) {
     // 	address, value := c.zeroPageX(m)
@@ -1272,11 +1300,16 @@ impl CPU {
     // 	m.Write(address, newValue)
     // }
 
-    // func (c *CPU) lsrAbsolute(m Memory) {
-    // 	address, value := c.absolute(m)
-    // 	newValue := c.lsrCommon(value, 3, 6)
-    // 	m.Write(address, newValue)
-    // }
+    fn lsr_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        let new_value = self.lsr_common(value, 6);
+        m.write8(address, new_value);
+    }
+
+    // TODO here
 
     // func (c *CPU) lsrAbsoluteX(m Memory) {
     // 	address, value, _ := c.absoluteX(m)
@@ -1284,25 +1317,30 @@ impl CPU {
     // 	m.Write(address, newValue)
     // }
 
-    // func (c *CPU) lsrCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
-    // 	newValue := value >> 1
-    // 	c.clearFlags(NegativeFlagMask)
-    // 	c.setFlagsTo(ZeroFlagMask, newValue == 0)
-    // 	c.setFlagsTo(CarryFlagMask, (value&0b0000_0001) != 0)
-    // 	c.PC += pcOffset
-    // 	c.ClockTime += clock
-    // 	return newValue
-    // }
+    fn lsr_common(&mut self, value: u8, clock: u64) -> u8 {
+        let new_value = value >> 1;
+        self.flags -= Flags::NEGATIVE_MASK;
+        self.flags.set(Flags::ZERO_MASK, new_value == 0);
+        self.flags
+            .set(Flags::CARRY_MASK, (value & 0b0000_0001) != 0);
+        self.clock += clock;
+        new_value
+    }
 
-    // func (c *CPU) alr(m Memory) {
-    // 	value := c.A & m.Read(c.PC+1)
-    // 	c.A = value >> 1
-    // 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
-    // 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
-    // 	c.setFlagsTo(CarryFlagMask, (value&0b0000_0001) != 0)
-    // 	c.PC += 2
-    // 	c.ClockTime += 2
-    // }
+    fn alr<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.a & self.read_next_u8(m);
+        self.a = value >> 1;
+        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO_MASK, self.a == 0);
+        self.flags
+            .set(Flags::CARRY_MASK, (value & 0b0000_0001) != 0);
+        self.clock += 2;
+    }
+
+    // TODO here
 
     // func (c *CPU) adcImmediate(m Memory) {
     // 	value := m.Read(c.PC + 1)
