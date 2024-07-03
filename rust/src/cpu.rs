@@ -60,38 +60,22 @@ impl CPU {
             0x0d => self.ora_absolute(m),
             0x0e => self.asl_absolute(m),
             0x0f => self.slo_absolute(m),
-            // 	case 0x10:
-            // 		c.bpl(m)
-            // 	case 0x11:
-            // 		c.oraZeroPageIndirectY(m)
-            // 	case 0x12:
-            // 		c.nop(0, 3)
-            // 	case 0x13:
-            // 		c.sloZeroPageIndirectY(m)
-            // 	case 0x14:
-            // 		c.nop(2, 4)
-            // 	case 0x15:
-            // 		c.oraZeroPageX(m)
-            // 	case 0x16:
-            // 		c.aslZeroPageX(m)
-            // 	case 0x17:
-            // 		c.sloZeroPageX(m)
-            // 	case 0x18:
-            // 		c.clc()
-            // 	case 0x19:
-            // 		c.oraAbsoluteY(m)
-            // 	case 0x1a:
-            // 		c.nop(1, 2)
-            // 	case 0x1b:
-            // 		c.sloAbsoluteY(m)
-            // 	case 0x1c:
-            // 		c.nopAbsoluteX(m)
-            // 	case 0x1d:
-            // 		c.oraAbsoluteX(m)
-            // 	case 0x1e:
-            // 		c.aslAbsoluteX(m)
-            // 	case 0x1f:
-            // 		c.sloAbsoluteX(m)
+            0x10 => self.bpl(m),
+            0x11 => self.ora_zero_page_indirect_y(m),
+            0x12 => self.nop(-1, 3),
+            0x13 => self.slo_zero_page_indirect_y(m),
+            0x14 => self.nop(1, 4),
+            0x15 => self.ora_zero_page_x(m),
+            0x16 => self.asl_zero_page_x(m),
+            0x17 => self.slo_zero_page_x(m),
+            0x18 => self.clc(),
+            0x19 => self.ora_absolute_y(m),
+            0x1a => self.nop(0, 2),
+            0x1b => self.slo_absolute_y(m),
+            0x1c => self.nop_absolute_x(m),
+            0x1d => self.ora_absolute_x(m),
+            0x1e => self.asl_absolute_x(m),
+            0x1f => self.slo_absolute_x(m),
             // 	case 0x20:
             // 		c.jsr(m)
             // 	case 0x21:
@@ -625,12 +609,17 @@ impl CPU {
         self.ora_common(value, 6);
     }
 
-    // TODO here
-
-    // func (c *CPU) oraZeroPageIndirectY(m Memory) {
-    // 	_, value, extraClock := c.zeroPageIndirectY(m)
-    // 	c.oraCommon(value, 2, 5+extraClock)
-    // }
+    fn ora_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.zero_page_indirect_y(m);
+        self.ora_common(value, 5 + extra_clock);
+    }
 
     fn ora_zero_page_fixed<M>(&mut self, m: &mut M)
     where
@@ -640,22 +629,37 @@ impl CPU {
         self.ora_common(value, 3)
     }
 
-    // TODO here
+    fn ora_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_x(m);
+        self.ora_common(value, 4);
+    }
 
-    // func (c *CPU) oraZeroPageX(m Memory) {
-    // 	_, value := c.zeroPageX(m)
-    // 	c.oraCommon(value, 2, 4)
-    // }
+    fn ora_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_x(m);
+        self.ora_common(value, 4 + extra_clock);
+    }
 
-    // func (c *CPU) oraAbsoluteX(m Memory) {
-    // 	_, value, extraClock := c.absoluteX(m)
-    // 	c.oraCommon(value, 3, 4+extraClock)
-    // }
-
-    // func (c *CPU) oraAbsoluteY(m Memory) {
-    // 	_, value, extraClock := c.absoluteY(m)
-    // 	c.oraCommon(value, 3, 4+extraClock)
-    // }
+    fn ora_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        self.ora_common(value, 4 + extra_clock);
+    }
 
     fn ora_common(&mut self, new_value: u8, clock: u64) {
         self.a |= new_value;
@@ -672,17 +676,29 @@ impl CPU {
         self.slo_common(m, address, value, 6);
     }
 
-    // TODO here
+    fn slo_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        self.slo_common(m, address, value, 7);
+    }
 
-    // func (c *CPU) sloAbsoluteX(m Memory) {
-    // 	address, value, _ := c.absoluteX(m)
-    // 	c.sloCommon(m, address, value, 3, 7)
-    // }
-
-    // func (c *CPU) sloAbsoluteY(m Memory) {
-    // 	address, value, _ := c.absoluteY(m)
-    // 	c.sloCommon(m, address, value, 3, 7)
-    // }
+    fn slo_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_y(m);
+        self.slo_common(m, address, value, 7);
+    }
 
     fn slo_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
@@ -692,12 +708,17 @@ impl CPU {
         self.slo_common(m, address, value, 8);
     }
 
-    // TODO here
-
-    // func (c *CPU) sloZeroPageIndirectY(m Memory) {
-    // 	address, value, _ := c.zeroPageIndirectY(m)
-    // 	c.sloCommon(m, address, value, 2, 8)
-    // }
+    fn slo_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.zero_page_indirect_y(m);
+        self.slo_common(m, address, value, 8);
+    }
 
     fn slo_zero_page_immediate<M>(&mut self, m: &mut M)
     where
@@ -708,12 +729,14 @@ impl CPU {
         self.slo_common(m, address, value, 5)
     }
 
-    // TODO here
-
-    // func (c *CPU) sloZeroPageX(m Memory) {
-    // 	address, value := c.zeroPageX(m)
-    // 	c.sloCommon(m, address, value, 2, 6)
-    // }
+    fn slo_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        // 	address, value := c.zeroPageFixed(m)
+        self.slo_common(m, address, value, 6)
+    }
 
     fn slo_common<M>(&mut self, m: &mut M, address: u16, value: u8, clock: u64)
     where
@@ -754,17 +777,25 @@ impl CPU {
         self.asl_common(m, address, value, 6);
     }
 
-    // TODO here
+    fn asl_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        self.asl_common(m, address, value, 6);
+    }
 
-    // func (c *CPU) aslZeroPageX(m Memory) {
-    // 	address, value := c.zeroPageX(m)
-    // 	c.aslCommon(m, address, value, 2, 6)
-    // }
-
-    // func (c *CPU) aslAbsoluteX(m Memory) {
-    // 	address, value, _ := c.absoluteX(m)
-    // 	c.aslCommon(m, address, value, 3, 7)
-    // }
+    fn asl_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        self.asl_common(m, address, value, 7);
+    }
 
     fn asl_common<M>(&mut self, m: &mut M, address: u16, value: u8, clock: u64)
     where
@@ -932,9 +963,14 @@ impl CPU {
     // 	return newValue
     // }
 
-    // func (c *CPU) bpl(m Memory) {
-    // 	c.branchCommon(m, (c.Flags&NegativeFlagMask) == 0)
-    // }
+    fn bpl<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.branch_common(m, !self.flags.contains(Flags::NEGATIVE_MASK));
+    }
+
+    // TODO here
 
     // func (c *CPU) bmi(m Memory) {
     // 	c.branchCommon(m, (c.Flags&NegativeFlagMask) != 0)
@@ -952,24 +988,26 @@ impl CPU {
     // 	c.branchCommon(m, (c.Flags&CarryFlagMask) == 0)
     // }
 
-    // func (c *CPU) branchCommon(m Memory, condition bool) {
-    // 	if condition {
-    // 		// high byte of address after the branch instruction
-    // 		high1 := (c.PC + 2) & 0xff00
-    // 		// do the jump
-    // 		c.PC = uint16(int32(c.PC) + 2 + int32(int8(m.Read(c.PC+1))))
-    // 		// high byte of address of branch destination
-    // 		high2 := c.PC & 0xff00
-    // 		if high1 == high2 {
-    // 			c.ClockTime += 3
-    // 		} else {
-    // 			c.ClockTime += 4
-    // 		}
-    // 	} else {
-    // 		c.PC += 2
-    // 		c.ClockTime += 2
-    // 	}
-    // }
+    fn branch_common<M>(&mut self, m: &mut M, condition: bool)
+    where
+        M: Memory,
+    {
+        if condition {
+            let offset = self.read_next_u8(m);
+            // high byte of address after the branch instruction
+            let high1 = self.pc & 0xff00;
+            // do the jump
+            self.pc = self.pc.wrapping_add(offset as i8 as u16);
+            // high byte of address of branch destination
+            let high2 = self.pc & 0xff00;
+            self.clock += if high1 == high2 { 3 } else { 4 }
+        } else {
+            self.pc += 1;
+            self.clock += 2;
+        }
+    }
+
+    // TODO here
 
     // func (c *CPU) jmpAbsolute(m Memory) {
     // 	c.PC = Read16(m, c.PC+1)
@@ -988,11 +1026,12 @@ impl CPU {
     // 	c.ClockTime += 5
     // }
 
-    // func (c *CPU) clc() {
-    // 	c.clearFlags(CarryFlagMask)
-    // 	c.PC += 1
-    // 	c.ClockTime += 2
-    // }
+    fn clc(&mut self) {
+        self.flags -= Flags::CARRY_MASK;
+        self.clock += 2
+    }
+
+    // TODO here
 
     // func (c *CPU) sec() {
     // 	c.setFlags(CarryFlagMask)
@@ -1515,7 +1554,6 @@ impl CPU {
             value: _,
             extra_clock,
         } = self.absolute_x(m);
-        self.pc += 3;
         self.clock += 4 + extra_clock;
     }
 
@@ -1582,7 +1620,7 @@ impl CPU {
     {
         let address = self.read_next_u16(m);
         let high1 = address & 0xff00;
-        let address = address + (offset as u16);
+        let address = address.wrapping_add(offset as u16);
         let value = m.read8(address);
         let high2 = address & 0xff00;
         // if adding Y pushes us into a new page it will take an extra clock cycle to resolve
@@ -1629,7 +1667,7 @@ impl CPU {
         let offset = self.read_next_u8(m);
         let address = self.zero_page_indirect(m, offset, 0);
         let high1 = address & 0xff00;
-        let address = address + (self.y as u16);
+        let address = address.wrapping_add(self.y as u16);
         let value = m.read8(address);
         let high2 = address & 0xff00;
         // if adding Y pushes us into a new page it will take an extra clock cycle to resolve
