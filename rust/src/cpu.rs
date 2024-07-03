@@ -48,30 +48,18 @@ impl CPU {
             0x01 => self.ora_zero_page_indirect_x(m),
             0x02 => self.nop(-1, 3),
             0x03 => self.slo_zero_page_indirect_x(m),
-            // 	case 0x04:
-            // 		c.nop(2, 3)
-            // 	case 0x05:
-            // 		c.oraZeroPageFixed(m)
-            // 	case 0x06:
-            // 		c.aslZeroPageFixed(m)
-            // 	case 0x07:
-            // 		c.sloZeroPageImmediate(m)
-            // 	case 0x08:
-            // 		c.php(m)
-            // 	case 0x09:
-            // 		c.oraImmediate(m)
-            // 	case 0x0a:
-            // 		c.asl()
-            // 	case 0x0b:
-            // 		c.ancImmediate(m)
-            // 	case 0x0c:
-            // 		c.nop(3, 4)
-            // 	case 0x0d:
-            // 		c.oraAbsolute(m)
-            // 	case 0x0e:
-            // 		c.aslAbsolute(m)
-            // 	case 0x0f:
-            // 		c.sloAbsolute(m)
+            0x04 => self.nop(1, 3),
+            0x05 => self.ora_zero_page_fixed(m),
+            0x06 => self.asl_zero_page_fixed(m),
+            0x07 => self.slo_zero_page_immediate(m),
+            0x08 => self.php(m),
+            0x09 => self.ora_immediate(m),
+            0x0a => self.asl(),
+            0x0b => self.anc_immediate(m),
+            0x0c => self.nop(2, 4),
+            0x0d => self.ora_absolute(m),
+            0x0e => self.asl_absolute(m),
+            0x0f => self.slo_absolute(m),
             // 	case 0x10:
             // 		c.bpl(m)
             // 	case 0x11:
@@ -568,15 +556,15 @@ impl CPU {
         self.clock += 7;
     }
 
-    // TODO here
+    fn php<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.push8(m, (self.flags | Flags::BREAK_COMMAND_MASK).bits());
+        self.clock += 3;
+    }
 
-    // func (c *CPU) php(m Memory) {
-    // 	c.setFlags(BreakCommandFlagMask)
-    // 	c.push8(m, c.Flags)
-    // 	c.clearFlags(BreakCommandFlagMask)
-    // 	c.PC += 1
-    // 	c.ClockTime += 3
-    // }
+    // TODO here
 
     // func (c *CPU) plp(m Memory) {
     // 	c.Flags = c.pop8(m)
@@ -613,15 +601,21 @@ impl CPU {
     // 	c.ClockTime += 4
     // }
 
-    // func (c *CPU) oraImmediate(m Memory) {
-    // 	value := m.Read(c.PC + 1)
-    // 	c.oraCommon(value, 2, 2)
-    // }
+    fn ora_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.ora_common(value, 2);
+    }
 
-    // func (c *CPU) oraAbsolute(m Memory) {
-    // 	_, value := c.absolute(m)
-    // 	c.oraCommon(value, 3, 4)
-    // }
+    fn ora_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.ora_common(value, 4);
+    }
 
     fn ora_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
@@ -638,10 +632,15 @@ impl CPU {
     // 	c.oraCommon(value, 2, 5+extraClock)
     // }
 
-    // func (c *CPU) oraZeroPageFixed(m Memory) {
-    // 	_, value := c.zeroPageFixed(m)
-    // 	c.oraCommon(value, 2, 3)
-    // }
+    fn ora_zero_page_fixed<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.ora_common(value, 3)
+    }
+
+    // TODO here
 
     // func (c *CPU) oraZeroPageX(m Memory) {
     // 	_, value := c.zeroPageX(m)
@@ -665,12 +664,15 @@ impl CPU {
         self.clock += clock;
     }
 
-    // TODO here
+    fn slo_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        self.slo_common(m, address, value, 6);
+    }
 
-    // func (c *CPU) sloAbsolute(m Memory) {
-    // 	address, value := c.absolute(m)
-    // 	c.sloCommon(m, address, value, 3, 6)
-    // }
+    // TODO here
 
     // func (c *CPU) sloAbsoluteX(m Memory) {
     // 	address, value, _ := c.absoluteX(m)
@@ -697,10 +699,16 @@ impl CPU {
     // 	c.sloCommon(m, address, value, 2, 8)
     // }
 
-    // func (c *CPU) sloZeroPageImmediate(m Memory) {
-    // 	address, value := c.zeroPageFixed(m)
-    // 	c.sloCommon(m, address, value, 2, 5)
-    // }
+    fn slo_zero_page_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        // 	address, value := c.zeroPageFixed(m)
+        self.slo_common(m, address, value, 5)
+    }
+
+    // TODO here
 
     // func (c *CPU) sloZeroPageX(m Memory) {
     // 	address, value := c.zeroPageX(m)
@@ -720,28 +728,33 @@ impl CPU {
         self.clock += clock;
     }
 
+    fn asl(&mut self) {
+        let value = self.a;
+        let new_value = value << 1;
+        self.a = new_value;
+        self.flags.set(Flags::NEGATIVE_MASK, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO_MASK, new_value == 0);
+        self.flags.set(Flags::CARRY_MASK, new_value < value);
+        self.clock += 2;
+    }
+
+    fn asl_zero_page_fixed<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        self.asl_common(m, address, value, 5);
+    }
+
+    fn asl_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        self.asl_common(m, address, value, 6);
+    }
+
     // TODO here
-
-    // func (c *CPU) asl() {
-    // 	value := c.A
-    // 	newValue := value << 1
-    // 	c.A = newValue
-    // 	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
-    // 	c.setFlagsTo(ZeroFlagMask, newValue == 0)
-    // 	c.setFlagsTo(CarryFlagMask, newValue < value)
-    // 	c.PC += 1
-    // 	c.ClockTime += 2
-    // }
-
-    // func (c *CPU) aslZeroPageFixed(m Memory) {
-    // 	address, value := c.zeroPageFixed(m)
-    // 	c.aslCommon(m, address, value, 2, 5)
-    // }
-
-    // func (c *CPU) aslAbsolute(m Memory) {
-    // 	address, value := c.absolute(m)
-    // 	c.aslCommon(m, address, value, 3, 6)
-    // }
 
     // func (c *CPU) aslZeroPageX(m Memory) {
     // 	address, value := c.zeroPageX(m)
@@ -753,26 +766,33 @@ impl CPU {
     // 	c.aslCommon(m, address, value, 3, 7)
     // }
 
-    // func (c *CPU) aslCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
-    // 	newValue := value << 1
-    // 	m.Write(address, newValue)
-    // 	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
-    // 	c.setFlagsTo(ZeroFlagMask, newValue == 0)
-    // 	c.setFlagsTo(CarryFlagMask, newValue < value)
-    // 	c.PC += pcOffset
-    // 	c.ClockTime += clock
-    // }
+    fn asl_common<M>(&mut self, m: &mut M, address: u16, value: u8, clock: u64)
+    where
+        M: Memory,
+    {
+        let new_value = value << 1;
+        m.write8(address, new_value);
+        self.flags.set(Flags::NEGATIVE_MASK, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO_MASK, new_value == 0);
+        self.flags.set(Flags::CARRY_MASK, new_value < value);
+        self.clock += clock;
+    }
 
-    // func (c *CPU) ancImmediate(m Memory) {
-    // 	value := m.Read(c.PC + 1)
-    // 	newValue := c.A & value
-    // 	c.A = newValue
-    // 	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
-    // 	c.setFlagsTo(ZeroFlagMask, newValue == 0)
-    // 	c.setFlagsTo(CarryFlagMask, (newValue&0b1000_0000) != 0)
-    // 	c.PC += 2
-    // 	c.ClockTime += 2
-    // }
+    fn anc_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        let new_value = self.a & value;
+        self.a = new_value;
+        self.flags.set(Flags::NEGATIVE_MASK, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO_MASK, new_value == 0);
+        self.flags
+            .set(Flags::CARRY_MASK, (new_value & 0b1000_0000) != 0);
+        self.clock += 2;
+    }
+
+    // TODO here
 
     // func (c *CPU) andZeroPage(m Memory) {
     // 	_, value := c.zeroPageFixed(m)
