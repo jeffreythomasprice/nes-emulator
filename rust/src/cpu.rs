@@ -92,36 +92,22 @@ impl CPU {
             0x2d => self.and_absolute(m),
             0x2e => self.rol_absolute(m),
             0x2f => self.rla_absolute(m),
-            // 	case 0x30:
-            // 		c.bmi(m)
-            // 	case 0x31:
-            // 		c.andZeroPageIndirectY(m)
-            // 	case 0x32:
-            // 		c.nop(0, 3)
-            // 	case 0x33:
-            // 		c.rlaZeroPageIndirectY(m)
-            // 	case 0x34:
-            // 		c.nop(2, 4)
-            // 	case 0x35:
-            // 		c.andZeroPageX(m)
-            // 	case 0x36:
-            // 		c.rolZeroPageX(m)
-            // 	case 0x37:
-            // 		c.rlaZeroPageX(m)
-            // 	case 0x38:
-            // 		c.sec()
-            // 	case 0x39:
-            // 		c.andAbsoluteY(m)
-            // 	case 0x3a:
-            // 		c.nop(1, 2)
-            // 	case 0x3b:
-            // 		c.rlaAbsoluteY(m)
-            // 	case 0x3c:
-            // 		c.nopAbsoluteX(m)
-            // 	case 0x3d:
-            // 		c.andAbsoluteX(m)
-            // 	case 0x3e:
-            // 		c.rolAbsoluteX(m)
+            0x30 => self.bmi(m),
+            0x31 => self.and_zero_page_indirect_y(m),
+            0x32 => self.nop(-1, 3),
+            0x33 => self.rla_zero_page_indirect_y(m),
+            0x34 => self.nop(1, 4),
+            0x35 => self.and_zero_page_x(m),
+            0x36 => self.rol_zero_page_x(m),
+            0x37 => self.rla_zero_page_x(m),
+            0x38 => self.sec(),
+            0x39 => self.and_absolute_y(m),
+            0x3a => self.nop(0, 2),
+            0x3b => self.rla_absolute_y(m),
+            0x3c => self.nop_absolute_x(m),
+            0x3d => self.and_absolute_x(m),
+            0x3e => self.rol_absolute_x(m),
+            0x3f => self.rla_absolute_x(m),
             // 	case 0x3f:
             // 		c.rlaAbsoluteX(m)
             // 	case 0x40:
@@ -816,12 +802,13 @@ impl CPU {
         self.and_common(value, 3);
     }
 
-    // TODO here
-
-    // func (c *CPU) andZeroPageX(m Memory) {
-    // 	_, value := c.zeroPageX(m)
-    // 	c.andCommon(value, 2, 4)
-    // }
+    fn and_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_x(m);
+        self.and_common(value, 4);
+    }
 
     fn and_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
@@ -831,12 +818,17 @@ impl CPU {
         self.and_common(value, 6);
     }
 
-    // TODO here
-
-    // func (c *CPU) andZeroPageIndirectY(m Memory) {
-    // 	_, value, extraClock := c.zeroPageIndirectY(m)
-    // 	c.andCommon(value, 2, 5+extraClock)
-    // }
+    fn and_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.zero_page_indirect_y(m);
+        self.and_common(value, 5 + extra_clock);
+    }
 
     fn and_immediate<M>(&mut self, m: &mut M)
     where
@@ -854,17 +846,29 @@ impl CPU {
         self.and_common(value, 4);
     }
 
-    // TODO here
+    fn and_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_x(m);
+        self.and_common(value, 4 + extra_clock);
+    }
 
-    // func (c *CPU) andAbsoluteX(m Memory) {
-    // 	_, value, extraClock := c.absoluteX(m)
-    // 	c.andCommon(value, 3, 4+extraClock)
-    // }
-
-    // func (c *CPU) andAbsoluteY(m Memory) {
-    // 	_, value, extraClock := c.absoluteY(m)
-    // 	c.andCommon(value, 3, 4+extraClock)
-    // }
+    fn and_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        self.and_common(value, 4 + extra_clock);
+    }
 
     fn and_common(&mut self, value: u8, clock: u64) {
         self.a &= value;
@@ -881,12 +885,13 @@ impl CPU {
         self.rla_common(m, address, value, 5);
     }
 
-    // TODO here
-
-    // func (c *CPU) rlaZeroPageX(m Memory) {
-    // 	address, value := c.zeroPageX(m)
-    // 	c.rlaCommon(m, address, value, 2, 6)
-    // }
+    fn rla_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        self.rla_common(m, address, value, 6);
+    }
 
     fn rla_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
@@ -896,12 +901,17 @@ impl CPU {
         self.rla_common(m, address, value, 8);
     }
 
-    // TODO here
-
-    // func (c *CPU) rlaZeroPageIndirectY(m Memory) {
-    // 	address, value, _ := c.zeroPageIndirectY(m)
-    // 	c.rlaCommon(m, address, value, 2, 8)
-    // }
+    fn rla_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.zero_page_indirect_y(m);
+        self.rla_common(m, address, value, 8);
+    }
 
     fn rla_absolute<M>(&mut self, m: &mut M)
     where
@@ -911,17 +921,29 @@ impl CPU {
         self.rla_common(m, address, value, 6);
     }
 
-    // TODO here
+    fn rla_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        self.rla_common(m, address, value, 7);
+    }
 
-    // func (c *CPU) rlaAbsoluteX(m Memory) {
-    // 	address, value, _ := c.absoluteX(m)
-    // 	c.rlaCommon(m, address, value, 3, 7)
-    // }
-
-    // func (c *CPU) rlaAbsoluteY(m Memory) {
-    // 	address, value, _ := c.absoluteY(m)
-    // 	c.rlaCommon(m, address, value, 3, 7)
-    // }
+    fn rla_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_y(m);
+        self.rla_common(m, address, value, 7);
+    }
 
     fn rla_common<M>(&mut self, m: &mut M, address: u16, value: u8, clock: u64)
     where
@@ -955,13 +977,14 @@ impl CPU {
         m.write8(address, new_value);
     }
 
-    // TODO here
-
-    // func (c *CPU) rolZeroPageX(m Memory) {
-    // 	address, value := c.zeroPageX(m)
-    // 	newValue := c.rolCommon(value, 2, 6)
-    // 	m.Write(address, newValue)
-    // }
+    fn rol_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        let new_value = self.rol_common(value, 6);
+        m.write8(address, new_value);
+    }
 
     fn rol_absolute<M>(&mut self, m: &mut M)
     where
@@ -972,13 +995,18 @@ impl CPU {
         m.write8(address, new_value);
     }
 
-    // TODO here
-
-    // func (c *CPU) rolAbsoluteX(m Memory) {
-    // 	address, value, _ := c.absoluteX(m)
-    // 	newValue := c.rolCommon(value, 3, 7)
-    // 	m.Write(address, newValue)
-    // }
+    fn rol_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        let new_value = self.rol_common(value, 7);
+        m.write8(address, new_value);
+    }
 
     fn rol_common(&mut self, value: u8, clock: u64) -> u8 {
         let new_value = (value << 1)
@@ -1002,11 +1030,14 @@ impl CPU {
         self.branch_common(m, !self.flags.contains(Flags::NEGATIVE_MASK));
     }
 
-    // TODO here
+    fn bmi<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.branch_common(m, self.flags.contains(Flags::NEGATIVE_MASK));
+    }
 
-    // func (c *CPU) bmi(m Memory) {
-    // 	c.branchCommon(m, (c.Flags&NegativeFlagMask) != 0)
-    // }
+    // TODO here
 
     // func (c *CPU) bvc(m Memory) {
     // 	c.branchCommon(m, (c.Flags&OverflowFlagMask) == 0)
@@ -1063,13 +1094,12 @@ impl CPU {
         self.clock += 2
     }
 
-    // TODO here
+    fn sec(&mut self) {
+        self.flags |= Flags::CARRY_MASK;
+        self.clock += 2;
+    }
 
-    // func (c *CPU) sec() {
-    // 	c.setFlags(CarryFlagMask)
-    // 	c.PC += 1
-    // 	c.ClockTime += 2
-    // }
+    // TODO here
 
     // func (c *CPU) cli() {
     // 	c.clearFlags(InterruptDisableFlagMask)
