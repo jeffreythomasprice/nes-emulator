@@ -26,6 +26,12 @@ struct AddrValueClock {
     extra_clock: u64,
 }
 
+impl AddrValueClock {
+    pub fn is_page_crossing(&self) -> bool {
+        self.extra_clock != 0
+    }
+}
+
 impl CPU {
     pub fn new() -> Self {
         Self {
@@ -192,30 +198,18 @@ impl CPU {
             0x91 => self.sta_zero_page_indirect_y(m),
             0x92 => self.nop(-1, 3),
             0x93 => self.ahx_zero_page_indirect_y(m),
-            // 	case 0x94:
-            // 		// TODO impl
-            // 	case 0x95:
-            // 		// TODO impl
-            // 	case 0x96:
-            // 		// TODO impl
-            // 	case 0x97:
-            // 		// TODO impl
-            // 	case 0x98:
-            // 		// TODO impl
-            // 	case 0x99:
-            // 		// TODO impl
-            // 	case 0x9a:
-            // 		// TODO impl
-            // 	case 0x9b:
-            // 		// TODO impl
-            // 	case 0x9c:
-            // 		// TODO impl
-            // 	case 0x9d:
-            // 		// TODO impl
-            // 	case 0x9e:
-            // 		// TODO impl
-            // 	case 0x9f:
-            // 		// TODO impl
+            0x94 => self.sty_zero_page_x(m),
+            0x95 => self.sta_zero_page_x(m),
+            0x96 => self.stx_zero_page_y(m),
+            0x97 => self.sax_zero_page_y(m),
+            0x98 => self.tya(),
+            0x99 => self.sta_absolute_y(m),
+            0x9a => self.txs(),
+            0x9b => self.tas_absolute_y(m),
+            0x9c => self.shy_absolute_x(m),
+            0x9d => self.sta_absolute_x(m),
+            0x9e => self.shx_absolute_y(m),
+            0x9f => self.ahx_absolute_y(m),
             // 	case 0xa0:
             // 		// TODO impl
             // 	case 0xa1:
@@ -1043,6 +1037,13 @@ impl CPU {
         self.clock += 2;
     }
 
+    fn tya(&mut self) {
+        self.a = self.y;
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
+        self.clock += 2;
+    }
+
     fn jsr<M>(&mut self, m: &mut M)
     where
         M: Memory,
@@ -1599,12 +1600,47 @@ impl CPU {
         m.write8(address, new_value);
     }
 
+    fn sta_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value: _,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        let new_value = self.sta_common(5);
+        m.write8(address, new_value);
+    }
+
+    fn sta_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value: _,
+            extra_clock: _,
+        } = self.absolute_y(m);
+        let new_value = self.sta_common(5);
+        m.write8(address, new_value);
+    }
+
     fn sta_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address, value: _ } = self.zero_page_fixed(m);
         let new_value = self.sta_common(3);
+        m.write8(address, new_value);
+    }
+
+    fn sta_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value: _ } = self.zero_page_x(m);
+        let new_value = self.sta_common(4);
         m.write8(address, new_value);
     }
 
@@ -1653,6 +1689,15 @@ impl CPU {
         m.write8(address, new_value);
     }
 
+    fn sax_zero_page_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value: _ } = self.zero_page_y(m);
+        let new_value = self.sax_common(4);
+        m.write8(address, new_value);
+    }
+
     fn sax_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
         M: Memory,
@@ -1685,6 +1730,15 @@ impl CPU {
         m.write8(address, new_value);
     }
 
+    fn stx_zero_page_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value: _ } = self.zero_page_y(m);
+        let new_value = self.stx_common(4);
+        m.write8(address, new_value);
+    }
+
     fn stx_common(&mut self, clock: u64) -> u8 {
         self.clock += clock;
         self.x
@@ -1705,6 +1759,15 @@ impl CPU {
     {
         let AddrValue { address, value: _ } = self.zero_page_fixed(m);
         let new_value = self.sty_common(3);
+        m.write8(address, new_value);
+    }
+
+    fn sty_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value: _ } = self.zero_page_x(m);
+        let new_value = self.sty_common(4);
         m.write8(address, new_value);
     }
 
@@ -1733,6 +1796,19 @@ impl CPU {
         self.clock += 2;
     }
 
+    fn txs(&mut self) {
+        self.sp = self.x;
+        self.clock += 2;
+    }
+
+    fn ahx_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let input = self.absolute_y(m);
+        self.ahx_common(m, input, 5);
+    }
+
     fn ahx_zero_page_indirect_y<M>(&mut self, m: &mut M)
     where
         M: Memory,
@@ -1745,17 +1821,15 @@ impl CPU {
     where
         M: Memory,
     {
-        let page_crossing = input.extra_clock != 0;
         let address: Word = input.address.into();
         let value = self.a
             & self.x
-            & if !page_crossing {
+            & if !input.is_page_crossing() {
                 address.high.wrapping_add(1)
             } else {
                 address.high
             };
-        let address: Word = address.into();
-        let address = if page_crossing {
+        let address = if input.is_page_crossing() {
             Word {
                 high: value,
                 low: address.low,
@@ -1765,6 +1839,80 @@ impl CPU {
         };
         m.write8(address.into(), value);
         self.clock += clock;
+    }
+
+    fn tas_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let input = self.absolute_y(m);
+        let address: Word = input.address.into();
+        let value = self.a
+            & self.x
+            & if !input.is_page_crossing() {
+                address.high.wrapping_add(1)
+            } else {
+                address.high
+            };
+        let address = if input.is_page_crossing() {
+            Word {
+                high: value,
+                low: address.low,
+            }
+        } else {
+            address
+        };
+        self.sp = self.a & self.x;
+        m.write8(address.into(), value);
+        self.clock += 5;
+    }
+
+    fn shy_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let input = self.absolute_x(m);
+        let address: Word = input.address.into();
+        let value = self.y
+            & if !input.is_page_crossing() {
+                address.high.wrapping_add(1)
+            } else {
+                address.high
+            };
+        let address = if input.is_page_crossing() {
+            Word {
+                high: value,
+                low: address.low,
+            }
+        } else {
+            address
+        };
+        m.write8(address.into(), value);
+        self.clock += 5;
+    }
+
+    fn shx_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let input = self.absolute_y(m);
+        let address: Word = input.address.into();
+        let value = self.x
+            & if !input.is_page_crossing() {
+                address.high.wrapping_add(1)
+            } else {
+                address.high
+            };
+        let address = if input.is_page_crossing() {
+            Word {
+                high: value,
+                low: address.low,
+            }
+        } else {
+            address
+        };
+        m.write8(address.into(), value);
+        self.clock += 5;
     }
 
     fn nop(&mut self, pc_offset: i8, clock: u64) {
@@ -1873,6 +2021,15 @@ impl CPU {
         M: Memory,
     {
         let address = ((self.read_next_u8(m) as u16) + (self.x as u16)) & 0xff;
+        let value = m.read8(address);
+        AddrValue { address, value }
+    }
+
+    fn zero_page_y<M>(&mut self, m: &mut M) -> AddrValue
+    where
+        M: Memory,
+    {
+        let address = ((self.read_next_u8(m) as u16) + (self.y as u16)) & 0xff;
         let value = m.read8(address);
         AddrValue { address, value }
     }
