@@ -124,38 +124,22 @@ impl CPU {
             0x4d => self.eor_absolute(m),
             0x4e => self.lsr_absolute(m),
             0x4f => self.sre_absolute(m),
-            // 	case 0x50:
-            // 		c.bvc(m)
-            // 	case 0x51:
-            // 		c.eorZeroPageIndirectY(m)
-            // 	case 0x52:
-            // 		c.nop(0, 3)
-            // 	case 0x53:
-            // 		c.sreZeroPageIndirectY(m)
-            // 	case 0x54:
-            // 		c.nop(2, 4)
-            // 	case 0x55:
-            // 		c.eorZeroPageX(m)
-            // 	case 0x56:
-            // 		c.lsrZeroPageX(m)
-            // 	case 0x57:
-            // 		c.sreZeroPageX(m)
-            // 	case 0x58:
-            // 		c.cli()
-            // 	case 0x59:
-            // 		c.eorAbsoluteY(m)
-            // 	case 0x5a:
-            // 		c.nop(1, 2)
-            // 	case 0x5b:
-            // 		c.sreAbsoluteY(m)
-            // 	case 0x5c:
-            // 		c.nopAbsoluteX(m)
-            // 	case 0x5d:
-            // 		c.eorAbsoluteX(m)
-            // 	case 0x5e:
-            // 		c.lsrAbsoluteX(m)
-            // 	case 0x5f:
-            // 		c.sreAbsoluteX(m)
+            0x50 => self.bvc(m),
+            0x51 => self.eor_zero_page_indirect_y(m),
+            0x52 => self.nop(-1, 3),
+            0x53 => self.sre_zero_page_indirect_y(m),
+            0x54 => self.nop(1, 4),
+            0x55 => self.eor_zero_page_x(m),
+            0x56 => self.lsr_zero_page_x(m),
+            0x57 => self.sre_zero_page_x(m),
+            0x58 => self.cli(),
+            0x59 => self.eor_absolute_y(m),
+            0x5a => self.nop(0, 2),
+            0x5b => self.sre_absolute_y(m),
+            0x5c => self.nop_absolute_x(m),
+            0x5d => self.eor_absolute_x(m),
+            0x5e => self.lsr_absolute_x(m),
+            0x5f => self.sre_absolute_x(m),
             // 	case 0x60:
             // 		c.rta(m)
             // 	case 0x61:
@@ -486,8 +470,8 @@ impl CPU {
         M: Memory,
     {
         self.push16(m, self.pc + 1);
-        self.push8(m, (self.flags | Flags::BREAK_COMMAND_MASK).bits());
-        self.flags.set(Flags::INTERRUPT_DISABLE_MASK, true);
+        self.push8(m, (self.flags | Flags::BREAK_COMMAND).bits());
+        self.flags.set(Flags::INTERRUPT_DISABLE, true);
         self.pc = m.read16(INTERRUPT_REQUEST_INTERRUPT_ADDRESS);
         self.clock += 7;
     }
@@ -496,7 +480,7 @@ impl CPU {
     where
         M: Memory,
     {
-        self.push8(m, (self.flags | Flags::BREAK_COMMAND_MASK).bits());
+        self.push8(m, (self.flags | Flags::BREAK_COMMAND).bits());
         self.clock += 3;
     }
 
@@ -504,8 +488,7 @@ impl CPU {
     where
         M: Memory,
     {
-        self.flags = (Flags::from_bits_retain(self.pop8(m)) - Flags::BREAK_COMMAND_MASK)
-            | Flags::UNUSED_MASK;
+        self.flags = (Flags::from_bits_retain(self.pop8(m)) - Flags::BREAK_COMMAND) | Flags::UNUSED;
         self.clock += 4;
     }
 
@@ -513,8 +496,7 @@ impl CPU {
     where
         M: Memory,
     {
-        self.flags = (Flags::from_bits_retain(self.pop8(m)) - Flags::BREAK_COMMAND_MASK)
-            | Flags::UNUSED_MASK;
+        self.flags = (Flags::from_bits_retain(self.pop8(m)) - Flags::BREAK_COMMAND) | Flags::UNUSED;
         self.pc = self.pop16(m);
         self.clock += 6;
     }
@@ -622,8 +604,8 @@ impl CPU {
 
     fn ora_common(&mut self, new_value: u8, clock: u64) {
         self.a |= new_value;
-        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, self.a == 0);
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
         self.clock += clock;
     }
 
@@ -704,9 +686,9 @@ impl CPU {
         let new_value = value << 1;
         m.write8(address, new_value);
         self.a |= new_value;
-        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, self.a == 0);
-        self.flags.set(Flags::CARRY_MASK, new_value < value);
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
+        self.flags.set(Flags::CARRY, new_value < value);
         self.clock += clock;
     }
 
@@ -714,9 +696,9 @@ impl CPU {
         let value = self.a;
         let new_value = value << 1;
         self.a = new_value;
-        self.flags.set(Flags::NEGATIVE_MASK, (new_value as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, new_value == 0);
-        self.flags.set(Flags::CARRY_MASK, new_value < value);
+        self.flags.set(Flags::NEGATIVE, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO, new_value == 0);
+        self.flags.set(Flags::CARRY, new_value < value);
         self.clock += 2;
     }
 
@@ -762,9 +744,9 @@ impl CPU {
     {
         let new_value = value << 1;
         m.write8(address, new_value);
-        self.flags.set(Flags::NEGATIVE_MASK, (new_value as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, new_value == 0);
-        self.flags.set(Flags::CARRY_MASK, new_value < value);
+        self.flags.set(Flags::NEGATIVE, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO, new_value == 0);
+        self.flags.set(Flags::CARRY, new_value < value);
         self.clock += clock;
     }
 
@@ -775,10 +757,9 @@ impl CPU {
         let value = self.read_next_u8(m);
         let new_value = self.a & value;
         self.a = new_value;
-        self.flags.set(Flags::NEGATIVE_MASK, (new_value as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, new_value == 0);
-        self.flags
-            .set(Flags::CARRY_MASK, (new_value & 0b1000_0000) != 0);
+        self.flags.set(Flags::NEGATIVE, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO, new_value == 0);
+        self.flags.set(Flags::CARRY, (new_value & 0b1000_0000) != 0);
         self.clock += 2;
     }
 
@@ -860,8 +841,8 @@ impl CPU {
 
     fn and_common(&mut self, value: u8, clock: u64) {
         self.a &= value;
-        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, self.a == 0);
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
         self.clock += clock;
     }
 
@@ -938,17 +919,16 @@ impl CPU {
         M: Memory,
     {
         let new_value = (value << 1)
-            + if self.flags.contains(Flags::CARRY_MASK) {
+            + if self.flags.contains(Flags::CARRY) {
                 1
             } else {
                 0
             };
         m.write8(address, new_value);
         self.a &= new_value;
-        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, self.a == 0);
-        self.flags
-            .set(Flags::CARRY_MASK, (value & 0b1000_0000) != 0);
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
+        self.flags.set(Flags::CARRY, (value & 0b1000_0000) != 0);
         self.clock += clock;
     }
 
@@ -998,15 +978,14 @@ impl CPU {
 
     fn rol_common(&mut self, value: u8, clock: u64) -> u8 {
         let new_value = (value << 1)
-            + if self.flags.contains(Flags::CARRY_MASK) {
+            + if self.flags.contains(Flags::CARRY) {
                 1
             } else {
                 0
             };
-        self.flags.set(Flags::NEGATIVE_MASK, (new_value as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, new_value == 0);
-        self.flags
-            .set(Flags::CARRY_MASK, (value & 0b1000_0000) != 0);
+        self.flags.set(Flags::NEGATIVE, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO, new_value == 0);
+        self.flags.set(Flags::CARRY, (value & 0b1000_0000) != 0);
         self.clock += clock;
         new_value
     }
@@ -1015,21 +994,24 @@ impl CPU {
     where
         M: Memory,
     {
-        self.branch_common(m, !self.flags.contains(Flags::NEGATIVE_MASK));
+        self.branch_common(m, !self.flags.contains(Flags::NEGATIVE));
     }
 
     fn bmi<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
-        self.branch_common(m, self.flags.contains(Flags::NEGATIVE_MASK));
+        self.branch_common(m, self.flags.contains(Flags::NEGATIVE));
+    }
+
+    fn bvc<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.branch_common(m, !self.flags.contains(Flags::OVERFLOW));
     }
 
     // TODO here
-
-    // func (c *CPU) bvc(m Memory) {
-    // 	c.branchCommon(m, (c.Flags&OverflowFlagMask) == 0)
-    // }
 
     // func (c *CPU) bvs(m Memory) {
     // 	c.branchCommon(m, (c.Flags&OverflowFlagMask) != 0)
@@ -1081,22 +1063,21 @@ impl CPU {
     // }
 
     fn clc(&mut self) {
-        self.flags -= Flags::CARRY_MASK;
+        self.flags -= Flags::CARRY;
         self.clock += 2
     }
 
     fn sec(&mut self) {
-        self.flags |= Flags::CARRY_MASK;
+        self.flags |= Flags::CARRY;
+        self.clock += 2;
+    }
+
+    fn cli(&mut self) {
+        self.flags -= Flags::INTERRUPT_DISABLE;
         self.clock += 2;
     }
 
     // TODO here
-
-    // func (c *CPU) cli() {
-    // 	c.clearFlags(InterruptDisableFlagMask)
-    // 	c.PC += 1
-    // 	c.ClockTime += 2
-    // }
 
     // func (c *CPU) sei() {
     // 	c.setFlags(InterruptDisableFlagMask)
@@ -1139,15 +1120,11 @@ impl CPU {
     }
 
     fn bit_common(&mut self, value: u8, clock: u64) {
-        self.flags.set(
-            Flags::OVERFLOW_MASK,
-            (value & Flags::OVERFLOW_MASK.bits()) != 0,
-        );
-        self.flags.set(
-            Flags::NEGATIVE_MASK,
-            (value & Flags::NEGATIVE_MASK.bits()) != 0,
-        );
-        self.flags.set(Flags::ZERO_MASK, (value & self.a) == 0);
+        self.flags
+            .set(Flags::OVERFLOW, (value & Flags::OVERFLOW.bits()) != 0);
+        self.flags
+            .set(Flags::NEGATIVE, (value & Flags::NEGATIVE.bits()) != 0);
+        self.flags.set(Flags::ZERO, (value & self.a) == 0);
         self.clock += clock;
     }
 
@@ -1159,11 +1136,13 @@ impl CPU {
         self.eor_common(value, 3);
     }
 
-    // TODO here
-    // func (c *CPU) eorZeroPageX(m Memory) {
-    // 	_, value := c.zeroPageX(m)
-    // 	c.eorCommon(value, 2, 4)
-    // }
+    fn eor_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_x(m);
+        self.eor_common(value, 4);
+    }
 
     fn eor_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
@@ -1173,12 +1152,17 @@ impl CPU {
         self.eor_common(value, 6);
     }
 
-    // TODO here
-
-    // func (c *CPU) eorZeroPageIndirectY(m Memory) {
-    // 	_, value, extraClock := c.zeroPageIndirectY(m)
-    // 	c.eorCommon(value, 2, 5+extraClock)
-    // }
+    fn eor_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.zero_page_indirect_y(m);
+        self.eor_common(value, 5 + extra_clock);
+    }
 
     fn eor_immediate<M>(&mut self, m: &mut M)
     where
@@ -1196,22 +1180,34 @@ impl CPU {
         self.eor_common(value, 4);
     }
 
-    // TODO here
+    fn eor_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_x(m);
+        self.eor_common(value, 4 + extra_clock);
+    }
 
-    // func (c *CPU) eorAbsoluteX(m Memory) {
-    // 	_, value, extraClock := c.absoluteX(m)
-    // 	c.eorCommon(value, 3, 4+extraClock)
-    // }
-
-    // func (c *CPU) eorAbsoluteY(m Memory) {
-    // 	_, value, extraClock := c.absoluteY(m)
-    // 	c.eorCommon(value, 3, 4+extraClock)
-    // }
+    fn eor_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        self.eor_common(value, 4 + extra_clock);
+    }
 
     fn eor_common(&mut self, value: u8, clock: u64) {
         self.a ^= value;
-        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, self.a == 0);
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
         self.clock += clock;
     }
 
@@ -1223,12 +1219,13 @@ impl CPU {
         self.sre_common(m, address, value, 5);
     }
 
-    // TODO here
-
-    // func (c *CPU) sreZeroPageX(m Memory) {
-    // 	address, value := c.zeroPageX(m)
-    // 	c.sreCommon(m, address, value, 2, 6)
-    // }
+    fn sre_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        self.sre_common(m, address, value, 6);
+    }
 
     fn sre_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
@@ -1238,12 +1235,17 @@ impl CPU {
         self.sre_common(m, address, value, 8);
     }
 
-    // TODO here
-
-    // func (c *CPU) sreZeroPageIndirectY(m Memory) {
-    // 	address, value, _ := c.zeroPageIndirectY(m)
-    // 	c.sreCommon(m, address, value, 2, 8)
-    // }
+    fn sre_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.zero_page_indirect_y(m);
+        self.sre_common(m, address, value, 8);
+    }
 
     fn sre_absolute<M>(&mut self, m: &mut M)
     where
@@ -1253,17 +1255,29 @@ impl CPU {
         self.sre_common(m, address, value, 6);
     }
 
-    // TODO here
+    fn sre_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        self.sre_common(m, address, value, 7);
+    }
 
-    // func (c *CPU) sreAbsoluteX(m Memory) {
-    // 	address, value, _ := c.absoluteX(m)
-    // 	c.sreCommon(m, address, value, 3, 7)
-    // }
-
-    // func (c *CPU) sreAbsoluteY(m Memory) {
-    // 	address, value, _ := c.absoluteY(m)
-    // 	c.sreCommon(m, address, value, 3, 7)
-    // }
+    fn sre_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_y(m);
+        self.sre_common(m, address, value, 7);
+    }
 
     fn sre_common<M>(&mut self, m: &mut M, address: u16, value: u8, clock: u64)
     where
@@ -1272,10 +1286,9 @@ impl CPU {
         let new_value = value >> 1;
         m.write8(address, new_value);
         self.a ^= new_value;
-        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, self.a == 0);
-        self.flags
-            .set(Flags::CARRY_MASK, (value & 0b0000_0001) != 0);
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
+        self.flags.set(Flags::CARRY, (value & 0b0000_0001) != 0);
         self.clock += clock;
     }
 
@@ -1292,13 +1305,14 @@ impl CPU {
         m.write8(address, new_value);
     }
 
-    // TODO here
-
-    // func (c *CPU) lsrZeroPageX(m Memory) {
-    // 	address, value := c.zeroPageX(m)
-    // 	newValue := c.lsrCommon(value, 2, 6)
-    // 	m.Write(address, newValue)
-    // }
+    fn lsr_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        let new_value = self.lsr_common(value, 6);
+        m.write8(address, new_value);
+    }
 
     fn lsr_absolute<M>(&mut self, m: &mut M)
     where
@@ -1309,20 +1323,24 @@ impl CPU {
         m.write8(address, new_value);
     }
 
-    // TODO here
-
-    // func (c *CPU) lsrAbsoluteX(m Memory) {
-    // 	address, value, _ := c.absoluteX(m)
-    // 	newValue := c.lsrCommon(value, 3, 7)
-    // 	m.Write(address, newValue)
-    // }
+    fn lsr_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        let new_value = self.lsr_common(value, 7);
+        m.write8(address, new_value);
+    }
 
     fn lsr_common(&mut self, value: u8, clock: u64) -> u8 {
         let new_value = value >> 1;
-        self.flags -= Flags::NEGATIVE_MASK;
-        self.flags.set(Flags::ZERO_MASK, new_value == 0);
-        self.flags
-            .set(Flags::CARRY_MASK, (value & 0b0000_0001) != 0);
+        self.flags -= Flags::NEGATIVE;
+        self.flags.set(Flags::ZERO, new_value == 0);
+        self.flags.set(Flags::CARRY, (value & 0b0000_0001) != 0);
         self.clock += clock;
         new_value
     }
@@ -1333,10 +1351,9 @@ impl CPU {
     {
         let value = self.a & self.read_next_u8(m);
         self.a = value >> 1;
-        self.flags.set(Flags::NEGATIVE_MASK, (self.a as i8) < 0);
-        self.flags.set(Flags::ZERO_MASK, self.a == 0);
-        self.flags
-            .set(Flags::CARRY_MASK, (value & 0b0000_0001) != 0);
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
+        self.flags.set(Flags::CARRY, (value & 0b0000_0001) != 0);
         self.clock += 2;
     }
 
