@@ -97,11 +97,6 @@ mod test {
             );
 
             for test_case in test_cases {
-                // TODO do all tests
-                // if test_case.name != "93 9996" {
-                //     continue;
-                // }
-
                 let test_name = format!("path=\"{}\", name=\"{}\"", path, test_case.name);
 
                 let mut c = CPU::new();
