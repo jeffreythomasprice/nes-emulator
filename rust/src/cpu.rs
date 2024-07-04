@@ -226,70 +226,38 @@ impl CPU {
             0xad => self.lda_absolute(m),
             0xae => self.ldx_absolute(m),
             0xaf => self.lax_absolute(m),
-            // 	case 0xb0:
-            // 		// TODO impl
-            // 	case 0xb1:
-            // 		// TODO impl
-            // 	case 0xb2:
-            // 		// TODO impl
-            // 	case 0xb3:
-            // 		// TODO impl
-            // 	case 0xb4:
-            // 		// TODO impl
-            // 	case 0xb5:
-            // 		// TODO impl
-            // 	case 0xb6:
-            // 		// TODO impl
-            // 	case 0xb7:
-            // 		// TODO impl
-            // 	case 0xb8:
-            // 		// TODO impl
-            // 	case 0xb9:
-            // 		// TODO impl
-            // 	case 0xba:
-            // 		// TODO impl
-            // 	case 0xbb:
-            // 		// TODO impl
-            // 	case 0xbc:
-            // 		// TODO impl
-            // 	case 0xbd:
-            // 		// TODO impl
-            // 	case 0xbe:
-            // 		// TODO impl
-            // 	case 0xbf:
-            // 		// TODO impl
-            // 	case 0xc0:
-            // 		// TODO impl
-            // 	case 0xc1:
-            // 		// TODO impl
-            // 	case 0xc2:
-            // 		// TODO impl
-            // 	case 0xc3:
-            // 		// TODO impl
-            // 	case 0xc4:
-            // 		// TODO impl
-            // 	case 0xc5:
-            // 		// TODO impl
-            // 	case 0xc6:
-            // 		// TODO impl
-            // 	case 0xc7:
-            // 		// TODO impl
-            // 	case 0xc8:
-            // 		// TODO impl
-            // 	case 0xc9:
-            // 		// TODO impl
-            // 	case 0xca:
-            // 		// TODO impl
-            // 	case 0xcb:
-            // 		// TODO impl
-            // 	case 0xcc:
-            // 		// TODO impl
-            // 	case 0xcd:
-            // 		// TODO impl
-            // 	case 0xce:
-            // 		// TODO impl
-            // 	case 0xcf:
-            // 		// TODO impl
+            0xb0 => self.bcs(m),
+            0xb1 => self.lda_zero_page_indirect_y(m),
+            0xb2 => self.nop(-1, 3),
+            0xb3 => self.lax_zero_page_indirect_y(m),
+            0xb4 => self.ldy_zero_page_x(m),
+            0xb5 => self.lda_zero_page_x(m),
+            0xb6 => self.ldx_zero_page_y(m),
+            0xb7 => self.lax_zero_page_y(m),
+            0xb8 => self.clv(),
+            0xb9 => self.lda_absolute_y(m),
+            0xba => self.tsx(),
+            0xbb => self.las_absolute_y(m),
+            0xbc => self.ldy_absolute_x(m),
+            0xbd => self.lda_absolute_x(m),
+            0xbe => self.ldx_absolute_y(m),
+            0xbf => self.lax_absolute_y(m),
+            0xc0 => self.cpy_immediate(m),
+            0xc1 => self.cmp_zero_page_indirect_x(m),
+            0xc2 => self.nop(1, 2),
+            0xc3 => self.dcp_zero_page_indirect_x(m),
+            0xc4 => self.cpy_zero_page(m),
+            0xc5 => self.cmp_zero_page(m),
+            0xc6 => self.dec_zero_page(m),
+            0xc7 => self.dcp_zero_page(m),
+            0xc8 => self.iny(),
+            0xc9 => self.cmp_immediate(m),
+            0xca => self.dex(),
+            0xcb => self.axs_immediate(m),
+            0xcc => self.cpy_absolute(m),
+            0xcd => self.cmp_absolute(m),
+            0xce => self.dec_absolute(m),
+            0xcf => self.dcp_absolute(m),
             // 	case 0xd0:
             // 		// TODO impl
             // 	case 0xd1:
@@ -952,6 +920,13 @@ impl CPU {
         self.branch_common(m, !self.flags.contains(Flags::CARRY));
     }
 
+    fn bcs<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.branch_common(m, self.flags.contains(Flags::CARRY));
+    }
+
     fn branch_common<M>(&mut self, m: &mut M, condition: bool)
     where
         M: Memory,
@@ -1039,6 +1014,32 @@ impl CPU {
         self.x = self.a;
         self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
         self.flags.set(Flags::ZERO, self.a == 0);
+        self.clock += 2;
+    }
+
+    fn clv(&mut self) {
+        self.flags -= Flags::OVERFLOW;
+        self.clock += 2;
+    }
+
+    fn tsx(&mut self) {
+        self.x = self.sp;
+        self.flags.set(Flags::NEGATIVE, (self.x as i8) < 0);
+        self.flags.set(Flags::ZERO, self.x == 0);
+        self.clock += 2;
+    }
+
+    fn iny(&mut self) {
+        self.y = self.y.wrapping_add(1);
+        self.flags.set(Flags::NEGATIVE, (self.y as i8) < 0);
+        self.flags.set(Flags::ZERO, self.y == 0);
+        self.clock += 2;
+    }
+
+    fn dex(&mut self) {
+        self.x = self.x.wrapping_sub(1);
+        self.flags.set(Flags::NEGATIVE, (self.x as i8) < 0);
+        self.flags.set(Flags::ZERO, self.x == 0);
         self.clock += 2;
     }
 
@@ -1929,12 +1930,32 @@ impl CPU {
         self.ldy_common(value, 4);
     }
 
+    fn ldy_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_x(m);
+        self.ldy_common(value, 4 + extra_clock);
+    }
+
     fn ldy_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address: _, value } = self.zero_page_fixed(m);
         self.ldy_common(value, 3);
+    }
+
+    fn ldy_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_x(m);
+        self.ldy_common(value, 4);
     }
 
     fn ldy_common(&mut self, value: u8, clock: u64) {
@@ -1960,6 +1981,30 @@ impl CPU {
         self.lda_common(value, 4);
     }
 
+    fn lda_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_x(m);
+        self.lda_common(value, 4 + extra_clock);
+    }
+
+    fn lda_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        self.lda_common(value, 4 + extra_clock);
+    }
+
     fn lda_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
@@ -1968,12 +2013,32 @@ impl CPU {
         self.lda_common(value, 3);
     }
 
+    fn lda_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_x(m);
+        self.lda_common(value, 4);
+    }
+
     fn lda_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address: _, value } = self.zero_page_indirect_x(m);
         self.lda_common(value, 6);
+    }
+
+    fn lda_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.zero_page_indirect_y(m);
+        self.lda_common(value, 5 + extra_clock);
     }
 
     fn lda_common(&mut self, value: u8, clock: u64) {
@@ -1999,12 +2064,32 @@ impl CPU {
         self.ldx_common(value, 4);
     }
 
+    fn ldx_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        self.ldx_common(value, 4 + extra_clock);
+    }
+
     fn ldx_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address: _, value } = self.zero_page_fixed(m);
         self.ldx_common(value, 3);
+    }
+
+    fn ldx_zero_page_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_y(m);
+        self.ldx_common(value, 4);
     }
 
     fn ldx_common(&mut self, value: u8, clock: u64) {
@@ -2031,12 +2116,32 @@ impl CPU {
         self.lax_common(value, 4);
     }
 
+    fn lax_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        self.lax_common(value, 4 + extra_clock);
+    }
+
     fn lax_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address: _, value } = self.zero_page_fixed(m);
         self.lax_common(value, 3);
+    }
+
+    fn lax_zero_page_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_y(m);
+        self.lax_common(value, 4);
     }
 
     fn lax_zero_page_indirect_x<M>(&mut self, m: &mut M)
@@ -2047,12 +2152,190 @@ impl CPU {
         self.lax_common(value, 6);
     }
 
+    fn lax_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.zero_page_indirect_y(m);
+        self.lax_common(value, 5 + extra_clock);
+    }
+
     fn lax_common(&mut self, value: u8, clock: u64) {
         self.a = value;
         self.x = value;
         self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
         self.flags.set(Flags::ZERO, value == 0);
         self.clock += clock;
+    }
+
+    fn las_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        let value = value & self.sp;
+        self.a = value;
+        self.x = value;
+        self.sp = value;
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.clock += 4 + extra_clock;
+    }
+
+    fn cpy_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.cpy_common(value, 2);
+    }
+
+    fn cpy_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.cpy_common(value, 4);
+    }
+
+    fn cpy_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        self.cpy_common(value, 3);
+    }
+
+    fn cpy_common(&mut self, value: u8, clock: u64) {
+        let value = self.y.wrapping_sub(value);
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.flags.set(Flags::CARRY, self.y >= value);
+        self.clock += clock;
+    }
+
+    fn cmp_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.cmp_common(value, 2);
+    }
+
+    fn cmp_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.cmp_common(value, 4);
+    }
+
+    fn cmp_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.cmp_common(value, 3);
+    }
+
+    fn cmp_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_indirect_x(m);
+        self.cmp_common(value, 6);
+    }
+
+    fn cmp_common(&mut self, value: u8, clock: u64) {
+        let value = self.a.wrapping_sub(value);
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.flags.set(Flags::CARRY, self.a >= value);
+        self.clock += clock;
+    }
+
+    fn dcp_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        let new_value = self.dcp_common(value, 6);
+        m.write8(address, new_value);
+    }
+
+    fn dcp_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        let new_value = self.dcp_common(value, 5);
+        m.write8(address, new_value);
+    }
+
+    fn dcp_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_indirect_x(m);
+        let new_value = self.dcp_common(value, 8);
+        m.write8(address, new_value);
+    }
+
+    fn dcp_common(&mut self, value: u8, clock: u64) -> u8 {
+        let dec_value = value.wrapping_sub(1);
+        let cmp_value = self.a.wrapping_sub(dec_value);
+        self.flags.set(Flags::NEGATIVE, (cmp_value as i8) < 0);
+        self.flags.set(Flags::ZERO, cmp_value == 0);
+        self.flags.set(Flags::CARRY, self.a >= cmp_value);
+        self.clock += clock;
+        dec_value
+    }
+
+    fn dec_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        let new_value = self.dec_common(value, 6);
+        m.write8(address, new_value);
+    }
+
+    fn dec_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        let new_value = self.dec_common(value, 5);
+        m.write8(address, new_value);
+    }
+
+    fn dec_common(&mut self, value: u8, clock: u64) -> u8 {
+        let value = value.wrapping_sub(1);
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.clock += clock;
+        value
+    }
+
+    fn axs_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let left = self.a & self.x;
+        let right = self.read_next_u8(m);
+        self.x = left.wrapping_sub(right);
+        self.flags.set(Flags::NEGATIVE, (self.x as i8) < 0);
+        self.flags.set(Flags::ZERO, self.x == 0);
+        self.flags.set(Flags::CARRY, left >= right);
+        self.clock += 2;
     }
 
     fn nop(&mut self, pc_offset: i8, clock: u64) {
