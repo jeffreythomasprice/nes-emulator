@@ -258,38 +258,22 @@ impl CPU {
             0xcd => self.cmp_absolute(m),
             0xce => self.dec_absolute(m),
             0xcf => self.dcp_absolute(m),
-            // 	case 0xd0:
-            // 		// TODO impl
-            // 	case 0xd1:
-            // 		// TODO impl
-            // 	case 0xd2:
-            // 		// TODO impl
-            // 	case 0xd3:
-            // 		// TODO impl
-            // 	case 0xd4:
-            // 		// TODO impl
-            // 	case 0xd5:
-            // 		// TODO impl
-            // 	case 0xd6:
-            // 		// TODO impl
-            // 	case 0xd7:
-            // 		// TODO impl
-            // 	case 0xd8:
-            // 		// TODO impl
-            // 	case 0xd9:
-            // 		// TODO impl
-            // 	case 0xda:
-            // 		// TODO impl
-            // 	case 0xdb:
-            // 		// TODO impl
-            // 	case 0xdc:
-            // 		// TODO impl
-            // 	case 0xdd:
-            // 		// TODO impl
-            // 	case 0xde:
-            // 		// TODO impl
-            // 	case 0xdf:
-            // 		// TODO impl
+            0xd0 => self.bne(m),
+            0xd1 => self.cmp_zero_page_indirect_y(m),
+            0xd2 => self.nop(-1, 3),
+            0xd3 => self.dcp_zero_page_indirect_y(m),
+            0xd4 => self.nop(1, 4),
+            0xd5 => self.cmp_zero_page_x(m),
+            0xd6 => self.dec_zero_page_x(m),
+            0xd7 => self.dcp_zero_page_x(m),
+            0xd8 => self.cld(),
+            0xd9 => self.cmp_absolute_y(m),
+            0xda => self.nop(0, 2),
+            0xdb => self.dcp_absolute_y(m),
+            0xdc => self.nop_absolute_x(m),
+            0xdd => self.cmp_absolute_x(m),
+            0xde => self.dec_absolute_x(m),
+            0xdf => self.dcp_absolute_x(m),
             // 	case 0xe0:
             // 		// TODO impl
             // 	case 0xe1:
@@ -927,6 +911,13 @@ impl CPU {
         self.branch_common(m, self.flags.contains(Flags::CARRY));
     }
 
+    fn bne<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        self.branch_common(m, !self.flags.contains(Flags::ZERO));
+    }
+
     fn branch_common<M>(&mut self, m: &mut M, condition: bool)
     where
         M: Memory,
@@ -1040,6 +1031,11 @@ impl CPU {
         self.x = self.x.wrapping_sub(1);
         self.flags.set(Flags::NEGATIVE, (self.x as i8) < 0);
         self.flags.set(Flags::ZERO, self.x == 0);
+        self.clock += 2;
+    }
+
+    fn cld(&mut self) {
+        self.flags -= Flags::DECIMAL_MODE;
         self.clock += 2;
     }
 
@@ -2238,6 +2234,30 @@ impl CPU {
         self.cmp_common(value, 4);
     }
 
+    fn cmp_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_x(m);
+        self.cmp_common(value, 4 + extra_clock);
+    }
+
+    fn cmp_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.absolute_y(m);
+        self.cmp_common(value, 4 + extra_clock);
+    }
+
     fn cmp_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
@@ -2246,12 +2266,32 @@ impl CPU {
         self.cmp_common(value, 3);
     }
 
+    fn cmp_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_x(m);
+        self.cmp_common(value, 4);
+    }
+
     fn cmp_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address: _, value } = self.zero_page_indirect_x(m);
         self.cmp_common(value, 6);
+    }
+
+    fn cmp_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address: _,
+            value,
+            extra_clock,
+        } = self.zero_page_indirect_y(m);
+        self.cmp_common(value, 5 + extra_clock);
     }
 
     fn cmp_common(&mut self, value: u8, clock: u64) {
@@ -2271,6 +2311,32 @@ impl CPU {
         m.write8(address, new_value);
     }
 
+    fn dcp_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        let new_value = self.dcp_common(value, 7);
+        m.write8(address, new_value);
+    }
+
+    fn dcp_absolute_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_y(m);
+        let new_value = self.dcp_common(value, 7);
+        m.write8(address, new_value);
+    }
+
     fn dcp_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
@@ -2280,11 +2346,33 @@ impl CPU {
         m.write8(address, new_value);
     }
 
+    fn dcp_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        let new_value = self.dcp_common(value, 5);
+        m.write8(address, new_value);
+    }
+
     fn dcp_zero_page_indirect_x<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address, value } = self.zero_page_indirect_x(m);
+        let new_value = self.dcp_common(value, 8);
+        m.write8(address, new_value);
+    }
+
+    fn dcp_zero_page_indirect_y<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.zero_page_indirect_y(m);
         let new_value = self.dcp_common(value, 8);
         m.write8(address, new_value);
     }
@@ -2308,12 +2396,34 @@ impl CPU {
         m.write8(address, new_value);
     }
 
+    fn dec_absolute_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValueClock {
+            address,
+            value,
+            extra_clock: _,
+        } = self.absolute_x(m);
+        let new_value = self.dec_common(value, 7);
+        m.write8(address, new_value);
+    }
+
     fn dec_zero_page<M>(&mut self, m: &mut M)
     where
         M: Memory,
     {
         let AddrValue { address, value } = self.zero_page_fixed(m);
         let new_value = self.dec_common(value, 5);
+        m.write8(address, new_value);
+    }
+
+    fn dec_zero_page_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_x(m);
+        let new_value = self.dec_common(value, 6);
         m.write8(address, new_value);
     }
 

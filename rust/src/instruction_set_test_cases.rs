@@ -81,7 +81,7 @@ mod test {
 
             // TODO do all tests
             let instruction = u8::from_str_radix(&file_name[0..2], 16).unwrap();
-            if instruction != 0xd0 {
+            if instruction != 0xe0 {
                 continue;
             }
 
