@@ -97,6 +97,13 @@ mod test {
             );
 
             for test_case in test_cases {
+                // TODO do all tests
+                // if test_case.name != "93 9996" {
+                //     continue;
+                // }
+
+                let test_name = format!("path=\"{}\", name=\"{}\"", path, test_case.name);
+
                 let mut c = CPU::new();
                 c.pc = test_case.initial.pc;
                 c.sp = test_case.initial.sp;
@@ -112,22 +119,22 @@ mod test {
 
                 c.step(&mut m);
 
-                test_results.eq(&test_case.expected.pc, &c.pc, "pc".to_string());
-                test_results.eq(&test_case.expected.sp, &c.sp, "sp".to_string());
-                test_results.eq(&test_case.expected.a, &c.a, "a".to_string());
-                test_results.eq(&test_case.expected.x, &c.x, "x".to_string());
-                test_results.eq(&test_case.expected.y, &c.y, "y".to_string());
+                test_results.eq(&test_case.expected.pc, &c.pc, format!("{}, pc", test_name));
+                test_results.eq(&test_case.expected.sp, &c.sp, format!("{}, sp", test_name));
+                test_results.eq(&test_case.expected.a, &c.a, format!("{}, a", test_name));
+                test_results.eq(&test_case.expected.x, &c.x, format!("{}, x", test_name));
+                test_results.eq(&test_case.expected.y, &c.y, format!("{}, y", test_name));
                 test_results.eq(
                     &Flags::from_bits_truncate(test_case.expected.flags),
                     &c.flags,
-                    "flags".to_string(),
+                    format!("{}, flags", test_name),
                 );
 
                 for x in test_case.expected.ram {
                     test_results.eq(
                         &x.value,
                         &m.read8(x.address),
-                        format!("memory at {:04x}", x.address),
+                        format!("{}, memory at {:04x}", test_name, x.address),
                     );
                 }
 

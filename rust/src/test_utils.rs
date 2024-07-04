@@ -28,8 +28,10 @@ pub mod test {
             T: Eq + Debug,
         {
             if expected != actual {
-                self.messages
-                    .push(format!("{:?} != {:?}, {}", expected, actual, message));
+                self.messages.push(format!(
+                    "{:?} (expected) != {:?} (actual), {}",
+                    expected, actual, message
+                ));
             }
         }
     }

@@ -1740,16 +1740,35 @@ impl CPU {
         let AddrValueClock {
             address,
             value,
-            extra_clock: _,
+            extra_clock,
         } = self.zero_page_indirect_y(m);
-        let new_value = self.ahx_common(m, address, value, 6);
+        let new_value = self.ahx_common(m, address, value, 6, extra_clock != 0);
+        let mut address: Word = address.into();
+        if extra_clock != 0 {
+            address.high = new_value;
+        }
+        let address: u16 = address.into();
         m.write8(address, new_value);
     }
 
-    fn ahx_common<M>(&mut self, m: &mut M, address: u16, value: u8, clock: u64) -> u8 {
-        // TODO impl
+    fn ahx_common<M>(
+        &mut self,
+        m: &mut M,
+        address: u16,
+        value: u8,
+        clock: u64,
+        page_crossing: bool,
+    ) -> u8 {
+        let address: Word = address.into();
+        let value = self.a
+            & self.x
+            & if !page_crossing {
+                address.high.wrapping_add(1)
+            } else {
+                address.high
+            };
         self.clock += clock;
-        todo!()
+        value
     }
 
     fn nop(&mut self, pc_offset: i8, clock: u64) {
