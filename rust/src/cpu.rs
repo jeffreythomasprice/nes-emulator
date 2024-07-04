@@ -210,38 +210,22 @@ impl CPU {
             0x9d => self.sta_absolute_x(m),
             0x9e => self.shx_absolute_y(m),
             0x9f => self.ahx_absolute_y(m),
-            // 	case 0xa0:
-            // 		// TODO impl
-            // 	case 0xa1:
-            // 		// TODO impl
-            // 	case 0xa2:
-            // 		// TODO impl
-            // 	case 0xa3:
-            // 		// TODO impl
-            // 	case 0xa4:
-            // 		// TODO impl
-            // 	case 0xa5:
-            // 		// TODO impl
-            // 	case 0xa6:
-            // 		// TODO impl
-            // 	case 0xa7:
-            // 		// TODO impl
-            // 	case 0xa8:
-            // 		// TODO impl
-            // 	case 0xa9:
-            // 		// TODO impl
-            // 	case 0xaa:
-            // 		// TODO impl
-            // 	case 0xab:
-            // 		// TODO impl
-            // 	case 0xac:
-            // 		// TODO impl
-            // 	case 0xad:
-            // 		// TODO impl
-            // 	case 0xae:
-            // 		// TODO impl
-            // 	case 0xaf:
-            // 		// TODO impl
+            0xa0 => self.ldy_immediate(m),
+            0xa1 => self.lda_zero_page_indirect_x(m),
+            0xa2 => self.ldx_immediate(m),
+            0xa3 => self.lax_zero_page_indirect_x(m),
+            0xa4 => self.ldy_zero_page(m),
+            0xa5 => self.lda_zero_page(m),
+            0xa6 => self.ldx_zero_page(m),
+            0xa7 => self.lax_zero_page(m),
+            0xa8 => self.tay(),
+            0xa9 => self.lda_immediate(m),
+            0xaa => self.tax(),
+            0xab => self.lax_immediate(m),
+            0xac => self.ldy_absolute(m),
+            0xad => self.lda_absolute(m),
+            0xae => self.ldx_absolute(m),
+            0xaf => self.lax_absolute(m),
             // 	case 0xb0:
             // 		// TODO impl
             // 	case 0xb1:
@@ -1039,6 +1023,20 @@ impl CPU {
 
     fn tya(&mut self) {
         self.a = self.y;
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
+        self.clock += 2;
+    }
+
+    fn tay(&mut self) {
+        self.y = self.a;
+        self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
+        self.flags.set(Flags::ZERO, self.a == 0);
+        self.clock += 2;
+    }
+
+    fn tax(&mut self) {
+        self.x = self.a;
         self.flags.set(Flags::NEGATIVE, (self.a as i8) < 0);
         self.flags.set(Flags::ZERO, self.a == 0);
         self.clock += 2;
@@ -1913,6 +1911,148 @@ impl CPU {
         };
         m.write8(address.into(), value);
         self.clock += 5;
+    }
+
+    fn ldy_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.ldy_common(value, 2);
+    }
+
+    fn ldy_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.ldy_common(value, 4);
+    }
+
+    fn ldy_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.ldy_common(value, 3);
+    }
+
+    fn ldy_common(&mut self, value: u8, clock: u64) {
+        self.y = value;
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.clock += clock;
+    }
+
+    fn lda_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.lda_common(value, 2);
+    }
+
+    fn lda_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.lda_common(value, 4);
+    }
+
+    fn lda_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.lda_common(value, 3);
+    }
+
+    fn lda_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_indirect_x(m);
+        self.lda_common(value, 6);
+    }
+
+    fn lda_common(&mut self, value: u8, clock: u64) {
+        self.a = value;
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.clock += clock;
+    }
+
+    fn ldx_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.ldx_common(value, 2);
+    }
+
+    fn ldx_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.ldx_common(value, 4);
+    }
+
+    fn ldx_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.ldx_common(value, 3);
+    }
+
+    fn ldx_common(&mut self, value: u8, clock: u64) {
+        self.x = value;
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.clock += clock;
+    }
+
+    fn lax_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        let value = (self.a | 0xee) & value;
+        self.lax_common(value, 2);
+    }
+
+    fn lax_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.lax_common(value, 4);
+    }
+
+    fn lax_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.lax_common(value, 3);
+    }
+
+    fn lax_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_indirect_x(m);
+        self.lax_common(value, 6);
+    }
+
+    fn lax_common(&mut self, value: u8, clock: u64) {
+        self.a = value;
+        self.x = value;
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.clock += clock;
     }
 
     fn nop(&mut self, pc_offset: i8, clock: u64) {
