@@ -274,38 +274,22 @@ impl CPU {
             0xdd => self.cmp_absolute_x(m),
             0xde => self.dec_absolute_x(m),
             0xdf => self.dcp_absolute_x(m),
-            // 	case 0xe0:
-            // 		// TODO impl
-            // 	case 0xe1:
-            // 		// TODO impl
-            // 	case 0xe2:
-            // 		// TODO impl
-            // 	case 0xe3:
-            // 		// TODO impl
-            // 	case 0xe4:
-            // 		// TODO impl
-            // 	case 0xe5:
-            // 		// TODO impl
-            // 	case 0xe6:
-            // 		// TODO impl
-            // 	case 0xe7:
-            // 		// TODO impl
-            // 	case 0xe8:
-            // 		// TODO impl
-            // 	case 0xe9:
-            // 		// TODO impl
-            // 	case 0xea:
-            // 		// TODO impl
-            // 	case 0xeb:
-            // 		// TODO impl
-            // 	case 0xec:
-            // 		// TODO impl
-            // 	case 0xed:
-            // 		// TODO impl
-            // 	case 0xee:
-            // 		// TODO impl
-            // 	case 0xef:
-            // 		// TODO impl
+            0xe0 => self.cpx_immediate(m),
+            0xe1 => self.sbc_zero_page_indirect_x(m),
+            0xe2 => self.nop(1, 2),
+            0xe3 => self.isc_zero_page_indirect_x(m),
+            0xe4 => self.cpx_zerp_page(m),
+            0xe5 => self.sbc_zero_page(m),
+            0xe6 => self.inc_zero_page(m),
+            0xe7 => self.isc_zero_page(m),
+            0xe8 => self.inx(),
+            0xe9 => self.sbc_immediate(m),
+            0xea => self.nop(0, 2),
+            0xeb => self.sbc_immediate(m),
+            0xec => self.cpx_absolute(m),
+            0xed => self.sbc_absolute(m),
+            0xee => self.inc_absolute(m),
+            0xef => self.isc_absolute(m),
             // 	case 0xf0:
             // 		// TODO impl
             // 	case 0xf1:
@@ -1036,6 +1020,13 @@ impl CPU {
 
     fn cld(&mut self) {
         self.flags -= Flags::DECIMAL_MODE;
+        self.clock += 2;
+    }
+
+    fn inx(&mut self) {
+        self.x = self.x.wrapping_add(1);
+        self.flags.set(Flags::NEGATIVE, (self.x as i8) < 0);
+        self.flags.set(Flags::ZERO, self.x == 0);
         self.clock += 2;
     }
 
@@ -2446,6 +2437,165 @@ impl CPU {
         self.flags.set(Flags::ZERO, self.x == 0);
         self.flags.set(Flags::CARRY, left >= right);
         self.clock += 2;
+    }
+
+    fn cpx_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.cpx_common(value, 2);
+    }
+
+    fn cpx_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.cpx_common(value, 4);
+    }
+
+    fn cpx_zerp_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.cpx_common(value, 3);
+    }
+
+    fn cpx_common(&mut self, value: u8, clock: u64) {
+        let value = self.x.wrapping_sub(value);
+        self.flags.set(Flags::NEGATIVE, (value as i8) < 0);
+        self.flags.set(Flags::ZERO, value == 0);
+        self.flags.set(Flags::CARRY, self.x >= value);
+        self.clock += clock;
+    }
+
+    fn sbc_immediate<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let value = self.read_next_u8(m);
+        self.sbc_common(value, 2);
+    }
+
+    fn sbc_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.absolute(m);
+        self.sbc_common(value, 4);
+    }
+
+    fn sbc_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
+        self.sbc_common(value, 3);
+    }
+
+    fn sbc_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address: _, value } = self.zero_page_indirect_x(m);
+        self.sbc_common(value, 6);
+    }
+
+    fn sbc_common(&mut self, value: u8, clock: u64) {
+        let old_a = self.a;
+        let (new_value, overflow1) = self.a.overflowing_sub(value);
+        let (new_value, overflow2) =
+            new_value.overflowing_sub(if self.flags.contains(Flags::CARRY) {
+                0
+            } else {
+                1
+            });
+        self.a = new_value;
+        self.flags.set(Flags::NEGATIVE, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO, new_value == 0);
+        self.flags.set(Flags::CARRY, !overflow1 && !overflow2);
+        self.flags.set(
+            Flags::OVERFLOW,
+            (old_a ^ value) & 0x80 != 0 && (old_a ^ new_value) & 0x80 != 0,
+        );
+        self.clock += clock;
+    }
+
+    fn isc_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        let new_value = self.isc_common(value, 6);
+        m.write8(address, new_value);
+    }
+
+    fn isc_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        let new_value = self.isc_common(value, 5);
+        m.write8(address, new_value);
+    }
+
+    fn isc_zero_page_indirect_x<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_indirect_x(m);
+        let new_value = self.isc_common(value, 8);
+        m.write8(address, new_value);
+    }
+
+    fn isc_common(&mut self, value: u8, clock: u64) -> u8 {
+        let inc_value = value.wrapping_add(1);
+        let (sub_value, overflow1) = self.a.overflowing_sub(inc_value);
+        let (sub_value, overflow2) =
+            sub_value.overflowing_sub(if self.flags.contains(Flags::CARRY) {
+                0
+            } else {
+                1
+            });
+        let old_a = self.a;
+        self.a = sub_value;
+        self.flags.set(Flags::NEGATIVE, (sub_value as i8) < 0);
+        self.flags.set(Flags::ZERO, sub_value == 0);
+        self.flags.set(Flags::CARRY, !overflow1 && !overflow2);
+        self.flags.set(
+            Flags::OVERFLOW,
+            (old_a ^ inc_value) & 0x80 != 0 && (old_a ^ sub_value) & 0x80 != 0,
+        );
+        self.clock += clock;
+        inc_value
+    }
+
+    fn inc_absolute<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.absolute(m);
+        let new_value = self.inc_common(value, 6);
+        m.write8(address, new_value);
+    }
+
+    fn inc_zero_page<M>(&mut self, m: &mut M)
+    where
+        M: Memory,
+    {
+        let AddrValue { address, value } = self.zero_page_fixed(m);
+        let new_value = self.inc_common(value, 5);
+        m.write8(address, new_value);
+    }
+
+    fn inc_common(&mut self, value: u8, clock: u64) -> u8 {
+        let new_value = value.wrapping_add(1);
+        self.flags.set(Flags::NEGATIVE, (new_value as i8) < 0);
+        self.flags.set(Flags::ZERO, new_value == 0);
+        self.clock += clock;
+        new_value
     }
 
     fn nop(&mut self, pc_offset: i8, clock: u64) {
