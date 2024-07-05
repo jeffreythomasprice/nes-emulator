@@ -78,12 +78,7 @@ mod test {
             let path = path.as_path();
             let file_name = path.file_name().unwrap().to_str().unwrap();
             let path = path.to_str().unwrap();
-
-            // TODO do all tests
             let instruction = u8::from_str_radix(&file_name[0..2], 16).unwrap();
-            if instruction != 0xef {
-                continue;
-            }
 
             let mut f = File::open(path).unwrap();
             let mut s = String::new();
@@ -136,7 +131,7 @@ mod test {
                 test_results.eq(
                     &(test_case.cycles.len() as u64),
                     &c.clock,
-                    "clock".to_string(),
+                    format!("{}, clock", test_name),
                 );
                 // TODO verify per-cycle memory access
             }

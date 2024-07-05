@@ -14,7 +14,6 @@ pub mod test {
         }
 
         pub fn assert(&self) {
-            // TODO if any messages, fail and print them
             if self.messages.len() > 0 {
                 for m in self.messages.iter() {
                     println!("test failure: {}", m);
