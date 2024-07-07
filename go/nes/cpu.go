@@ -1,7 +1,5 @@
 package nes
 
-import "fmt"
-
 const (
 	CarryFlagMask            uint8 = 0b0000_0001
 	ZeroFlagMask             uint8 = 0b0000_0010
@@ -14,20 +12,35 @@ const (
 )
 
 const (
-	StackAddress                     uint16 = 0x0100
-	NonMaskableInterruptAddress      uint16 = 0xfffa
-	ResetInterruptAddress            uint16 = 0xfffc
-	InterruptRequestInterruptAddress uint16 = 0xfffe
+	StackAddress                     Word = 0x0100
+	NonMaskableInterruptAddress      Word = 0xfffa
+	ResetInterruptAddress            Word = 0xfffc
+	InterruptRequestInterruptAddress Word = 0xfffe
 )
 
 type CPU struct {
-	PC        uint16
+	PC        Word
 	SP        uint8
 	A         uint8
 	X         uint8
 	Y         uint8
 	Flags     uint8
 	ClockTime uint64
+}
+
+type addrValue struct {
+	address Word
+	value   uint8
+}
+
+type addrValueClock struct {
+	address    Word
+	value      uint8
+	extraClock uint64
+}
+
+func (a addrValueClock) IsPageCrossing() bool {
+	return a.extraClock > 0
 }
 
 func (c *CPU) Step(m Memory) {
@@ -602,46 +615,46 @@ func (c *CPU) pla(m Memory) {
 }
 
 func (c *CPU) oraImmediate(m Memory) {
-	value := m.Read(c.PC + 1)
+	value := m.Read((c.PC + 1))
 	c.oraCommon(value, 2, 2)
 }
 
 func (c *CPU) oraAbsolute(m Memory) {
-	_, value := c.absolute(m)
-	c.oraCommon(value, 3, 4)
+	data := c.absolute(m)
+	c.oraCommon(data.value, 3, 4)
 }
 
 func (c *CPU) oraZeroPageIndirectX(m Memory) {
-	_, value := c.zeroPageIndirectX(m)
-	c.oraCommon(value, 2, 6)
+	data := c.zeroPageIndirectX(m)
+	c.oraCommon(data.value, 2, 6)
 }
 
 func (c *CPU) oraZeroPageIndirectY(m Memory) {
-	_, value, extraClock := c.zeroPageIndirectY(m)
-	c.oraCommon(value, 2, 5+extraClock)
+	data := c.zeroPageIndirectY(m)
+	c.oraCommon(data.value, 2, 5+data.extraClock)
 }
 
 func (c *CPU) oraZeroPageFixed(m Memory) {
-	_, value := c.zeroPageFixed(m)
-	c.oraCommon(value, 2, 3)
+	data := c.zeroPageFixed(m)
+	c.oraCommon(data.value, 2, 3)
 }
 
 func (c *CPU) oraZeroPageX(m Memory) {
-	_, value := c.zeroPageX(m)
-	c.oraCommon(value, 2, 4)
+	data := c.zeroPageX(m)
+	c.oraCommon(data.value, 2, 4)
 }
 
 func (c *CPU) oraAbsoluteX(m Memory) {
-	_, value, extraClock := c.absoluteX(m)
-	c.oraCommon(value, 3, 4+extraClock)
+	data := c.absoluteX(m)
+	c.oraCommon(data.value, 3, 4+data.extraClock)
 }
 
 func (c *CPU) oraAbsoluteY(m Memory) {
-	_, value, extraClock := c.absoluteY(m)
-	c.oraCommon(value, 3, 4+extraClock)
+	data := c.absoluteY(m)
+	c.oraCommon(data.value, 3, 4+data.extraClock)
 }
 
-func (c *CPU) oraCommon(newValue uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) oraCommon(newValue uint8, pcOffset Word, clock uint64) {
 	c.A |= newValue
 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
@@ -650,41 +663,41 @@ func (c *CPU) oraCommon(newValue uint8, pcOffset uint16, clock uint64) {
 }
 
 func (c *CPU) sloAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	c.sloCommon(m, address, value, 3, 6)
+	data := c.absolute(m)
+	c.sloCommon(m, data.address, data.value, 3, 6)
 }
 
 func (c *CPU) sloAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	c.sloCommon(m, address, value, 3, 7)
+	data := c.absoluteX(m)
+	c.sloCommon(m, data.address, data.value, 3, 7)
 }
 
 func (c *CPU) sloAbsoluteY(m Memory) {
-	address, value, _ := c.absoluteY(m)
-	c.sloCommon(m, address, value, 3, 7)
+	data := c.absoluteY(m)
+	c.sloCommon(m, data.address, data.value, 3, 7)
 }
 
 func (c *CPU) sloZeroPageIndirectX(m Memory) {
-	address, value := c.zeroPageIndirectX(m)
-	c.sloCommon(m, address, value, 2, 8)
+	data := c.zeroPageIndirectX(m)
+	c.sloCommon(m, data.address, data.value, 2, 8)
 }
 
 func (c *CPU) sloZeroPageIndirectY(m Memory) {
-	address, value, _ := c.zeroPageIndirectY(m)
-	c.sloCommon(m, address, value, 2, 8)
+	data := c.zeroPageIndirectY(m)
+	c.sloCommon(m, data.address, data.value, 2, 8)
 }
 
 func (c *CPU) sloZeroPageImmediate(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	c.sloCommon(m, address, value, 2, 5)
+	data := c.zeroPageFixed(m)
+	c.sloCommon(m, data.address, data.value, 2, 5)
 }
 
 func (c *CPU) sloZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	c.sloCommon(m, address, value, 2, 6)
+	data := c.zeroPageX(m)
+	c.sloCommon(m, data.address, data.value, 2, 6)
 }
 
-func (c *CPU) sloCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) sloCommon(m Memory, address Word, value uint8, pcOffset Word, clock uint64) {
 	newValue := value << 1
 	m.Write(address, newValue)
 	c.A |= newValue
@@ -707,26 +720,26 @@ func (c *CPU) asl() {
 }
 
 func (c *CPU) aslZeroPageFixed(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	c.aslCommon(m, address, value, 2, 5)
+	data := c.zeroPageFixed(m)
+	c.aslCommon(m, data.address, data.value, 2, 5)
 }
 
 func (c *CPU) aslAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	c.aslCommon(m, address, value, 3, 6)
+	data := c.absolute(m)
+	c.aslCommon(m, data.address, data.value, 3, 6)
 }
 
 func (c *CPU) aslZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	c.aslCommon(m, address, value, 2, 6)
+	data := c.zeroPageX(m)
+	c.aslCommon(m, data.address, data.value, 2, 6)
 }
 
 func (c *CPU) aslAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	c.aslCommon(m, address, value, 3, 7)
+	data := c.absoluteX(m)
+	c.aslCommon(m, data.address, data.value, 3, 7)
 }
 
-func (c *CPU) aslCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) aslCommon(m Memory, address Word, value uint8, pcOffset Word, clock uint64) {
 	newValue := value << 1
 	m.Write(address, newValue)
 	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
@@ -737,7 +750,7 @@ func (c *CPU) aslCommon(m Memory, address uint16, value uint8, pcOffset uint16, 
 }
 
 func (c *CPU) ancImmediate(m Memory) {
-	value := m.Read(c.PC + 1)
+	value := m.Read((c.PC + 1))
 	newValue := c.A & value
 	c.A = newValue
 	c.setFlagsTo(NegativeFlagMask, int8(newValue) < 0)
@@ -748,46 +761,46 @@ func (c *CPU) ancImmediate(m Memory) {
 }
 
 func (c *CPU) andZeroPage(m Memory) {
-	_, value := c.zeroPageFixed(m)
-	c.andCommon(value, 2, 3)
+	data := c.zeroPageFixed(m)
+	c.andCommon(data.value, 2, 3)
 }
 
 func (c *CPU) andZeroPageX(m Memory) {
-	_, value := c.zeroPageX(m)
-	c.andCommon(value, 2, 4)
+	data := c.zeroPageX(m)
+	c.andCommon(data.value, 2, 4)
 }
 
 func (c *CPU) andZeroPageIndirectX(m Memory) {
-	_, value := c.zeroPageIndirectX(m)
-	c.andCommon(value, 2, 6)
+	data := c.zeroPageIndirectX(m)
+	c.andCommon(data.value, 2, 6)
 }
 
 func (c *CPU) andZeroPageIndirectY(m Memory) {
-	_, value, extraClock := c.zeroPageIndirectY(m)
-	c.andCommon(value, 2, 5+extraClock)
+	data := c.zeroPageIndirectY(m)
+	c.andCommon(data.value, 2, 5+data.extraClock)
 }
 
 func (c *CPU) andImmediate(m Memory) {
-	value := m.Read(c.PC + 1)
+	value := m.Read((c.PC + 1))
 	c.andCommon(value, 2, 2)
 }
 
 func (c *CPU) andAbsolute(m Memory) {
-	_, value := c.absolute(m)
-	c.andCommon(value, 3, 4)
+	data := c.absolute(m)
+	c.andCommon(data.value, 3, 4)
 }
 
 func (c *CPU) andAbsoluteX(m Memory) {
-	_, value, extraClock := c.absoluteX(m)
-	c.andCommon(value, 3, 4+extraClock)
+	data := c.absoluteX(m)
+	c.andCommon(data.value, 3, 4+data.extraClock)
 }
 
 func (c *CPU) andAbsoluteY(m Memory) {
-	_, value, extraClock := c.absoluteY(m)
-	c.andCommon(value, 3, 4+extraClock)
+	data := c.absoluteY(m)
+	c.andCommon(data.value, 3, 4+data.extraClock)
 }
 
-func (c *CPU) andCommon(value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) andCommon(value uint8, pcOffset Word, clock uint64) {
 	c.A &= value
 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
@@ -796,41 +809,41 @@ func (c *CPU) andCommon(value uint8, pcOffset uint16, clock uint64) {
 }
 
 func (c *CPU) rlaZeroPage(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	c.rlaCommon(m, address, value, 2, 5)
+	data := c.zeroPageFixed(m)
+	c.rlaCommon(m, data.address, data.value, 2, 5)
 }
 
 func (c *CPU) rlaZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	c.rlaCommon(m, address, value, 2, 6)
+	data := c.zeroPageX(m)
+	c.rlaCommon(m, data.address, data.value, 2, 6)
 }
 
 func (c *CPU) rlaZeroPageIndirectX(m Memory) {
-	address, value := c.zeroPageIndirectX(m)
-	c.rlaCommon(m, address, value, 2, 8)
+	data := c.zeroPageIndirectX(m)
+	c.rlaCommon(m, data.address, data.value, 2, 8)
 }
 
 func (c *CPU) rlaZeroPageIndirectY(m Memory) {
-	address, value, _ := c.zeroPageIndirectY(m)
-	c.rlaCommon(m, address, value, 2, 8)
+	data := c.zeroPageIndirectY(m)
+	c.rlaCommon(m, data.address, data.value, 2, 8)
 }
 
 func (c *CPU) rlaAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	c.rlaCommon(m, address, value, 3, 6)
+	data := c.absolute(m)
+	c.rlaCommon(m, data.address, data.value, 3, 6)
 }
 
 func (c *CPU) rlaAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	c.rlaCommon(m, address, value, 3, 7)
+	data := c.absoluteX(m)
+	c.rlaCommon(m, data.address, data.value, 3, 7)
 }
 
 func (c *CPU) rlaAbsoluteY(m Memory) {
-	address, value, _ := c.absoluteY(m)
-	c.rlaCommon(m, address, value, 3, 7)
+	data := c.absoluteY(m)
+	c.rlaCommon(m, data.address, data.value, 3, 7)
 }
 
-func (c *CPU) rlaCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) rlaCommon(m Memory, address Word, value uint8, pcOffset Word, clock uint64) {
 	newValue := value << 1
 	if (c.Flags & CarryFlagMask) != 0 {
 		newValue += 1
@@ -849,30 +862,30 @@ func (c *CPU) rol() {
 }
 
 func (c *CPU) rolZeroPage(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	newValue := c.rolCommon(value, 2, 5)
-	m.Write(address, newValue)
+	data := c.zeroPageFixed(m)
+	newValue := c.rolCommon(data.value, 2, 5)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rolZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	newValue := c.rolCommon(value, 2, 6)
-	m.Write(address, newValue)
+	data := c.zeroPageX(m)
+	newValue := c.rolCommon(data.value, 2, 6)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rolAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	newValue := c.rolCommon(value, 3, 6)
-	m.Write(address, newValue)
+	data := c.absolute(m)
+	newValue := c.rolCommon(data.value, 3, 6)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rolAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	newValue := c.rolCommon(value, 3, 7)
-	m.Write(address, newValue)
+	data := c.absoluteX(m)
+	newValue := c.rolCommon(data.value, 3, 7)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) rolCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) rolCommon(value uint8, pcOffset Word, clock uint64) uint8 {
 	newValue := value << 1
 	if (c.Flags & CarryFlagMask) != 0 {
 		newValue += 1
@@ -910,7 +923,7 @@ func (c *CPU) branchCommon(m Memory, condition bool) {
 		// high byte of address after the branch instruction
 		high1 := (c.PC + 2) & 0xff00
 		// do the jump
-		c.PC = uint16(int32(c.PC) + 2 + int32(int8(m.Read(c.PC+1))))
+		c.PC = Word(int32(c.PC) + 2 + int32(int8(m.Read((c.PC + 1)))))
 		// high byte of address of branch destination
 		high2 := c.PC & 0xff00
 		if high1 == high2 {
@@ -925,16 +938,16 @@ func (c *CPU) branchCommon(m Memory, condition bool) {
 }
 
 func (c *CPU) jmpAbsolute(m Memory) {
-	c.PC = Read16(m, c.PC+1)
+	c.PC = Read16(m, (c.PC + 1))
 	c.ClockTime += 3
 }
 
 func (c *CPU) jmpIndirect(m Memory) {
-	address := Read16(m, c.PC+1)
+	address := Read16(m, (c.PC + 1))
 	if address&0xff == 0x0ff {
 		low := m.Read(address)
 		high := m.Read(address & 0xff00)
-		c.PC = uint16(low) | (uint16(high) << 8)
+		c.PC = NewWord(low, high)
 	} else {
 		c.PC = Read16(m, address)
 	}
@@ -974,23 +987,23 @@ func (c *CPU) dey() {
 }
 
 func (c *CPU) jsr(m Memory) {
-	address := Read16(m, c.PC+1)
+	address := Read16(m, (c.PC + 1))
 	c.push16(m, c.PC+2)
 	c.PC = address
 	c.ClockTime += 6
 }
 
 func (c *CPU) bitZeroPageImmediate(m Memory) {
-	_, value := c.zeroPageFixed(m)
-	c.bitCommon(value, 2, 3)
+	data := c.zeroPageFixed(m)
+	c.bitCommon(data.value, 2, 3)
 }
 
 func (c *CPU) bitAbsolute(m Memory) {
-	_, value := c.absolute(m)
-	c.bitCommon(value, 3, 4)
+	data := c.absolute(m)
+	c.bitCommon(data.value, 3, 4)
 }
 
-func (c *CPU) bitCommon(value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) bitCommon(value uint8, pcOffset Word, clock uint64) {
 	c.setFlagsTo(OverflowFlagMask, (value&OverflowFlagMask) != 0)
 	c.setFlagsTo(NegativeFlagMask, (NegativeFlagMask&value) != 0)
 	c.setFlagsTo(ZeroFlagMask, (value&c.A) == 0)
@@ -999,46 +1012,46 @@ func (c *CPU) bitCommon(value uint8, pcOffset uint16, clock uint64) {
 }
 
 func (c *CPU) eorZeroPage(m Memory) {
-	_, value := c.zeroPageFixed(m)
-	c.eorCommon(value, 2, 3)
+	data := c.zeroPageFixed(m)
+	c.eorCommon(data.value, 2, 3)
 }
 
 func (c *CPU) eorZeroPageX(m Memory) {
-	_, value := c.zeroPageX(m)
-	c.eorCommon(value, 2, 4)
+	data := c.zeroPageX(m)
+	c.eorCommon(data.value, 2, 4)
 }
 
 func (c *CPU) eorZeroPageIndirectX(m Memory) {
-	_, value := c.zeroPageIndirectX(m)
-	c.eorCommon(value, 2, 6)
+	data := c.zeroPageIndirectX(m)
+	c.eorCommon(data.value, 2, 6)
 }
 
 func (c *CPU) eorZeroPageIndirectY(m Memory) {
-	_, value, extraClock := c.zeroPageIndirectY(m)
-	c.eorCommon(value, 2, 5+extraClock)
+	data := c.zeroPageIndirectY(m)
+	c.eorCommon(data.value, 2, 5+data.extraClock)
 }
 
 func (c *CPU) eorImmediate(m Memory) {
-	value := m.Read(c.PC + 1)
+	value := m.Read((c.PC + 1))
 	c.eorCommon(value, 2, 2)
 }
 
 func (c *CPU) eorAbsolute(m Memory) {
-	_, value := c.absolute(m)
-	c.eorCommon(value, 3, 4)
+	data := c.absolute(m)
+	c.eorCommon(data.value, 3, 4)
 }
 
 func (c *CPU) eorAbsoluteX(m Memory) {
-	_, value, extraClock := c.absoluteX(m)
-	c.eorCommon(value, 3, 4+extraClock)
+	data := c.absoluteX(m)
+	c.eorCommon(data.value, 3, 4+data.extraClock)
 }
 
 func (c *CPU) eorAbsoluteY(m Memory) {
-	_, value, extraClock := c.absoluteY(m)
-	c.eorCommon(value, 3, 4+extraClock)
+	data := c.absoluteY(m)
+	c.eorCommon(data.value, 3, 4+data.extraClock)
 }
 
-func (c *CPU) eorCommon(value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) eorCommon(value uint8, pcOffset Word, clock uint64) {
 	c.A ^= value
 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
@@ -1047,41 +1060,41 @@ func (c *CPU) eorCommon(value uint8, pcOffset uint16, clock uint64) {
 }
 
 func (c *CPU) sreZeroPage(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	c.sreCommon(m, address, value, 2, 5)
+	data := c.zeroPageFixed(m)
+	c.sreCommon(m, data.address, data.value, 2, 5)
 }
 
 func (c *CPU) sreZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	c.sreCommon(m, address, value, 2, 6)
+	data := c.zeroPageX(m)
+	c.sreCommon(m, data.address, data.value, 2, 6)
 }
 
 func (c *CPU) sreZeroPageIndirectX(m Memory) {
-	address, value := c.zeroPageIndirectX(m)
-	c.sreCommon(m, address, value, 2, 8)
+	data := c.zeroPageIndirectX(m)
+	c.sreCommon(m, data.address, data.value, 2, 8)
 }
 
 func (c *CPU) sreZeroPageIndirectY(m Memory) {
-	address, value, _ := c.zeroPageIndirectY(m)
-	c.sreCommon(m, address, value, 2, 8)
+	data := c.zeroPageIndirectY(m)
+	c.sreCommon(m, data.address, data.value, 2, 8)
 }
 
 func (c *CPU) sreAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	c.sreCommon(m, address, value, 3, 6)
+	data := c.absolute(m)
+	c.sreCommon(m, data.address, data.value, 3, 6)
 }
 
 func (c *CPU) sreAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	c.sreCommon(m, address, value, 3, 7)
+	data := c.absoluteX(m)
+	c.sreCommon(m, data.address, data.value, 3, 7)
 }
 
 func (c *CPU) sreAbsoluteY(m Memory) {
-	address, value, _ := c.absoluteY(m)
-	c.sreCommon(m, address, value, 3, 7)
+	data := c.absoluteY(m)
+	c.sreCommon(m, data.address, data.value, 3, 7)
 }
 
-func (c *CPU) sreCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) sreCommon(m Memory, address Word, value uint8, pcOffset Word, clock uint64) {
 	newValue := value >> 1
 	m.Write(address, newValue)
 	c.A ^= newValue
@@ -1097,30 +1110,30 @@ func (c *CPU) lsr() {
 }
 
 func (c *CPU) lsrZeroPage(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	newValue := c.lsrCommon(value, 2, 5)
-	m.Write(address, newValue)
+	data := c.zeroPageFixed(m)
+	newValue := c.lsrCommon(data.value, 2, 5)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) lsrZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	newValue := c.lsrCommon(value, 2, 6)
-	m.Write(address, newValue)
+	data := c.zeroPageX(m)
+	newValue := c.lsrCommon(data.value, 2, 6)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) lsrAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	newValue := c.lsrCommon(value, 3, 6)
-	m.Write(address, newValue)
+	data := c.absolute(m)
+	newValue := c.lsrCommon(data.value, 3, 6)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) lsrAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	newValue := c.lsrCommon(value, 3, 7)
-	m.Write(address, newValue)
+	data := c.absoluteX(m)
+	newValue := c.lsrCommon(data.value, 3, 7)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) lsrCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) lsrCommon(value uint8, pcOffset Word, clock uint64) uint8 {
 	newValue := value >> 1
 	c.clearFlags(NegativeFlagMask)
 	c.setFlagsTo(ZeroFlagMask, newValue == 0)
@@ -1131,7 +1144,7 @@ func (c *CPU) lsrCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
 }
 
 func (c *CPU) alr(m Memory) {
-	value := c.A & m.Read(c.PC+1)
+	value := c.A & m.Read((c.PC + 1))
 	c.A = value >> 1
 	c.setFlagsTo(NegativeFlagMask, int8(c.A) < 0)
 	c.setFlagsTo(ZeroFlagMask, c.A == 0)
@@ -1141,46 +1154,46 @@ func (c *CPU) alr(m Memory) {
 }
 
 func (c *CPU) adcImmediate(m Memory) {
-	value := m.Read(c.PC + 1)
+	value := m.Read((c.PC + 1))
 	c.adcCommon(value, 2, 2)
 }
 
 func (c *CPU) adcAbsolute(m Memory) {
-	_, value := c.absolute(m)
-	c.adcCommon(value, 3, 4)
+	data := c.absolute(m)
+	c.adcCommon(data.value, 3, 4)
 }
 
 func (c *CPU) adcAbsoluteX(m Memory) {
-	_, value, extraClock := c.absoluteX(m)
-	c.adcCommon(value, 3, 4+extraClock)
+	data := c.absoluteX(m)
+	c.adcCommon(data.value, 3, 4+data.extraClock)
 }
 
 func (c *CPU) adcAbsoluteY(m Memory) {
-	_, value, extraClock := c.absoluteY(m)
-	c.adcCommon(value, 3, 4+extraClock)
+	data := c.absoluteY(m)
+	c.adcCommon(data.value, 3, 4+data.extraClock)
 }
 
 func (c *CPU) adcZeroPage(m Memory) {
-	_, value := c.zeroPageFixed(m)
-	c.adcCommon(value, 2, 3)
+	data := c.zeroPageFixed(m)
+	c.adcCommon(data.value, 2, 3)
 }
 
 func (c *CPU) adcZeroPageX(m Memory) {
-	_, value := c.zeroPageX(m)
-	c.adcCommon(value, 2, 4)
+	data := c.zeroPageX(m)
+	c.adcCommon(data.value, 2, 4)
 }
 
 func (c *CPU) adcZeroPageIndirectX(m Memory) {
-	_, value := c.zeroPageIndirectX(m)
-	c.adcCommon(value, 2, 6)
+	data := c.zeroPageIndirectX(m)
+	c.adcCommon(data.value, 2, 6)
 }
 
 func (c *CPU) adcZeroPageIndirectY(m Memory) {
-	_, value, extraClock := c.zeroPageIndirectY(m)
-	c.adcCommon(value, 2, 5+extraClock)
+	data := c.zeroPageIndirectY(m)
+	c.adcCommon(data.value, 2, 5+data.extraClock)
 }
 
-func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
+func (c *CPU) adcCommon(value uint8, pcOffset Word, clock uint64) {
 	newValue := uint16(c.A) + uint16(value)
 	if (c.Flags & CarryFlagMask) != 0 {
 		newValue++
@@ -1199,48 +1212,48 @@ func (c *CPU) adcCommon(value uint8, pcOffset uint16, clock uint64) {
 }
 
 func (c *CPU) rraAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	newValue := c.rraCommon(value, 3, 6)
-	m.Write(address, newValue)
+	data := c.absolute(m)
+	newValue := c.rraCommon(data.value, 3, 6)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rraAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	newValue := c.rraCommon(value, 3, 7)
-	m.Write(address, newValue)
+	data := c.absoluteX(m)
+	newValue := c.rraCommon(data.value, 3, 7)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rraAbsoluteY(m Memory) {
-	address, value, _ := c.absoluteY(m)
-	newValue := c.rraCommon(value, 3, 7)
-	m.Write(address, newValue)
+	data := c.absoluteY(m)
+	newValue := c.rraCommon(data.value, 3, 7)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rraZeroPage(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	newValue := c.rraCommon(value, 2, 5)
-	m.Write(address, newValue)
+	data := c.zeroPageFixed(m)
+	newValue := c.rraCommon(data.value, 2, 5)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rraZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	newValue := c.rraCommon(value, 2, 6)
-	m.Write(address, newValue)
+	data := c.zeroPageX(m)
+	newValue := c.rraCommon(data.value, 2, 6)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rraZeroPageIndirectX(m Memory) {
-	address, value := c.zeroPageIndirectX(m)
-	newValue := c.rraCommon(value, 2, 8)
-	m.Write(address, newValue)
+	data := c.zeroPageIndirectX(m)
+	newValue := c.rraCommon(data.value, 2, 8)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rraZeroPageIndirectY(m Memory) {
-	address, value, _ := c.zeroPageIndirectY(m)
-	newValue := c.rraCommon(value, 2, 8)
-	m.Write(address, newValue)
+	data := c.zeroPageIndirectY(m)
+	newValue := c.rraCommon(data.value, 2, 8)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) rraCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) rraCommon(value uint8, pcOffset Word, clock uint64) uint8 {
 	rorNewValue := value >> 1
 	if (c.Flags & CarryFlagMask) != 0 {
 		rorNewValue |= 0b1000_0000
@@ -1269,30 +1282,30 @@ func (c *CPU) ror() {
 }
 
 func (c *CPU) rorAbsolute(m Memory) {
-	address, value := c.absolute(m)
-	newValue := c.rorCommon(value, 3, 6)
-	m.Write(address, newValue)
+	data := c.absolute(m)
+	newValue := c.rorCommon(data.value, 3, 6)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rorAbsoluteX(m Memory) {
-	address, value, _ := c.absoluteX(m)
-	newValue := c.rorCommon(value, 3, 7)
-	m.Write(address, newValue)
+	data := c.absoluteX(m)
+	newValue := c.rorCommon(data.value, 3, 7)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rorZeroPage(m Memory) {
-	address, value := c.zeroPageFixed(m)
-	newValue := c.rorCommon(value, 2, 5)
-	m.Write(address, newValue)
+	data := c.zeroPageFixed(m)
+	newValue := c.rorCommon(data.value, 2, 5)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) rorZeroPageX(m Memory) {
-	address, value := c.zeroPageX(m)
-	newValue := c.rorCommon(value, 2, 6)
-	m.Write(address, newValue)
+	data := c.zeroPageX(m)
+	newValue := c.rorCommon(data.value, 2, 6)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) rorCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) rorCommon(value uint8, pcOffset Word, clock uint64) uint8 {
 	newValue := value >> 1
 	if (c.Flags & CarryFlagMask) != 0 {
 		newValue |= 0b1000_0000
@@ -1306,7 +1319,7 @@ func (c *CPU) rorCommon(value uint8, pcOffset uint16, clock uint64) uint8 {
 }
 
 func (c *CPU) arrImmediate(m Memory) {
-	immValue := m.Read(c.PC + 1)
+	immValue := m.Read((c.PC + 1))
 	newValue := c.A & immValue
 	c.setFlagsTo(OverflowFlagMask, (newValue^(newValue>>1))&0x40 != 0)
 	newCarry := newValue & 0b1000_0000
@@ -1323,97 +1336,97 @@ func (c *CPU) arrImmediate(m Memory) {
 }
 
 func (c *CPU) staAbsolute(m Memory) {
-	address, _ := c.absolute(m)
+	data := c.absolute(m)
 	newValue := c.staCommon(3, 4)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) staZeroPage(m Memory) {
-	address, _ := c.zeroPageFixed(m)
+	data := c.zeroPageFixed(m)
 	newValue := c.staCommon(2, 3)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) staZeroPageIndirectX(m Memory) {
-	address, _ := c.zeroPageIndirectX(m)
+	data := c.zeroPageIndirectX(m)
 	newValue := c.staCommon(2, 6)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) staZeroPageIndirectY(m Memory) {
-	address, _, _ := c.zeroPageIndirectY(m)
+	data := c.zeroPageIndirectY(m)
 	newValue := c.staCommon(2, 6)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) staCommon(pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) staCommon(pcOffset Word, clock uint64) uint8 {
 	c.PC += pcOffset
 	c.ClockTime += clock
 	return c.A
 }
 
 func (c *CPU) saxAbsolute(m Memory) {
-	address, _ := c.absolute(m)
+	data := c.absolute(m)
 	newValue := c.saxCommon(3, 4)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) saxZeroPage(m Memory) {
-	address, _ := c.zeroPageFixed(m)
+	data := c.zeroPageFixed(m)
 	newValue := c.saxCommon(2, 3)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) saxZeroPageIndirectX(m Memory) {
-	address, _ := c.zeroPageIndirectX(m)
+	data := c.zeroPageIndirectX(m)
 	newValue := c.saxCommon(2, 6)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) saxCommon(pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) saxCommon(pcOffset Word, clock uint64) uint8 {
 	c.PC += pcOffset
 	c.ClockTime += clock
 	return c.A & c.X
 }
 
 func (c *CPU) stxAbsolute(m Memory) {
-	address, _ := c.absolute(m)
+	data := c.absolute(m)
 	newValue := c.stxCommon(3, 4)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) stxZeroPage(m Memory) {
-	address, _ := c.zeroPageFixed(m)
+	data := c.zeroPageFixed(m)
 	newValue := c.stxCommon(2, 3)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) stxCommon(pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) stxCommon(pcOffset Word, clock uint64) uint8 {
 	c.PC += pcOffset
 	c.ClockTime += clock
 	return c.X
 }
 
 func (c *CPU) styAbsolute(m Memory) {
-	address, _ := c.absolute(m)
+	data := c.absolute(m)
 	newValue := c.styCommon(3, 4)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
 func (c *CPU) styZeroPage(m Memory) {
-	address, _ := c.zeroPageFixed(m)
+	data := c.zeroPageFixed(m)
 	newValue := c.styCommon(2, 3)
-	m.Write(address, newValue)
+	m.Write(data.address, newValue)
 }
 
-func (c *CPU) styCommon(pcOffset uint16, clock uint64) uint8 {
+func (c *CPU) styCommon(pcOffset Word, clock uint64) uint8 {
 	c.PC += pcOffset
 	c.ClockTime += clock
 	return c.Y
 }
 
 func (c *CPU) xaaImmediate(m Memory) {
-	value := m.Read(c.PC + 1)
+	value := m.Read((c.PC + 1))
 	c.A |= 0xee
 	c.A &= c.X
 	c.A &= value
@@ -1432,37 +1445,34 @@ func (c *CPU) txa() {
 }
 
 func (c *CPU) ahxZeroPageIndirectY(m Memory) {
-	address, value, _ := c.zeroPageIndirectY(m)
-	newValue := c.ahxCommon(m, address, value, 2, 6)
-	m.Write(address, newValue)
+	data := c.zeroPageIndirectY(m)
+	c.ahxCommon(m, data, 2, 6)
 }
 
-func (c *CPU) ahxCommon(m Memory, address uint16, value uint8, pcOffset uint16, clock uint64) uint8 {
-	fmt.Printf("TODO address = %04x\n", address)
-	fmt.Printf("TODO value = %02x\n", value)
-	fmt.Printf("TODO a = %02x\n", c.A)
-	fmt.Printf("TODO x = %02x\n", c.X)
-	// newValue := c.A & c.X & uint8((address+1)>>8)
-	newValue := c.A & c.X & (uint8(address >> 8))
-	fmt.Printf("TODO newValue = %02x\n", newValue)
-	// newValue := c.A & c.X & ((value - c.Y) + 1)
-	// newValue := c.A & c.X & (value + 1)
-	// newValue := c.A & c.X
-	// newValue := c.A & c.X & m.Read(uint16(uint8(address>>8)+1))
+func (c *CPU) ahxCommon(m Memory, data addrValueClock, pcOffset Word, clock uint64) {
+	newValue := c.A & c.X
+	var address Word
+	if data.IsPageCrossing() {
+		newValue &= data.address.High()
+		address = NewWord(data.address.Low(), newValue)
+	} else {
+		newValue &= data.address.High() + 1
+		address = data.address
+	}
+	m.Write(address, newValue)
 	c.PC += pcOffset
 	c.ClockTime += clock
-	return newValue
 }
 
-func (c *CPU) nop(pcOffset uint16, clock uint64) {
+func (c *CPU) nop(pcOffset Word, clock uint64) {
 	c.PC += pcOffset
 	c.ClockTime += clock
 }
 
 func (c *CPU) nopAbsoluteX(m Memory) {
-	_, _, extraClock := c.absoluteX(m)
+	data := c.absoluteX(m)
 	c.PC += 3
-	c.ClockTime += 4 + extraClock
+	c.ClockTime += 4 + data.extraClock
 }
 
 func (c *CPU) clearFlags(mask uint8) {
@@ -1482,95 +1492,96 @@ func (c *CPU) setFlagsTo(mask uint8, value bool) {
 }
 
 func (c *CPU) push8(m Memory, value uint8) {
-	m.Write(StackAddress+uint16(c.SP), value)
+	m.Write(StackAddress+Word(c.SP), value)
 	c.SP--
 }
 
 func (c *CPU) pop8(m Memory) uint8 {
 	c.SP++
-	return m.Read(StackAddress + uint16(c.SP))
+	return m.Read(StackAddress + Word(c.SP))
 }
 
-func (c *CPU) push16(m Memory, value uint16) {
-	c.push8(m, uint8(value>>8))
-	c.push8(m, uint8(value))
+func (c *CPU) push16(m Memory, value Word) {
+	c.push8(m, value.High())
+	c.push8(m, value.Low())
 }
 
-func (c *CPU) pop16(m Memory) uint16 {
+func (c *CPU) pop16(m Memory) Word {
 	low := c.pop8(m)
 	high := c.pop8(m)
-	return (uint16(high) << 8) | uint16(low)
+	return NewWord(low, high)
 }
 
-func (c *CPU) absolute(m Memory) (address uint16, value uint8) {
-	address = Read16(m, c.PC+1)
-	value = m.Read(address)
-	return
+func (c *CPU) absolute(m Memory) addrValue {
+	address := Word(Read16(m, (c.PC + 1)))
+	value := m.Read(address)
+	return addrValue{address, value}
 }
 
-func (c *CPU) absoluteX(m Memory) (address uint16, value uint8, extraClock uint64) {
+func (c *CPU) absoluteX(m Memory) addrValueClock {
 	return c.absoluteCommon(m, c.X)
 }
 
-func (c *CPU) absoluteY(m Memory) (address uint16, value uint8, extraClock uint64) {
+func (c *CPU) absoluteY(m Memory) addrValueClock {
 	return c.absoluteCommon(m, c.Y)
 }
 
-func (c *CPU) absoluteCommon(m Memory, offset uint8) (address uint16, value uint8, extraClock uint64) {
-	address = Read16(m, c.PC+1)
+func (c *CPU) absoluteCommon(m Memory, offset uint8) addrValueClock {
+	address := Read16(m, (c.PC + 1))
 	high1 := address & 0xff00
-	address += uint16(offset)
-	value = m.Read(address)
+	address += Word(offset)
+	value := m.Read(address)
 	high2 := address & 0xff00
 	// if adding Y pushes us into a new page it will take an extra clock cycle to resolve
+	var extraClock uint64
 	if high1 == high2 {
 		extraClock = 0
 	} else {
 		extraClock = 1
 	}
-	return
+	return addrValueClock{address, value, extraClock}
 }
 
-func (c *CPU) zeroPageFixed(m Memory) (address uint16, value uint8) {
-	address = uint16(m.Read(c.PC + 1))
-	value = m.Read(address)
-	return
+func (c *CPU) zeroPageFixed(m Memory) addrValue {
+	address := Word(m.Read((c.PC + 1)))
+	value := m.Read(address)
+	return addrValue{address, value}
 }
 
-func (c *CPU) zeroPageX(m Memory) (address uint16, value uint8) {
-	address = (uint16(m.Read(c.PC+1)) + uint16(c.X)) & 0xff
-	value = m.Read(address)
-	return
+func (c *CPU) zeroPageX(m Memory) addrValue {
+	address := (Word(m.Read((c.PC + 1))) + Word(c.X)) & 0xff
+	value := m.Read(address)
+	return addrValue{address, value}
 }
 
-func (c *CPU) zeroPageIndirectX(m Memory) (address uint16, value uint8) {
-	address = zeroPageIndirect(m, m.Read(c.PC+1), c.X)
-	value = m.Read(address)
-	return
+func (c *CPU) zeroPageIndirectX(m Memory) addrValue {
+	address := zeroPageIndirect(m, m.Read((c.PC + 1)), c.X)
+	value := m.Read(address)
+	return addrValue{address, value}
 }
 
-func (c *CPU) zeroPageIndirectY(m Memory) (address uint16, value uint8, extraClock uint64) {
-	address = zeroPageIndirect(m, m.Read(c.PC+1), 0)
+func (c *CPU) zeroPageIndirectY(m Memory) addrValueClock {
+	address := zeroPageIndirect(m, m.Read((c.PC + 1)), 0)
 	high1 := address & 0xff00
-	address += uint16(c.Y)
-	value = m.Read(address)
+	address += Word(c.Y)
+	value := m.Read(address)
 	high2 := address & 0xff00
 	// if adding Y pushes us into a new page it will take an extra clock cycle to resolve
+	var extraClock uint64
 	if high1 == high2 {
 		extraClock = 0
 	} else {
 		extraClock = 1
 	}
-	return
+	return addrValueClock{address, value, extraClock}
 }
 
-func zeroPageIndirect(m Memory, offset1, offset2 uint8) (address uint16) {
-	newOffset := uint16(offset1) + uint16(offset2)
+func zeroPageIndirect(m Memory, offset1, offset2 uint8) Word {
+	newOffset := Word(uint16(offset1) + uint16(offset2))
 	// address must be on the zero page
-	newOffsetLow := newOffset & 0xff
-	resultLow := m.Read(newOffsetLow)
+	newOffsetLow := newOffset.Low()
+	resultLow := m.Read(Word(newOffsetLow))
 	// address must be on the zero page
-	resultHigh := m.Read((newOffsetLow + 1) & 0xff)
-	address = uint16(resultLow) | (uint16(resultHigh) << 8)
-	return
+	resultHigh := m.Read(Word(newOffsetLow + 1))
+	return NewWord(resultLow, resultHigh)
 }

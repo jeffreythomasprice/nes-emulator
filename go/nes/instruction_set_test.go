@@ -13,7 +13,7 @@ import (
 )
 
 type ramState struct {
-	Address uint16
+	Address Word
 	Value   uint8
 }
 
@@ -29,7 +29,7 @@ func (r *ramState) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return fmt.Errorf("failed to get expected type for address, got %v", v[0])
 	}
-	r.Address = uint16(address)
+	r.Address = Word(address)
 	value, ok := v[1].(float64)
 	if !ok {
 		return fmt.Errorf("failed to get expected type for value, got %v", v[1])
@@ -39,7 +39,7 @@ func (r *ramState) UnmarshalJSON(data []byte) error {
 }
 
 type state struct {
-	PC    uint16     `json:"pc"`
+	PC    Word       `json:"pc"`
 	SP    uint8      `json:"s"`
 	A     uint8      `json:"a"`
 	X     uint8      `json:"x"`
@@ -112,7 +112,7 @@ func TestInstructionSet(t *testing.T) {
 		assert.NoError(t, err)
 
 		// TODO do all the tests
-		if instruction != 0x93 {
+		if instruction != 0x94 {
 			continue
 		}
 

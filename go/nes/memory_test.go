@@ -7,11 +7,11 @@ type testMemory struct {
 var _ Memory = (*testMemory)(nil)
 
 // Read implements Memory.
-func (t *testMemory) Read(address uint16) uint8 {
+func (t *testMemory) Read(address Word) uint8 {
 	return t.data[address]
 }
 
 // Write implements Memory.
-func (t *testMemory) Write(address uint16, value uint8) {
+func (t *testMemory) Write(address Word, value uint8) {
 	t.data[address] = value
 }
