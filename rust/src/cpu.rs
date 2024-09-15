@@ -2129,7 +2129,7 @@ impl CPU {
     where
         M: Memory,
     {
-        let AddrValue { address, value } = self.zero_page_indirect_x(m);
+        let AddrValue { address: _, value } = self.zero_page_indirect_x(m);
         self.lax_common(value, 6);
     }
 
@@ -2158,7 +2158,7 @@ impl CPU {
         M: Memory,
     {
         let AddrValueClock {
-            address,
+            address: _,
             value,
             extra_clock,
         } = self.absolute_y(m);
@@ -2191,7 +2191,7 @@ impl CPU {
     where
         M: Memory,
     {
-        let AddrValue { address, value } = self.zero_page_fixed(m);
+        let AddrValue { address: _, value } = self.zero_page_fixed(m);
         self.cpy_common(value, 3);
     }
 
