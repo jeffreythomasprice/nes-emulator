@@ -1,6 +1,13 @@
 #[cfg(test)]
 pub mod test {
+    use log::*;
     use std::fmt::Debug;
+
+    use crate::logging_utils::logger_builder;
+
+    pub fn init() {
+        logger_builder().is_test(true).init();
+    }
 
     pub struct TestResults {
         messages: Vec<String>,
@@ -16,7 +23,7 @@ pub mod test {
         pub fn assert(&self) {
             if self.messages.len() > 0 {
                 for m in self.messages.iter() {
-                    println!("test failure: {}", m);
+                    error!("test failure: {}", m);
                 }
                 assert!(false, "at least one test case failed")
             }

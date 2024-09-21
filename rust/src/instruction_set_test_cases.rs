@@ -1,11 +1,16 @@
 #[cfg(test)]
 mod test {
+    use glob::glob;
+    use log::*;
+    use serde::Deserialize;
     use std::{fmt::Debug, fs::File, io::Read};
 
-    use glob::glob;
-    use serde::Deserialize;
-
-    use crate::{cpu::CPU, flags::Flags, memory::Memory, test_utils::test::TestResults};
+    use crate::{
+        cpu::CPU,
+        flags::Flags,
+        memory::Memory,
+        test_utils::{self, test::TestResults},
+    };
 
     #[derive(Debug, Deserialize)]
     struct TestCase {
@@ -71,6 +76,8 @@ mod test {
 
     #[test]
     pub fn test() {
+        test_utils::test::init();
+
         let paths = glob("../submodules/ProcessorTests/nes6502/v1/*.json").unwrap();
         let mut test_results = TestResults::new();
         for path in paths {
@@ -84,7 +91,7 @@ mod test {
             let mut s = String::new();
             f.read_to_string(&mut s).unwrap();
             let test_cases: Vec<TestCase> = serde_json::from_str(&s).unwrap();
-            println!(
+            info!(
                 "path {:?}, instruction {:02x}, has {} test cases",
                 path,
                 instruction,
