@@ -22,7 +22,7 @@ pub trait Memory {
 pub mod main_memory {
     use crate::cartridge_file::pgr_rom;
 
-    use super::mappers::MemoryMapper;
+    use super::mappers::MainMemoryMapper;
 
     const ZERO_PAGE_SIZE: u16 = 0x0100;
     const STACK_SIZE: u16 = 0x0100;
@@ -50,11 +50,11 @@ pub mod main_memory {
     pub struct Memory {
         ram: [u8; TOTAL_RAM_SIZE as usize],
         sram: [u8; SRAM_SIZE as usize],
-        mapper: Box<dyn MemoryMapper>,
+        mapper: Box<dyn MainMemoryMapper>,
     }
 
     impl Memory {
-        pub fn new(mapper: Box<dyn MemoryMapper>) -> Self {
+        pub fn new(mapper: Box<dyn MainMemoryMapper>) -> Self {
             Self {
                 ram: [0; TOTAL_RAM_SIZE as usize],
                 sram: [0; SRAM_SIZE as usize],
@@ -86,11 +86,11 @@ pub mod main_memory {
                 // prg rom lower bank
                 ..PRG_LOWER_BANK_END => self
                     .mapper
-                    .read8_pgr_lower_bank(address & 0b0011_1111_1111_1111),
+                    .read8_main_lower_bank(address & 0b0011_1111_1111_1111),
                 // prg rom upper bank
                 _ => self
                     .mapper
-                    .read8_pgr_upper_bank(address & 0b0011_1111_1111_1111),
+                    .read8_main_upper_bank(address & 0b0011_1111_1111_1111),
             }
         }
 
@@ -117,20 +117,25 @@ pub mod main_memory {
                 // prg rom lower and upper banks
                 _ => self
                     .mapper
-                    .write8_pgr(address & 0b0111_1111_1111_1111, value),
+                    .write8_main(address & 0b0111_1111_1111_1111, value),
             }
         }
     }
 }
 
 pub mod video_memory {
-    use super::mappers::MemoryMapper;
+    use super::mappers::{
+        MainMemoryMapper, NameAndAttributeTablesMemoryMapper, PatternTableMemoryMapper,
+    };
 
     const PATTERN_TABLE_0_END: u16 = 0x1000;
     const PATTERN_TABLE_1_END: u16 = 0x2000;
 
+    const PATTERN_TABLE_SIZE: u16 = PATTERN_TABLE_0_END;
+
     const NAME_TABLE_0_START: u16 = PATTERN_TABLE_1_END;
     const NAME_TABLE_0_END: u16 = 0x23c0;
+    const ATTRIBUTE_TABLE_0_START: u16 = NAME_TABLE_0_END;
     const ATTRIBUTE_TABLE_0_END: u16 = 0x2400;
     const NAME_TABLE_1_END: u16 = 0x27c0;
     const ATTRIBUTE_TABLE_1_END: u16 = 0x2800;
@@ -138,6 +143,9 @@ pub mod video_memory {
     const ATTRIBUTE_TABLE_2_END: u16 = 0x2c00;
     const NAME_TABLE_3_END: u16 = 0x2fc0;
     const ATTRIBUTE_TABLE_3_END: u16 = 0x3000;
+
+    pub const NAME_TABLE_SIZE: u16 = NAME_TABLE_0_END - NAME_TABLE_0_START;
+    pub const ATTRIBUTE_TABLE_SIZE: u16 = ATTRIBUTE_TABLE_0_END - ATTRIBUTE_TABLE_0_START;
     const NAME_AND_ATTRIBUTE_TABLES_TOTAL_SIZE: u16 = ATTRIBUTE_TABLE_3_END - NAME_TABLE_0_START;
 
     const NAME_AND_ATTRIBUTE_TABLE_MIRRORS_START: u16 = ATTRIBUTE_TABLE_3_END;
@@ -155,16 +163,41 @@ pub mod video_memory {
     const MIRRORED_CONTENT_SIZE: u16 = IMAGE_AND_SPRITE_PALETTE_MIRRORS_END;
 
     pub struct Memory {
-        mapper: Box<dyn MemoryMapper>,
+        pattern_table_mapper: Box<dyn PatternTableMemoryMapper>,
+        name_and_attribute_table_mapper: Box<dyn NameAndAttributeTablesMemoryMapper>,
     }
 
     impl Memory {
-        pub fn new(mapper: Box<dyn MemoryMapper>) -> Self {
-            Self { mapper }
+        pub fn new(
+            pattern_table_mapper: Box<dyn PatternTableMemoryMapper>,
+            name_and_attribute_table_mapper: Box<dyn NameAndAttributeTablesMemoryMapper>,
+        ) -> Self {
+            Self {
+                pattern_table_mapper,
+                name_and_attribute_table_mapper,
+            }
         }
     }
 
     impl super::Memory for Memory {
+        /*
+        TODO nametable mirroring
+
+        horizontal
+            0 and 1 are both the 1st physical ram
+            2 and 3 are both the 2nd physical ram
+
+        vertical
+            0 and 2 are both the 1st physical ram
+            1 and 3 are both the 2nd physical ram
+
+        1 screen
+            all 4 go to the same physical ram
+
+        4 screen
+            there is actually a full 4 kb of ram backing these, they're all distinct
+        */
+
         fn read8(&self, address: u16) -> u8 {
             match address {
                 ..PATTERN_TABLE_0_END => todo!(),

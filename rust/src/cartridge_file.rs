@@ -80,6 +80,7 @@ pub mod pgr_ram {
 pub enum NametableArrangement {
     Vertical,
     Horizontal,
+    SingleScreenMirroring,
     FourScreenMirroring,
 }
 
@@ -92,76 +93,7 @@ pub enum TVSystem {
 
 #[derive(Debug, Clone, Copy)]
 pub enum MemoryMapper {
-    /// NROM, no mapper
-    NROMNoMapper,
-    /// Nintendo MMC1
-    NintendoMMC1,
-    /// UNROM switch
-    UNROMSwitch,
-    /// CNROM switch
-    CNROMSwitch,
-    /// Nintendo MMC3
-    NintendoMMC3,
-    /// Nintendo MMC5
-    NintendoMMC5,
-    /// FFE F4xxx
-    FFEF4xxx,
-    /// AOROM switch
-    AOROMSwitch,
-    /// FFE F3xxx
-    FFEF3xxx,
-    /// Nintendo MMC2
-    NintendoMMC2,
-    /// Nintendo MMC4
-    NintendoMMC4,
-    /// ColorDreams chip
-    ColorDreamsChip,
-    /// FFE F6xxx
-    FFEF6xxx,
-    /// 100-in-1 switch
-    Switch100In1,
-    /// Bandai chip
-    BandaiChip,
-    /// FFE F8xxx
-    FFEF8xxx,
-    /// Jaleco SS8806 chip
-    JalecoSS8806Chip,
-    /// Namcot 106 chip
-    Namcot106Chip,
-    /// Nintendo DiskSystem
-    NintendoDiskSystem,
-    /// Konami VRC4a
-    KonamiVRC4a,
-    /// Konami VRC2a
-    KonamiVRC2a,
-    /// Konami VRC6
-    KonamiVRC6,
-    /// Konami VRC4b
-    KonamiVRC4b,
-    /// Irem G-101 chip
-    IremG101Chip,
-    /// Taito TC0190/TC0350
-    TaitoTC0190TC0350,
-    /// 32 KB ROM switch
-    SwitchROM32KB,
-    /// Tengen RAMBO-1 chip
-    TengenRAMBO1Chip,
-    /// Irem H-3001 chip
-    IremH3001Chip,
-    /// GNROM switch
-    GNROMSwitch,
-    /// SunSoft3 chip
-    SunSoft3Chip,
-    /// SunSoft4 chip
-    SunSoft4Chip,
-    /// SunSoft5 FME-7 chip
-    SunSoft5FME7Chip,
-    /// Camerica chip
-    CamericaChip,
-    /// Irem 74HC161/32-based
-    Irem74HC161_32Based,
-    /// Pirate HK-SF3 chip
-    PirateHKSF3Chip,
+    NROM,
 }
 
 const PRG_ROM_INDEX: usize = 4;
@@ -188,41 +120,7 @@ impl Header {
             let high = data[7] & 0b1111_0000;
             let mapper = low | high;
             match mapper {
-                0 => MemoryMapper::NROMNoMapper,
-                1 => MemoryMapper::NintendoMMC1,
-                2 => MemoryMapper::UNROMSwitch,
-                3 => MemoryMapper::CNROMSwitch,
-                4 => MemoryMapper::NintendoMMC3,
-                5 => MemoryMapper::NintendoMMC5,
-                6 => MemoryMapper::FFEF4xxx,
-                7 => MemoryMapper::AOROMSwitch,
-                8 => MemoryMapper::FFEF3xxx,
-                9 => MemoryMapper::NintendoMMC2,
-                10 => MemoryMapper::NintendoMMC4,
-                11 => MemoryMapper::ColorDreamsChip,
-                12 => MemoryMapper::FFEF6xxx,
-                15 => MemoryMapper::Switch100In1,
-                16 => MemoryMapper::BandaiChip,
-                17 => MemoryMapper::FFEF8xxx,
-                18 => MemoryMapper::JalecoSS8806Chip,
-                19 => MemoryMapper::Namcot106Chip,
-                20 => MemoryMapper::NintendoDiskSystem,
-                21 => MemoryMapper::KonamiVRC4a,
-                22 | 23 => MemoryMapper::KonamiVRC2a,
-                24 => MemoryMapper::KonamiVRC6,
-                25 => MemoryMapper::KonamiVRC4b,
-                32 => MemoryMapper::IremG101Chip,
-                33 => MemoryMapper::TaitoTC0190TC0350,
-                34 => MemoryMapper::SwitchROM32KB,
-                64 => MemoryMapper::TengenRAMBO1Chip,
-                65 => MemoryMapper::IremH3001Chip,
-                66 => MemoryMapper::GNROMSwitch,
-                67 => MemoryMapper::SunSoft3Chip,
-                68 => MemoryMapper::SunSoft4Chip,
-                69 => MemoryMapper::SunSoft5FME7Chip,
-                71 => MemoryMapper::CamericaChip,
-                78 => MemoryMapper::Irem74HC161_32Based,
-                91 => MemoryMapper::PirateHKSF3Chip,
+                0 => MemoryMapper::NROM,
                 _ => Err(CartridgeError::UnrecognizedMemoryMapper(mapper))?,
             }
         };
@@ -239,23 +137,10 @@ impl Header {
     }
 
     pub fn nametable_arrangement(&self) -> NametableArrangement {
-        if (self.data[6] & 0b0000_1000) != 0 {
-            NametableArrangement::FourScreenMirroring
-        } else {
-            /*
-            sources differ
-            INES - NESdev Wiki.html
-                0 = vertical
-                1 = horizontal
-            NESDoc.pdf
-                0 = horizontal
-                1 = vertical
-            */
-            if (self.data[6] & 0b0000_0001) == 0 {
-                NametableArrangement::Vertical
-            } else {
-                NametableArrangement::Horizontal
-            }
+        let alt_layout = (self.data[6] & 0b0000_1000) != 0;
+        let layout = (self.data[6] & 0b0000_0001) != 0;
+        match (self.memory_mapper(), layout, alt_layout) {
+            (MemoryMapper::NROM, _, _) => NametableArrangement::Vertical,
         }
     }
 

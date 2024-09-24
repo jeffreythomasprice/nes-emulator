@@ -10,8 +10,8 @@ mod test_utils;
 use cartridge_file::Cartridge;
 use log::*;
 use logging_utils::logger_builder;
-use memory::{mappers::new_memory_mapper, MainMemory};
-use std::{env, fs::File, io::Read};
+use memory::{main_memory, mappers::new_memory_mapper};
+use std::{fs::File, io::Read};
 
 fn main() -> anyhow::Result<()> {
     logger_builder().init();
@@ -21,6 +21,10 @@ fn main() -> anyhow::Result<()> {
     f.read_to_end(&mut buffer)?;
     let cartridge = Cartridge::from_bytes(buffer)?;
     info!("memory mapper = {:?}", cartridge.header().memory_mapper());
+    info!(
+        "nametable arragement = {:?}",
+        cartridge.header().nametable_arrangement()
+    );
     info!(
         "pgr rom size = {:?}, {} bytes",
         cartridge.header().prg_rom_size(),
@@ -37,7 +41,9 @@ fn main() -> anyhow::Result<()> {
         cartridge.header().prg_ram_size().in_bytes()
     );
 
-    let memory = MainMemory::new(new_memory_mapper(&cartridge));
+    let (main_mapper, pattern_table_mapper, name_and_attribute_table_mapper) =
+        new_memory_mapper(&cartridge);
+    let memory = main_memory::Memory::new(main_mapper);
 
     Ok(())
 }

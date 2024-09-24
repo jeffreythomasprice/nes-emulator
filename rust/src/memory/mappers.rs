@@ -1,85 +1,535 @@
-use crate::cartridge_file::{self, pgr_rom, Cartridge};
+use crate::cartridge_file::{self, chr_rom, pgr_rom, Cartridge, NametableArrangement};
 
-pub trait MemoryMapper {
+use super::video_memory;
+
+pub trait MainMemoryMapper {
     /// Reads from whatever bank is set as the lower bank.
-    /// Address will be restricted to 0..PRG_BANK_SIZE. So only the low 14 bits will be set; the high 2 bits will be 0.
-    fn read8_pgr_lower_bank(&self, address: u16) -> u8;
+    /// Address will be already adjusted to be in 0..PRG_BANK_SIZE.
+    fn read8_main_lower_bank(&self, address: u16) -> u8;
 
     /// As lower bank, but for whatever bank is set on the upper bank.
-    fn read8_pgr_upper_bank(&self, address: u16) -> u8;
+    fn read8_main_upper_bank(&self, address: u16) -> u8;
 
     /// Since we're talking about program ROM we don't really write here, but the mappers all use this address space for memory mapper
     /// registers. Since they all behave differently and don't really have a banking mode just expose the whole range.
-    /// Address will be restricted to 0..(PRG_BANK_SIZE*2). So only the low 15 bits will be set; the high bit will be 0.
-    fn write8_pgr(&mut self, address: u16, value: u8);
-
-    // TODO chr read and write
+    /// Address will be already adjusted to be in 0..(PRG_BANK_SIZE*2).
+    fn write8_main(&mut self, address: u16, value: u8);
 }
 
-pub struct NROMNoMapper {
-    lower: pgr_rom::Block,
-    upper: pgr_rom::Block,
+pub trait PatternTableMemoryMapper {
+    /// Reads from pattern table 0.
+    /// Address will be already adjusted to be in 0..PATTERN_TABLE_SIZE.
+    fn read8_pattern_table_0(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_pattern_table_0(&mut self, address: u16, value: u8);
+
+    /// Reads from pattern table 0.
+    /// Address will be already adjusted to be in 0..PATTERN_TABLE_SIZE.
+    fn read8_pattern_table_1(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_pattern_table_1(&mut self, address: u16, value: u8);
 }
 
-impl NROMNoMapper {
+pub trait NameAndAttributeTablesMemoryMapper {
+    /// Reads from name table 0.
+    /// Address will be already adjusted to be in 0..NAME_TABLE_SIZE.
+    fn read8_name_table_0(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_name_table_0(&mut self, address: u16, value: u8);
+
+    /// Reads from attribute table 0.
+    /// Address will be already adjusted to be in 0..ATTRIBUTE_TABLE_SIZE.
+    fn read8_attribute_table_0(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_attribute_table_0(&mut self, address: u16, value: u8);
+
+    /// Reads from name table 0.
+    /// Address will be already adjusted to be in 0..NAME_TABLE_SIZE.
+    fn read8_name_table_1(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_name_table_1(&mut self, address: u16, value: u8);
+
+    /// Reads from attribute table 0.
+    /// Address will be already adjusted to be in 0..ATTRIBUTE_TABLE_SIZE.
+    fn read8_attribute_table_1(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_attribute_table_1(&mut self, address: u16, value: u8);
+
+    /// Reads from name table 0.
+    /// Address will be already adjusted to be in 0..NAME_TABLE_SIZE.
+    fn read8_name_table_2(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_name_table_2(&mut self, address: u16, value: u8);
+
+    /// Reads from attribute table 0.
+    /// Address will be already adjusted to be in 0..ATTRIBUTE_TABLE_SIZE.
+    fn read8_attribute_table_2(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_attribute_table_2(&mut self, address: u16, value: u8);
+
+    /// Reads from name table 0.
+    /// Address will be already adjusted to be in 0..NAME_TABLE_SIZE.
+    fn read8_name_table_3(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_name_table_3(&mut self, address: u16, value: u8);
+
+    /// Reads from attribute table 0.
+    /// Address will be already adjusted to be in 0..ATTRIBUTE_TABLE_SIZE.
+    fn read8_attribute_table_3(&self, address: u16) -> u8;
+
+    /// As read.
+    fn write8_attribute_table_3(&mut self, address: u16, value: u8);
+}
+
+pub struct NROMMain {
+    main_lower: pgr_rom::Block,
+    main_upper: pgr_rom::Block,
+}
+
+impl NROMMain {
     pub fn new(cartridge: &Cartridge) -> Self {
         let size = cartridge.header().prg_rom_size().in_blocks() as usize;
         let lower = cartridge.pgr_rom()[0];
         let upper = cartridge.pgr_rom()[size - 1];
-        Self { lower, upper }
+        Self {
+            main_lower: lower,
+            main_upper: upper,
+        }
     }
 }
 
-impl MemoryMapper for NROMNoMapper {
-    fn read8_pgr_lower_bank(&self, address: u16) -> u8 {
-        self.lower[address as usize]
+impl MainMemoryMapper for NROMMain {
+    fn read8_main_lower_bank(&self, address: u16) -> u8 {
+        self.main_lower[address as usize]
     }
 
-    fn read8_pgr_upper_bank(&self, address: u16) -> u8 {
-        self.upper[address as usize]
+    fn read8_main_upper_bank(&self, address: u16) -> u8 {
+        self.main_upper[address as usize]
     }
 
-    fn write8_pgr(&mut self, _address: u16, _value: u8) {
+    fn write8_main(&mut self, _address: u16, _value: u8) {
         // mapper doesn't have any input registers
     }
 }
 
-pub fn new_memory_mapper(cartridge: &Cartridge) -> Box<dyn MemoryMapper> {
-    Box::new(match cartridge.header().memory_mapper() {
-        cartridge_file::MemoryMapper::NROMNoMapper => NROMNoMapper::new(cartridge),
-        cartridge_file::MemoryMapper::NintendoMMC1 => todo!(),
-        cartridge_file::MemoryMapper::UNROMSwitch => todo!(),
-        cartridge_file::MemoryMapper::CNROMSwitch => todo!(),
-        cartridge_file::MemoryMapper::NintendoMMC3 => todo!(),
-        cartridge_file::MemoryMapper::NintendoMMC5 => todo!(),
-        cartridge_file::MemoryMapper::FFEF4xxx => todo!(),
-        cartridge_file::MemoryMapper::AOROMSwitch => todo!(),
-        cartridge_file::MemoryMapper::FFEF3xxx => todo!(),
-        cartridge_file::MemoryMapper::NintendoMMC2 => todo!(),
-        cartridge_file::MemoryMapper::NintendoMMC4 => todo!(),
-        cartridge_file::MemoryMapper::ColorDreamsChip => todo!(),
-        cartridge_file::MemoryMapper::FFEF6xxx => todo!(),
-        cartridge_file::MemoryMapper::Switch100In1 => todo!(),
-        cartridge_file::MemoryMapper::BandaiChip => todo!(),
-        cartridge_file::MemoryMapper::FFEF8xxx => todo!(),
-        cartridge_file::MemoryMapper::JalecoSS8806Chip => todo!(),
-        cartridge_file::MemoryMapper::Namcot106Chip => todo!(),
-        cartridge_file::MemoryMapper::NintendoDiskSystem => todo!(),
-        cartridge_file::MemoryMapper::KonamiVRC4a => todo!(),
-        cartridge_file::MemoryMapper::KonamiVRC2a => todo!(),
-        cartridge_file::MemoryMapper::KonamiVRC6 => todo!(),
-        cartridge_file::MemoryMapper::KonamiVRC4b => todo!(),
-        cartridge_file::MemoryMapper::IremG101Chip => todo!(),
-        cartridge_file::MemoryMapper::TaitoTC0190TC0350 => todo!(),
-        cartridge_file::MemoryMapper::SwitchROM32KB => todo!(),
-        cartridge_file::MemoryMapper::TengenRAMBO1Chip => todo!(),
-        cartridge_file::MemoryMapper::IremH3001Chip => todo!(),
-        cartridge_file::MemoryMapper::GNROMSwitch => todo!(),
-        cartridge_file::MemoryMapper::SunSoft3Chip => todo!(),
-        cartridge_file::MemoryMapper::SunSoft4Chip => todo!(),
-        cartridge_file::MemoryMapper::SunSoft5FME7Chip => todo!(),
-        cartridge_file::MemoryMapper::CamericaChip => todo!(),
-        cartridge_file::MemoryMapper::Irem74HC161_32Based => todo!(),
-        cartridge_file::MemoryMapper::PirateHKSF3Chip => todo!(),
-    })
+pub struct HorizontalMirroringNameAndAttributeTable {
+    name_table_0: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_0: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+    name_table_1: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_1: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+}
+
+impl HorizontalMirroringNameAndAttributeTable {
+    pub fn new() -> Self {
+        Self {
+            name_table_0: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_0: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+            name_table_1: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_1: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+        }
+    }
+}
+
+impl NameAndAttributeTablesMemoryMapper for HorizontalMirroringNameAndAttributeTable {
+    fn read8_name_table_0(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_0(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_0(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_0(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_1(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_1(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_1(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_1(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_2(&self, address: u16) -> u8 {
+        self.name_table_1[address as usize]
+    }
+
+    fn write8_name_table_2(&mut self, address: u16, value: u8) {
+        self.name_table_1[address as usize] = value;
+    }
+
+    fn read8_attribute_table_2(&self, address: u16) -> u8 {
+        self.attribute_table_1[address as usize]
+    }
+
+    fn write8_attribute_table_2(&mut self, address: u16, value: u8) {
+        self.attribute_table_1[address as usize] = value;
+    }
+
+    fn read8_name_table_3(&self, address: u16) -> u8 {
+        self.name_table_1[address as usize]
+    }
+
+    fn write8_name_table_3(&mut self, address: u16, value: u8) {
+        self.name_table_1[address as usize] = value;
+    }
+
+    fn read8_attribute_table_3(&self, address: u16) -> u8 {
+        self.attribute_table_1[address as usize]
+    }
+
+    fn write8_attribute_table_3(&mut self, address: u16, value: u8) {
+        self.attribute_table_1[address as usize] = value;
+    }
+}
+
+pub struct VerticalMirroringNameAndAttributeTable {
+    name_table_0: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_0: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+    name_table_1: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_1: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+}
+
+impl VerticalMirroringNameAndAttributeTable {
+    pub fn new() -> Self {
+        Self {
+            name_table_0: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_0: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+            name_table_1: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_1: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+        }
+    }
+}
+
+impl NameAndAttributeTablesMemoryMapper for VerticalMirroringNameAndAttributeTable {
+    fn read8_name_table_0(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_0(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_0(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_0(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_1(&self, address: u16) -> u8 {
+        self.name_table_1[address as usize]
+    }
+
+    fn write8_name_table_1(&mut self, address: u16, value: u8) {
+        self.name_table_1[address as usize] = value;
+    }
+
+    fn read8_attribute_table_1(&self, address: u16) -> u8 {
+        self.attribute_table_1[address as usize]
+    }
+
+    fn write8_attribute_table_1(&mut self, address: u16, value: u8) {
+        self.attribute_table_1[address as usize] = value;
+    }
+
+    fn read8_name_table_2(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_2(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_2(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_2(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_3(&self, address: u16) -> u8 {
+        self.name_table_1[address as usize]
+    }
+
+    fn write8_name_table_3(&mut self, address: u16, value: u8) {
+        self.name_table_1[address as usize] = value;
+    }
+
+    fn read8_attribute_table_3(&self, address: u16) -> u8 {
+        self.attribute_table_1[address as usize]
+    }
+
+    fn write8_attribute_table_3(&mut self, address: u16, value: u8) {
+        self.attribute_table_1[address as usize] = value;
+    }
+}
+
+pub struct SingleNameAndAttributeTable {
+    name_table_0: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_0: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+}
+
+impl SingleNameAndAttributeTable {
+    pub fn new() -> Self {
+        Self {
+            name_table_0: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_0: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+        }
+    }
+}
+
+impl NameAndAttributeTablesMemoryMapper for SingleNameAndAttributeTable {
+    fn read8_name_table_0(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_0(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_0(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_0(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_1(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_1(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_1(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_1(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_2(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_2(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_2(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_2(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_3(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_3(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_3(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_3(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+}
+
+pub struct FourWayMirroringNameAndAttributeTable {
+    name_table_0: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_0: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+    name_table_1: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_1: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+    name_table_2: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_2: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+    name_table_3: [u8; video_memory::NAME_TABLE_SIZE as usize],
+    attribute_table_3: [u8; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+}
+
+impl FourWayMirroringNameAndAttributeTable {
+    pub fn new() -> Self {
+        Self {
+            name_table_0: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_0: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+            name_table_1: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_1: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+            name_table_2: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_2: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+            name_table_3: [0; video_memory::NAME_TABLE_SIZE as usize],
+            attribute_table_3: [0; video_memory::ATTRIBUTE_TABLE_SIZE as usize],
+        }
+    }
+}
+
+impl NameAndAttributeTablesMemoryMapper for FourWayMirroringNameAndAttributeTable {
+    fn read8_name_table_0(&self, address: u16) -> u8 {
+        self.name_table_0[address as usize]
+    }
+
+    fn write8_name_table_0(&mut self, address: u16, value: u8) {
+        self.name_table_0[address as usize] = value;
+    }
+
+    fn read8_attribute_table_0(&self, address: u16) -> u8 {
+        self.attribute_table_0[address as usize]
+    }
+
+    fn write8_attribute_table_0(&mut self, address: u16, value: u8) {
+        self.attribute_table_0[address as usize] = value;
+    }
+
+    fn read8_name_table_1(&self, address: u16) -> u8 {
+        self.name_table_1[address as usize]
+    }
+
+    fn write8_name_table_1(&mut self, address: u16, value: u8) {
+        self.name_table_1[address as usize] = value;
+    }
+
+    fn read8_attribute_table_1(&self, address: u16) -> u8 {
+        self.attribute_table_1[address as usize]
+    }
+
+    fn write8_attribute_table_1(&mut self, address: u16, value: u8) {
+        self.attribute_table_1[address as usize] = value;
+    }
+
+    fn read8_name_table_2(&self, address: u16) -> u8 {
+        self.name_table_2[address as usize]
+    }
+
+    fn write8_name_table_2(&mut self, address: u16, value: u8) {
+        self.name_table_2[address as usize] = value;
+    }
+
+    fn read8_attribute_table_2(&self, address: u16) -> u8 {
+        self.attribute_table_2[address as usize]
+    }
+
+    fn write8_attribute_table_2(&mut self, address: u16, value: u8) {
+        self.attribute_table_2[address as usize] = value;
+    }
+
+    fn read8_name_table_3(&self, address: u16) -> u8 {
+        self.name_table_3[address as usize]
+    }
+
+    fn write8_name_table_3(&mut self, address: u16, value: u8) {
+        self.name_table_3[address as usize] = value;
+    }
+
+    fn read8_attribute_table_3(&self, address: u16) -> u8 {
+        self.attribute_table_3[address as usize]
+    }
+
+    fn write8_attribute_table_3(&mut self, address: u16, value: u8) {
+        self.attribute_table_3[address as usize] = value;
+    }
+}
+
+pub struct NROMVideo {
+    pattern_table_0: chr_rom::Block,
+    pattern_table_1: Option<chr_rom::Block>,
+}
+
+impl NROMVideo {
+    pub fn new(cartridge: &Cartridge) -> Self {
+        Self {
+            pattern_table_0: [0; chr_rom::BLOCK_SIZE],
+            pattern_table_1: if cartridge.header().chr_rom_size().in_blocks() >= 2 {
+                Some([0; chr_rom::BLOCK_SIZE])
+            } else {
+                None
+            },
+        }
+    }
+}
+
+impl PatternTableMemoryMapper for NROMVideo {
+    fn read8_pattern_table_0(&self, address: u16) -> u8 {
+        self.pattern_table_0[address as usize]
+    }
+
+    fn write8_pattern_table_0(&mut self, address: u16, value: u8) {
+        self.pattern_table_0[address as usize] = value;
+    }
+
+    fn read8_pattern_table_1(&self, address: u16) -> u8 {
+        (match self.pattern_table_1 {
+            Some(x) => x,
+            None => self.pattern_table_0,
+        })[address as usize]
+    }
+
+    fn write8_pattern_table_1(&mut self, address: u16, value: u8) {
+        (match self.pattern_table_1 {
+            Some(x) => x,
+            None => self.pattern_table_0,
+        })[address as usize] = value
+    }
+}
+
+pub fn new_memory_mapper(
+    cartridge: &Cartridge,
+) -> (
+    Box<dyn MainMemoryMapper>,
+    Box<dyn PatternTableMemoryMapper>,
+    Box<dyn NameAndAttributeTablesMemoryMapper>,
+) {
+    let name_and_attributes: Box<dyn NameAndAttributeTablesMemoryMapper> = match cartridge
+        .header()
+        .nametable_arrangement()
+    {
+        NametableArrangement::Vertical => Box::new(VerticalMirroringNameAndAttributeTable::new()),
+        NametableArrangement::Horizontal => {
+            Box::new(HorizontalMirroringNameAndAttributeTable::new())
+        }
+        NametableArrangement::SingleScreenMirroring => Box::new(SingleNameAndAttributeTable::new()),
+        NametableArrangement::FourScreenMirroring => {
+            Box::new(FourWayMirroringNameAndAttributeTable::new())
+        }
+    };
+
+    let (main, pattern_table) = match cartridge.header().memory_mapper() {
+        cartridge_file::MemoryMapper::NROM => (
+            Box::new(NROMMain::new(cartridge)),
+            Box::new(NROMVideo::new(cartridge)),
+        ),
+    };
+
+    (main, pattern_table, name_and_attributes)
 }
