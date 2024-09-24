@@ -10,7 +10,6 @@ mod test_utils;
 use cartridge_file::Cartridge;
 use log::*;
 use logging_utils::logger_builder;
-use memory::{main_memory, mappers::new_memory_mapper};
 use std::{fs::File, io::Read};
 
 fn main() -> anyhow::Result<()> {
@@ -41,9 +40,7 @@ fn main() -> anyhow::Result<()> {
         cartridge.header().prg_ram_size().in_bytes()
     );
 
-    let (main_mapper, pattern_table_mapper, name_and_attribute_table_mapper) =
-        new_memory_mapper(&cartridge);
-    let memory = main_memory::Memory::new(main_mapper);
+    let (main_memory, video_memory) = memory::new(&cartridge);
 
     Ok(())
 }
