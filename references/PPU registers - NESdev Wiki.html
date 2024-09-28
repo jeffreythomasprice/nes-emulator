@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html class="client-js" lang="en" dir="ltr" data-darkreader-mode="dynamic" data-darkreader-scheme="dark"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"><style class="darkreader darkreader--fallback" media="screen"></style><style class="darkreader darkreader--text" media="screen"></style><style class="darkreader darkreader--invert" media="screen">.jfk-bubble.gtx-bubble, .captcheck_answer_label > input + img, span#closed_text > img[src^="https://www.gstatic.com/images/branding/googlelogo"], span[data-href^="https://www.hcaptcha.com/"] > #icon, img.Wirisformula {
+    filter: invert(100%) hue-rotate(180deg) contrast(90%) !important;
+}</style><style class="darkreader darkreader--inline" media="screen">[data-darkreader-inline-bgcolor] {
+  background-color: var(--darkreader-inline-bgcolor) !important;
+}
+[data-darkreader-inline-bgimage] {
+  background-image: var(--darkreader-inline-bgimage) !important;
+}
+[data-darkreader-inline-border] {
+  border-color: var(--darkreader-inline-border) !important;
+}
+[data-darkreader-inline-border-bottom] {
+  border-bottom-color: var(--darkreader-inline-border-bottom) !important;
+}
+[data-darkreader-inline-border-left] {
+  border-left-color: var(--darkreader-inline-border-left) !important;
+}
+[data-darkreader-inline-border-right] {
+  border-right-color: var(--darkreader-inline-border-right) !important;
+}
+[data-darkreader-inline-border-top] {
+  border-top-color: var(--darkreader-inline-border-top) !important;
+}
+[data-darkreader-inline-boxshadow] {
+  box-shadow: var(--darkreader-inline-boxshadow) !important;
+}
+[data-darkreader-inline-color] {
+  color: var(--darkreader-inline-color) !important;
+}
+[data-darkreader-inline-fill] {
+  fill: var(--darkreader-inline-fill) !important;
+}
+[data-darkreader-inline-stroke] {
+  stroke: var(--darkreader-inline-stroke) !important;
+}
+[data-darkreader-inline-outline] {
+  outline-color: var(--darkreader-inline-outline) !important;
+}
+[data-darkreader-inline-stopcolor] {
+  stop-color: var(--darkreader-inline-stopcolor) !important;
+}
+[data-darkreader-inline-bg] {
+  background: var(--darkreader-inline-bg) !important;
+}
+[data-darkreader-inline-invert] {
+    filter: invert(100%) hue-rotate(180deg);
+}</style><style class="darkreader darkreader--variables" media="screen">:root {
+   --darkreader-neutral-background: #181a1b;
+   --darkreader-neutral-text: #e8e6e3;
+   --darkreader-selection-background: #004daa;
+   --darkreader-selection-text: #e8e6e3;
+}</style><style class="darkreader darkreader--root-vars" media="screen"></style><style class="darkreader darkreader--user-agent" media="screen">@layer {
+html {
+    background-color: #181a1b !important;
+}
+html {
+    color-scheme: dark !important;
+}
+iframe {
+    color-scheme: dark !important;
+}
+html, body {
+    background-color: #181a1b;
+}
+html, body {
+    border-color: #736b5e;
+    color: #e8e6e3;
+}
+a {
+    color: #3391ff;
+}
+table {
+    border-color: #545b5e;
+}
+mark {
+    color: #e8e6e3;
+}
+::placeholder {
+    color: #b2aba1;
+}
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    background-color: #404400 !important;
+    color: #e8e6e3 !important;
+}
+* {
+    scrollbar-color: #454a4d #202324;
+}
+::selection {
+    background-color: #004daa !important;
+    color: #e8e6e3 !important;
+}
+::-moz-selection {
+    background-color: #004daa !important;
+    color: #e8e6e3 !important;
+}
+}</style>
+<meta charset="UTF-8">
+<title>PPU registers - NESdev Wiki</title>
+<script>document.documentElement.className="client-js";RLCONF={"wgBreakFrames":false,"wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgRequestId":"ZvfOLP6LAXlFvsY0YrzP5gAAAB0","wgCSPNonce":false,"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"PPU_registers","wgTitle":"PPU registers","wgCurRevisionId":21907,"wgRevisionId":21907,"wgArticleId":970,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgRelevantPageName":"PPU_registers","wgRelevantArticleId":970,"wgIsProbablyEditable":false,"wgRelevantPageIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]};RLSTATE={"site.styles":"ready","user.styles":"ready","user":"ready",
+"user.options":"loading","ext.cite.styles":"ready","skins.monobook.styles":"ready"};RLPAGEMODULES=["ext.cite.ux-enhancements","site","mediawiki.page.ready","mediawiki.toc","skins.monobook.scripts"];</script>
+<script>(RLQ=window.RLQ||[]).push(function(){mw.loader.implement("user.options@12s5i",function($,jQuery,require,module){mw.user.tokens.set({"patrolToken":"+\\","watchToken":"+\\","csrfToken":"+\\"});});});</script>
+<link rel="stylesheet" href="PPU%20registers%20-%20NESdev%20Wiki_files/load_002.css"><style class="darkreader darkreader--sync" media="screen"></style>
+<script async="" src="PPU%20registers%20-%20NESdev%20Wiki_files/load.es"></script>
+<style>
+.oo-ui-icon-alert,.mw-ui-icon-alert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=alert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E alert %3C/title%3E%3Cpath d=%22M11.53 2.3A1.85 1.85 0 0 0 10 1.21 1.85 1.85 0 0 0 8.48 2.3L.36 16.36C-.48 17.81.21 19 1.88 19h16.24c1.67 0 2.36-1.19 1.52-2.64zM11 16H9v-2h2zm0-4H9V6h2z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-alert,.mw-ui-icon-alert-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=alert&variant=invert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E alert %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M11.53 2.3A1.85 1.85 0 0 0 10 1.21 1.85 1.85 0 0 0 8.48 2.3L.36 16.36C-.48 17.81.21 19 1.88 19h16.24c1.67 0 2.36-1.19 1.52-2.64zM11 16H9v-2h2zm0-4H9V6h2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-alert,.mw-ui-icon-alert-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=alert&variant=progressive&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E alert %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M11.53 2.3A1.85 1.85 0 0 0 10 1.21 1.85 1.85 0 0 0 8.48 2.3L.36 16.36C-.48 17.81.21 19 1.88 19h16.24c1.67 0 2.36-1.19 1.52-2.64zM11 16H9v-2h2zm0-4H9V6h2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-bell,.mw-ui-icon-bell:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=bell&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E bell %3C/title%3E%3Cpath d=%22M16 7a5.38 5.38 0 0 0-4.46-4.85C11.6 1.46 11.53 0 10 0S8.4 1.46 8.46 2.15A5.38 5.38 0 0 0 4 7v6l-2 2v1h16v-1l-2-2zm-6 13a3 3 0 0 0 3-3H7a3 3 0 0 0 3 3z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-bell,.mw-ui-icon-bell-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=bell&variant=invert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E bell %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M16 7a5.38 5.38 0 0 0-4.46-4.85C11.6 1.46 11.53 0 10 0S8.4 1.46 8.46 2.15A5.38 5.38 0 0 0 4 7v6l-2 2v1h16v-1l-2-2zm-6 13a3 3 0 0 0 3-3H7a3 3 0 0 0 3 3z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-bell,.mw-ui-icon-bell-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=bell&variant=progressive&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E bell %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M16 7a5.38 5.38 0 0 0-4.46-4.85C11.6 1.46 11.53 0 10 0S8.4 1.46 8.46 2.15A5.38 5.38 0 0 0 4 7v6l-2 2v1h16v-1l-2-2zm-6 13a3 3 0 0 0 3-3H7a3 3 0 0 0 3 3z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-bellOutline,.mw-ui-icon-bellOutline:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=bellOutline&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E bell %3C/title%3E%3Cpath d=%22M11.5 2.19C14.09 2.86 16 5.2 16 8v6l2 2v1H2v-1l2-2V8c0-2.8 1.91-5.14 4.5-5.81V1.5C8.5.67 9.17 0 10 0s1.5.67 1.5 1.5v.69zM10 4C7.79 4 6 5.79 6 8v7h8V8c0-2.21-1.79-4-4-4zM8 18h4c0 1.1-.9 2-2 2s-2-.9-2-2z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-bellOutline,.mw-ui-icon-bellOutline-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=bellOutline&variant=invert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E bell %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M11.5 2.19C14.09 2.86 16 5.2 16 8v6l2 2v1H2v-1l2-2V8c0-2.8 1.91-5.14 4.5-5.81V1.5C8.5.67 9.17 0 10 0s1.5.67 1.5 1.5v.69zM10 4C7.79 4 6 5.79 6 8v7h8V8c0-2.21-1.79-4-4-4zM8 18h4c0 1.1-.9 2-2 2s-2-.9-2-2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-bellOutline,.mw-ui-icon-bellOutline-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=bellOutline&variant=progressive&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E bell %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M11.5 2.19C14.09 2.86 16 5.2 16 8v6l2 2v1H2v-1l2-2V8c0-2.8 1.91-5.14 4.5-5.81V1.5C8.5.67 9.17 0 10 0s1.5.67 1.5 1.5v.69zM10 4C7.79 4 6 5.79 6 8v7h8V8c0-2.21-1.79-4-4-4zM8 18h4c0 1.1-.9 2-2 2s-2-.9-2-2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-error,.mw-ui-icon-error:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=error&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E error %3C/title%3E%3Cpath d=%22M13.728 1H6.272L1 6.272v7.456L6.272 19h7.456L19 13.728V6.272zM11 15H9v-2h2zm0-4H9V5h2z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-error,.mw-ui-icon-error-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=error&variant=invert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E error %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M13.728 1H6.272L1 6.272v7.456L6.272 19h7.456L19 13.728V6.272zM11 15H9v-2h2zm0-4H9V5h2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-error,.mw-ui-icon-error-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=error&variant=progressive&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E error %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M13.728 1H6.272L1 6.272v7.456L6.272 19h7.456L19 13.728V6.272zM11 15H9v-2h2zm0-4H9V5h2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-message,.mw-ui-icon-message:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=message&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E message %3C/title%3E%3Cpath d=%22M0 8v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-10 4z%22/%3E%3Cpath d=%22M2 2a2 2 0 0 0-2 2v2l10 4 10-4V4a2 2 0 0 0-2-2z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-message,.mw-ui-icon-message-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=message&variant=invert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E message %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M0 8v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-10 4z%22/%3E%3Cpath d=%22M2 2a2 2 0 0 0-2 2v2l10 4 10-4V4a2 2 0 0 0-2-2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-message,.mw-ui-icon-message-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=message&variant=progressive&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E message %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M0 8v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-10 4z%22/%3E%3Cpath d=%22M2 2a2 2 0 0 0-2 2v2l10 4 10-4V4a2 2 0 0 0-2-2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-notice,.mw-ui-icon-notice:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=notice&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E notice %3C/title%3E%3Cpath d=%22M10 0a10 10 0 1 0 10 10A10 10 0 0 0 10 0zm1 16H9v-2h2zm0-4H9V4h2z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-notice,.mw-ui-icon-notice-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=notice&variant=invert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E notice %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M10 0a10 10 0 1 0 10 10A10 10 0 0 0 10 0zm1 16H9v-2h2zm0-4H9V4h2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-notice,.mw-ui-icon-notice-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=notice&variant=progressive&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E notice %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M10 0a10 10 0 1 0 10 10A10 10 0 0 0 10 0zm1 16H9v-2h2zm0-4H9V4h2z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-speechBubble,.mw-ui-icon-speechBubble:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubble&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E speech bubble %3C/title%3E%3Cpath d=%22M6 14H0v6z%22/%3E%3Crect width=%2220%22 height=%2216%22 rx=%222%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-speechBubble,.mw-ui-icon-speechBubble-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubble&variant=invert&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E speech bubble %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M6 14H0v6z%22/%3E%3Crect width=%2220%22 height=%2216%22 rx=%222%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-speechBubble,.mw-ui-icon-speechBubble-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubble&variant=progressive&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E speech bubble %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M6 14H0v6z%22/%3E%3Crect width=%2220%22 height=%2216%22 rx=%222%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-speechBubbleAdd,.mw-ui-icon-speechBubbleAdd:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubbleAdd&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E add speech bubble %3C/title%3E%3Cpath d=%22M3 1a2 2 0 0 0-2 2v16l4-4h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 8h-4v4H9V9H5V7h4V3h2v4h4z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-speechBubbleAdd,.mw-ui-icon-speechBubbleAdd-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubbleAdd&variant=invert&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E add speech bubble %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M3 1a2 2 0 0 0-2 2v16l4-4h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 8h-4v4H9V9H5V7h4V3h2v4h4z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-speechBubbleAdd,.mw-ui-icon-speechBubbleAdd-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubbleAdd&variant=progressive&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E add speech bubble %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M3 1a2 2 0 0 0-2 2v16l4-4h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm12 8h-4v4H9V9H5V7h4V3h2v4h4z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-speechBubbles,.mw-ui-icon-speechBubbles:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubbles&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E speech bubbles %3C/title%3E%3Cpath d=%22M17 4v7a2 2 0 0 1-2 2H4v1a2 2 0 0 0 2 2h10l4 4V6a2 2 0 0 0-2-2zM6 10H0v6z%22/%3E%3Crect width=%2216%22 height=%2212%22 rx=%222%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-speechBubbles,.mw-ui-icon-speechBubbles-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubbles&variant=invert&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E speech bubbles %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M17 4v7a2 2 0 0 1-2 2H4v1a2 2 0 0 0 2 2h10l4 4V6a2 2 0 0 0-2-2zM6 10H0v6z%22/%3E%3Crect width=%2216%22 height=%2212%22 rx=%222%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-speechBubbles,.mw-ui-icon-speechBubbles-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=speechBubbles&variant=progressive&format=rasterized&lang=en&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E speech bubbles %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M17 4v7a2 2 0 0 1-2 2H4v1a2 2 0 0 0 2 2h10l4 4V6a2 2 0 0 0-2-2zM6 10H0v6z%22/%3E%3Crect width=%2216%22 height=%2212%22 rx=%222%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-icon-tray,.mw-ui-icon-tray:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=tray&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E tray %3C/title%3E%3Cpath d=%22M3 1a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm14 12h-4l-1 2H8l-1-2H3V3h14z%22/%3E%3C/svg%3E")}.oo-ui-image-invert.oo-ui-icon-tray,.mw-ui-icon-tray-invert:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=tray&variant=invert&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E tray %3C/title%3E%3Cg fill=%22%23fff%22%3E%3Cpath d=%22M3 1a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm14 12h-4l-1 2H8l-1-2H3V3h14z%22/%3E%3C/g%3E%3C/svg%3E")}.oo-ui-image-progressive.oo-ui-icon-tray,.mw-ui-icon-tray-progressive:before{background-image:url(/w/load.php?modules=oojs-ui.styles.icons-alerts&image=tray&variant=progressive&format=rasterized&skin=monobook&version=12nsh);background-image:linear-gradient(transparent,transparent),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2220%22 height=%2220%22 viewBox=%220 0 20 20%22%3E%3Ctitle%3E tray %3C/title%3E%3Cg fill=%22%2336c%22%3E%3Cpath d=%22M3 1a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zm14 12h-4l-1 2H8l-1-2H3V3h14z%22/%3E%3C/g%3E%3C/svg%3E")}
+.cite-accessibility-label{ top:-99999px;clip:rect(1px,1px,1px,1px); position:absolute !important;padding:0 !important;border:0 !important;height:1px !important;width:1px !important; overflow:hidden}:target .mw-cite-targeted-backlink{font-weight:bold}.mw-cite-up-arrow-backlink{display:none}:target .mw-cite-up-arrow-backlink{display:inline}:target .mw-cite-up-arrow{display:none}
+@media screen {
+	.toctoggle{-moz-user-select:none;-webkit-user-select:none;-ms-user-select:none;user-select:none;font-size:94%}}</style><style class="darkreader darkreader--sync" media="screen"></style><style>
+@media screen and (max-width:550px){body.skin--responsive{     }body.skin--responsive #p-search-mobilejs,body.skin--responsive #p-tb-mobilejs,body.skin--responsive #p-lang-mobilejs,body.skin--responsive #t-contributions{display:none}body.skin--responsive #sidebar #p-tb,body.skin--responsive #sidebar #p-lang,body.skin--responsive #sidebar #p-search{display:block}body.skin--responsive #p-cactions,body.skin--responsive #p-personal,body.skin--responsive #p-tb,body.skin--responsive #p-lang,body.skin--responsive #sidebar-mobilejs{position:absolute;top:-9999px;left:0}body.skin--responsive #p-cactions.mobile-menu-active,body.skin--responsive #p-personal.mobile-menu-active,body.skin--responsive #p-tb.mobile-menu-active,body.skin--responsive #p-lang.mobile-menu-active,body.skin--responsive #sidebar-mobilejs.mobile-menu-active{top:2em;left:0}body.skin--responsive .mobile-menu-active{position:absolute;z-index:10000;background:#ffffff;border:solid 1px #fabd23;border-left:0;padding:2em 2em 0 1.5em;font-size:125%}body.skin--responsive .mobile-menu-active *[id^='ca-nstab-'],body.skin--responsive .mobile-menu-active #ca-talk,body.skin--responsive .mobile-menu-active #ca-edit{position:absolute;top:-9999px;left:0}body.skin--responsive .mobile-menu-active ul{padding-top:1em}body.skin--responsive .mobile-menu-active li{white-space:nowrap}body.skin--responsive .mobile-menu-active a{display:block;padding:0.65em 0}body.skin--responsive .mobile-menu-active a.feedlink{padding-left:16px}body.skin--responsive .mobile-menu-active h3:first-child{margin-right:2em}body.skin--responsive .mobile-menu-active .pBody{margin-bottom:2em}body.skin--responsive .mobile-menu-active .mobile-close-button{width:20px;height:20px;background-image:url(/w/skins/MonoBook/resources/images/icon-close.svg?3b2fd);background-position:0 0;background-repeat:no-repeat;position:absolute;top:1em;right:0.75em;cursor:pointer}body.skin--responsive .menus-cover{display:none;top:0;left:0;width:100%;height:100%;z-index:9999}body.skin--responsive .menus-cover.visible{display:block}body.skin--responsive #menus-cover{position:fixed;opacity:0.45;background-color:#ffffff}body.skin--responsive #menus-cover-background{position:absolute;background-color:#f9f9f9;background-image:url(/w/skins/MonoBook/resources/images/headbg.svg?6341f);background-position:0 0;background-repeat:no-repeat;opacity:0.55}body.skin--responsive #p-cactions-mobile li#ca-edit-mobile a{background-image:url(/w/skins/MonoBook/resources/images/icon-edit.svg?fbba8)}body.skin--responsive #p-cactions-mobile li#t-contributions-mobile a{background-image:url(/w/skins/MonoBook/resources/images/icon-user.svg?83346)}body.skin--responsive .mobile-menu-active a.mw-echo-alert{padding-left:1em;padding-right:1em}body.skin--responsive #echo-hack-badges{list-style:none;margin:0;position:absolute;top:1px;left:1.5em;pointer-events:none}body.skin--responsive #echo-hack-badges li{white-space:nowrap}body.skin--responsive #echo-hack-badges #pt-notifications-alert .mw-echo-notifications-badge,body.skin--responsive #echo-hack-badges #pt-notifications-notice .mw-echo-notifications-badge{width:1.9em;overflow:hidden;height:16;top:0;color:transparent}body.skin--responsive #echo-hack-badges #pt-notifications-alert .mw-echo-notifications-badge:before,body.skin--responsive #echo-hack-badges #pt-notifications-notice .mw-echo-notifications-badge:before{display:none}body.skin--responsive #echo-hack-badges #pt-notifications-alert .mw-echo-notifications-badge:after,body.skin--responsive #echo-hack-badges #pt-notifications-notice .mw-echo-notifications-badge:after{left:0;top:0}}</style><style class="darkreader darkreader--sync" media="screen"></style><meta name="ResourceLoaderDynamicStyles" content="">
+<link rel="stylesheet" href="PPU%20registers%20-%20NESdev%20Wiki_files/load.css"><style class="darkreader darkreader--sync" media="screen"></style>
+<meta name="generator" content="MediaWiki 1.39.0">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="The PPU exposes eight memory-mapped registers to the CPU. These nominally sit at $2000 through $2007 in the CPU's address space, but because their addresses are incompletely decoded, they're mirrored in every 8 bytes from $2008 through $3FFF. For example, a write to $3456 is the same as a write to $2006.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=0.25, maximum-scale=5.0">
+<link rel="icon" href="https://www.nesdev.org/favicon.ico">
+<link rel="search" type="application/opensearchdescription+xml" href="https://www.nesdev.org/w/opensearch_desc.php" title="NESdev Wiki (en)">
+<link rel="EditURI" type="application/rsd+xml" href="https://www.nesdev.org/w/api.php?action=rsd">
+<link rel="alternate" type="application/atom+xml" title="NESdev Wiki Atom feed" href="https://www.nesdev.org/w/index.php?title=Special:RecentChanges&amp;feed=atom">
+	<meta property="og:type" content="article">
+
+	<meta property="og:site_name" content="NESdev Wiki">
+
+	<meta property="og:title" content="PPU registers">
+
+	<meta property="og:description" content="The PPU exposes eight memory-mapped registers to the CPU. These nominally sit at $2000 through $2007 in the CPU's address space, but because their addresses are incompletely decoded, they're mirrored in every 8 bytes from $2008 through $3FFF. For example, a write to $3456 is the same as a write to $2006.">
+
+	<meta property="og:url" content="https://www.nesdev.org/wiki/PPU_registers">
+
+<meta name="darkreader" content="e1b8cf877b9c441ca6a48a5a01d0c4a2"><style class="darkreader darkreader--override" media="screen">.vimvixen-hint {
+    background-color: #684b00 !important;
+    border-color: #9e7e00 !important;
+    color: #d7d4cf !important;
+}
+#vimvixen-console-frame {
+    color-scheme: light !important;
+}
+::placeholder {
+    opacity: 0.5 !important;
+}
+#edge-translate-panel-body,
+.MuiTypography-body1,
+.nfe-quote-text {
+    color: var(--darkreader-neutral-text) !important;
+}
+gr-main-header {
+    background-color: #1b4958 !important;
+}
+.tou-z65h9k,
+.tou-mignzq,
+.tou-1b6i2ox,
+.tou-lnqlqk {
+    background-color: var(--darkreader-neutral-background) !important;
+}
+.tou-75mvi {
+    background-color: #0f3a47 !important;
+}
+.tou-ta9e87,
+.tou-1w3fhi0,
+.tou-1b8t2us,
+.tou-py7lfi,
+.tou-1lpmd9d,
+.tou-1frrtv8,
+.tou-17ezmgn {
+    background-color: #1e2021 !important;
+}
+.tou-uknfeu {
+    background-color: #432c09 !important;
+}
+.tou-6i3zyv {
+    background-color: #245d70 !important;
+}
+div.mermaid-viewer-control-panel .btn {
+    background-color: var(--darkreader-neutral-background);
+    fill: var(--darkreader-neutral-text);
+}
+svg g rect.er {
+    fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.er.entityBox {
+    fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.er.attributeBoxOdd {
+    fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.er.attributeBoxEven {
+    fill: var(--darkreader-selection-background);
+    fill-opacity: 0.8 !important;
+}
+svg rect.er.relationshipLabelBox {
+    fill: var(--darkreader-neutral-background) !important;
+}
+svg g g.nodes rect,
+svg g g.nodes polygon {
+    fill: var(--darkreader-neutral-background) !important;
+}
+svg g rect.task {
+    fill: var(--darkreader-selection-background) !important;
+}
+svg line.messageLine0,
+svg line.messageLine1 {
+    stroke: var(--darkreader-neutral-text) !important;
+}
+div.mermaid .actor {
+    fill: var(--darkreader-neutral-background) !important;
+}
+mitid-authenticators-code-app > .code-app-container {
+    background-color: white !important;
+    padding-top: 1rem;
+}
+iframe#unpaywall[src$="unpaywall.html"] {
+    color-scheme: light !important;
+}
+embed[type="application/pdf"] { filter: invert(100%) contrast(90%); }</style></head>
+<body class="mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-PPU_registers rootpage-PPU_registers skin-monobook action-view skin--responsive"><div id="globalWrapper">
+	<div id="column-content">
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+			<div id="siteNotice"></div>
+			<div class="mw-indicators">
+			</div>
+			<h1 id="firstHeading" class="firstHeading mw-first-heading"><span class="mw-page-title-main">PPU registers</span></h1>
+			<div id="bodyContent" class="monobook-body">
+				<div id="siteSub">From NESdev Wiki</div>
+				<div id="contentSub"></div>
+				
+				<div id="jump-to-nav"></div><a href="#column-one" class="mw-jump-link">Jump to navigation</a><a href="#searchInput" class="mw-jump-link">Jump to search</a>
+				<!-- start content -->
+				<div id="mw-content-text" class="mw-body-content mw-content-ltr" lang="en" dir="ltr"><div class="mw-parser-output"><p>The <a href="https://www.nesdev.org/wiki/PPU" title="PPU">PPU</a>
+ exposes eight memory-mapped registers to the CPU. These nominally sit 
+at $2000 through $2007 in the CPU's address space, but because their 
+addresses are incompletely decoded, they're <a href="https://www.nesdev.org/wiki/Mirroring#Memory_Mirroring" title="Mirroring">mirrored</a> in every 8 bytes from $2008 through $3FFF. For example, a write to $3456 is the same as a write to $2006.
+</p><p>The PPU starts rendering immediately after power-on or reset, but
+ ignores writes to most registers (specifically $2000, $2001, $2005 and 
+$2006) until reaching the pre-render scanline of the next frame; more 
+specifically, for around 29658 NTSC CPU cycles or 33132 PAL CPU cycles, 
+assuming the CPU and PPU are reset at the same time. See <a href="https://www.nesdev.org/wiki/PPU_power_up_state" title="PPU power up state">PPU power up state</a> and <a href="https://www.nesdev.org/wiki/Init_code" title="Init code">Init code</a> for details.
+</p>
+<div id="toc" class="toc" role="navigation" aria-labelledby="mw-toc-heading"><input type="checkbox" role="button" id="toctogglecheckbox" class="toctogglecheckbox" style="display:none"><div class="toctitle" lang="en" dir="ltr"><h2 id="mw-toc-heading">Contents</h2><span class="toctogglespan"><label class="toctogglelabel" for="toctogglecheckbox"></label></span></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Summary"><span class="tocnumber">1</span> <span class="toctext">Summary</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#MMIO_registers"><span class="tocnumber">2</span> <span class="toctext">MMIO registers</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#Controller_($2000)_&gt;_write"><span class="tocnumber">2.1</span> <span class="toctext"><span><span>Controller ($2000) &gt; write</span></span></span></a>
+<ul>
+<li class="toclevel-3 tocsection-4"><a href="#Master/slave_mode_and_the_EXT_pins"><span class="tocnumber">2.1.1</span> <span class="toctext">Master/slave mode and the EXT pins</span></a></li>
+<li class="toclevel-3 tocsection-5"><a href="#Bit_0_race_condition"><span class="tocnumber">2.1.2</span> <span class="toctext">Bit 0 race condition</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-6"><a href="#Mask_($2001)_&gt;_write"><span class="tocnumber">2.2</span> <span class="toctext"><span><span>Mask ($2001) &gt; write</span></span></span></a>
+<ul>
+<li class="toclevel-3 tocsection-7"><a href="#Render_Control"><span class="tocnumber">2.2.1</span> <span class="toctext">Render Control</span></a></li>
+<li class="toclevel-3 tocsection-8"><a href="#Color_Control"><span class="tocnumber">2.2.2</span> <span class="toctext">Color Control</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-9"><a href="#Status_($2002)_&lt;_read"><span class="tocnumber">2.3</span> <span class="toctext"><span><span>Status ($2002) &lt; read</span></span></span></a>
+<ul>
+<li class="toclevel-3 tocsection-10"><a href="#Notes"><span class="tocnumber">2.3.1</span> <span class="toctext">Notes</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-11"><a href="#OAM_address_($2003)_&gt;_write"><span class="tocnumber">2.4</span> <span class="toctext"><span><span>OAM address ($2003) &gt; write</span></span></span></a>
+<ul>
+<li class="toclevel-3 tocsection-12"><a href="#Values_during_rendering"><span class="tocnumber">2.4.1</span> <span class="toctext">Values during rendering</span></a></li>
+<li class="toclevel-3 tocsection-13"><a href="#OAMADDR_precautions"><span class="tocnumber">2.4.2</span> <span class="toctext">OAMADDR precautions</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-14"><a href="#OAM_data_($2004)_&lt;&gt;_read/write"><span class="tocnumber">2.5</span> <span class="toctext"><span><span>OAM data ($2004) &lt;&gt; read/write</span></span></span></a></li>
+<li class="toclevel-2 tocsection-15"><a href="#Scroll_($2005)_&gt;&gt;_write_x2"><span class="tocnumber">2.6</span> <span class="toctext"><span><span>Scroll ($2005) &gt;&gt; write x2</span></span></span></a></li>
+<li class="toclevel-2 tocsection-16"><a href="#Address_($2006)_&gt;&gt;_write_x2"><span class="tocnumber">2.7</span> <span class="toctext"><span><span>Address ($2006) &gt;&gt; write x2</span></span></span></a>
+<ul>
+<li class="toclevel-3 tocsection-17"><a href="#Note"><span class="tocnumber">2.7.1</span> <span class="toctext">Note</span></a></li>
+<li class="toclevel-3 tocsection-18"><a href="#Palette_corruption"><span class="tocnumber">2.7.2</span> <span class="toctext">Palette corruption</span></a></li>
+<li class="toclevel-3 tocsection-19"><a href="#Bus_conflict"><span class="tocnumber">2.7.3</span> <span class="toctext">Bus conflict</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-20"><a href="#Data_($2007)_&lt;&gt;_read/write"><span class="tocnumber">2.8</span> <span class="toctext"><span><span>Data ($2007) &lt;&gt; read/write</span></span></span></a>
+<ul>
+<li class="toclevel-3 tocsection-21"><a href="#The_PPUDATA_read_buffer_(post-fetch)"><span class="tocnumber">2.8.1</span> <span class="toctext">The PPUDATA read buffer (post-fetch)</span></a></li>
+<li class="toclevel-3 tocsection-22"><a href="#Reading_palette_RAM"><span class="tocnumber">2.8.2</span> <span class="toctext">Reading palette RAM</span></a></li>
+<li class="toclevel-3 tocsection-23"><a href="#Read_conflict_with_DPCM_samples"><span class="tocnumber">2.8.3</span> <span class="toctext">Read conflict with DPCM samples</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-24"><a href="#OAM_DMA_($4014)_&gt;_write"><span class="tocnumber">2.9</span> <span class="toctext"><span><span>OAM DMA ($4014) &gt; write</span></span></span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-25"><a href="#Internal_registers"><span class="tocnumber">3</span> <span class="toctext">Internal registers</span></a></li>
+<li class="toclevel-1 tocsection-26"><a href="#References"><span class="tocnumber">4</span> <span class="toctext">References</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Summary">Summary</span></h2>
+<table class="tabular">
+<tbody><tr>
+<th>Common Name
+</th>
+<th>Address
+</th>
+<th>Bits
+</th>
+<th>Notes
+</th></tr>
+<tr>
+<th><a href="#PPUCTRL">PPUCTRL</a>
+</th>
+<th>$2000
+</th>
+<td><tt style="white-space: nowrap">VPHB SINN</tt></td>
+<td><a href="https://www.nesdev.org/wiki/NMI" title="NMI">NMI</a> enable
+ (V), PPU master/slave (P), sprite height (H), background tile select 
+(B), sprite tile select (S), increment mode (I), nametable select (NN)
+</td></tr>
+<tr>
+<th><a href="#PPUMASK">PPUMASK</a>
+</th>
+<th>$2001
+</th>
+<td><tt style="white-space: nowrap">BGRs bMmG</tt></td>
+<td>color emphasis (BGR), sprite enable (s), background enable (b), 
+sprite left column enable (M), background left column enable (m), 
+greyscale (G)
+</td></tr>
+<tr>
+<th><a href="#PPUSTATUS">PPUSTATUS</a>
+</th>
+<th>$2002
+</th>
+<td><tt style="white-space: nowrap">VSO- ----</tt></td>
+<td>vblank (V), sprite 0 hit (S), sprite overflow (O); read resets write pair for $2005/$2006
+</td></tr>
+<tr>
+<th><a href="#OAMADDR">OAMADDR</a>
+</th>
+<th>$2003
+</th>
+<td><tt style="white-space: nowrap">aaaa aaaa</tt></td>
+<td><a href="https://www.nesdev.org/wiki/PPU_OAM" title="PPU OAM">OAM</a> read/write address
+</td></tr>
+<tr>
+<th><a href="#OAMDATA">OAMDATA</a>
+</th>
+<th>$2004
+</th>
+<td><tt style="white-space: nowrap">dddd dddd</tt></td>
+<td>OAM data read/write
+</td></tr>
+<tr>
+<th><a href="#PPUSCROLL">PPUSCROLL</a>
+</th>
+<th>$2005
+</th>
+<td><tt style="white-space: nowrap">xxxx xxxx</tt></td>
+<td>fine scroll position (two writes: X scroll, Y scroll)
+</td></tr>
+<tr>
+<th><a href="#PPUADDR">PPUADDR</a>
+</th>
+<th>$2006
+</th>
+<td><tt style="white-space: nowrap">aaaa aaaa</tt></td>
+<td>PPU read/write address (two writes: most significant byte, least significant byte)
+</td></tr>
+<tr>
+<th><a href="#PPUDATA">PPUDATA</a>
+</th>
+<th>$2007
+</th>
+<td><tt style="white-space: nowrap">dddd dddd</tt></td>
+<td>PPU data read/write
+</td></tr>
+<tr>
+<th><a href="#OAMDMA">OAMDMA</a>
+</th>
+<th>$4014
+</th>
+<td><tt style="white-space: nowrap">aaaa aaaa</tt></td>
+<td>OAM DMA high address
+</td></tr></tbody></table>
+<h2><span class="mw-headline" id="MMIO_registers">MMIO registers</span></h2>
+<p><span id="Ports"></span>
+</p><p>The PPU has an internal data bus that it uses for communication with the CPU.
+This bus, called <code>_io_db</code> in <a href="https://www.nesdev.org/wiki/Visual_2C02" title="Visual 2C02">Visual 2C02</a> and <code>PPUGenLatch</code> in FCEUX,<sup id="cite_ref-1" class="reference"><a href="#cite_note-1">[1]</a></sup>
+ behaves as an 8-bit dynamic latch due to capacitance of very long 
+traces that run to various parts of the PPU.
+Writing any value to any PPU port, even to the nominally read-only 
+PPUSTATUS, will fill this latch.
+Reading any readable port (PPUSTATUS, OAMDATA, or PPUDATA) also fills 
+the latch with the bits read.
+Reading a nominally "write-only" register returns the latch's current 
+value, as do the unused bits of PPUSTATUS.
+This value begins to decay after a frame or so, faster once the PPU has 
+warmed up, and it is likely that values with alternating bit patterns 
+(such as $55 or $AA) will decay faster.<sup id="cite_ref-2" class="reference"><a href="#cite_note-2">[2]</a></sup>
+</p>
+<h3><span id="Controller_.28.242000.29_.3E_write"></span><span class="mw-headline" id="Controller_($2000)_&gt;_write"><span id="PPUCTRL"><span id="Reg2000">Controller ($2000) &gt; write</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>PPUCTRL</b></li>
+<li>Description: PPU control register</li>
+<li>Access: write</li></ul>
+<p>Various flags controlling general PPU operation.
+</p>
+<pre>7  bit  0
+---- ----
+VPHB SINN
+|||| ||||
+|||| ||++- Base nametable address
+|||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
+|||| |+--- VRAM address increment per CPU read/write of PPUDATA
+|||| |     (0: add 1, going across; 1: add 32, going down)
+|||| +---- Sprite pattern table address for 8x8 sprites
+||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
+|||+------ Background pattern table address (0: $0000; 1: $1000)
+||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels – see <a href="https://www.nesdev.org/wiki/PPU_OAM#Byte_1" title="PPU OAM">PPU OAM#Byte 1</a>)
+|+-------- PPU master/slave select
+|          (0: read backdrop from EXT pins; 1: output color on EXT pins)
++--------- Generate an <a href="https://www.nesdev.org/wiki/NMI" title="NMI">NMI</a> at the start of the
+           <a href="https://en.wikipedia.org/wiki/Vertical_blanking_interval" class="extiw" title="wikipedia:Vertical blanking interval">vertical blanking interval</a> (0: off; 1: on)
+</pre>
+<p>Equivalently, bits 1 and 0 are the most significant bit of the scrolling coordinates (see <a href="https://www.nesdev.org/wiki/PPU_nametables" title="PPU nametables">Nametables</a> and <a href="#PPUSCROLL">PPUSCROLL</a>):
+</p>
+<pre>7  bit  0
+---- ----
+.... ..YX
+       ||
+       |+- 1: Add 256 to the X scroll position
+       +-- 1: Add 240 to the Y scroll position
+</pre>
+<p>Another way of seeing the explanation above is that when reaching the
+ end of a nametable, the PPU must switch to another one to continue 
+scrolling across them, thereby changing the nametable address.
+</p><p>If the PPU is currently in vertical blank, and the <a href="#PPUSTATUS">PPUSTATUS</a>
+ ($2002) vblank flag is still set (1), changing the NMI flag in bit 7 of
+ $2000 from 0 to 1 will immediately generate an NMI.
+This can result in graphical errors (most likely a misplaced scroll) if 
+the NMI routine is executed too late in the blanking period to finish on
+ time.
+To avoid this problem, it is prudent to read $2002 immediately to clear 
+the vblank flag before writing $2000 to enable NMI.
+</p><p>For more explanation of sprite size, see: <a href="https://www.nesdev.org/wiki/Sprite_size" title="Sprite size">Sprite size</a>
+</p>
+<h4><span id="Master.2Fslave_mode_and_the_EXT_pins"></span><span class="mw-headline" id="Master/slave_mode_and_the_EXT_pins">Master/slave mode and the EXT pins</span></h4>
+<p>When bit 6 of PPUCTRL is clear (the usual case), the PPU gets the <a href="https://www.nesdev.org/wiki/PPU_palettes" title="PPU palettes">palette index</a>
+ for the backdrop color from the EXT pins. The stock NES grounds these 
+pins, making palette index 0 the backdrop color as expected. A secondary
+ picture generator connected to the EXT pins would be able to replace 
+the backdrop with a different image using colors from the background 
+palette, which could be used, for example, to implement parallax 
+scrolling.
+</p><p>Setting bit 6 causes the PPU to output the lower four bits of the
+ palette memory index on the EXT pins for each pixel (in addition to 
+normal image drawing) – since only four bits are output, background and 
+sprite pixels can't normally be distinguished this way. As the EXT pins 
+are grounded on an unmodified NES, setting bit 6 is discouraged as it 
+could potentially damage the chip whenever it outputs a non-zero pixel 
+value (due to it effectively shorting Vcc and GND together). Looking at 
+the relevant circuitry in <a href="https://www.nesdev.org/wiki/Visual_2C02" title="Visual 2C02">Visual 2C02</a>, it appears that the <a href="https://www.nesdev.org/wiki/PPU_palettes" title="PPU palettes">background palette hack</a> would not be functional for output from the EXT pins; they would always output index 0 for the backdrop color.
+</p>
+<h4><span class="mw-headline" id="Bit_0_race_condition">Bit 0 race condition</span></h4>
+<p>Be very careful when writing to this register outside vertical 
+blanking if using vertical mirroring (horizontal arrangement) or 
+4-screen VRAM.
+For specific CPU-PPU alignments, <a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=112424#p112424">a write that starts</a> on <a href="https://www.nesdev.org/wiki/PPU_scrolling#At_dot_257_of_each_scanline" title="PPU scrolling">dot 257</a>
+ will cause only the next scanline to be erroneously drawn from the left
+ nametable.
+This can cause a visible glitch, and it can also interfere with sprite 0
+ hit for that scanline (by being drawn with the wrong background).
+</p><p>The glitch has no effect in horizontal or one-screen mirroring.
+Only writes that start on dot 257 and continue through dot 258 can cause
+ this glitch: any other horizontal timing is safe. 
+The glitch specifically writes the value of open bus to the register, 
+which will almost always be the upper byte of the address. Writing to 
+this register or the mirror of this register at $2100 according to the 
+desired nametable appears to be a <a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=230434#p230434">functional workaround</a>.
+</p><p>This produces an occasionally <a href="https://www.nesdev.org/wiki/Game_bugs" title="Game bugs">visible glitch</a> in <i>Super Mario Bros.</i>
+ when the program writes to PPUCTRL at the end of game logic.
+It appears to be turning NMI off during game logic and then turning NMI 
+back on once the game logic has finished in order to prevent the NMI 
+handler from being called again before the game logic finishes.
+Another workaround is to use a software flag to prevent NMI reentry, 
+instead of using the PPU's NMI enable.
+</p>
+<h3><span id="Mask_.28.242001.29_.3E_write"></span><span class="mw-headline" id="Mask_($2001)_&gt;_write"><span id="PPUMASK"><span id="Reg2001">Mask ($2001) &gt; write</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>PPUMASK</b></li>
+<li>Description: PPU mask register</li>
+<li>Access: write</li></ul>
+<p>This register controls the rendering of sprites and backgrounds, as well as colour effects.
+</p>
+<pre>7  bit  0
+---- ----
+BGRs bMmG
+|||| ||||
+|||| |||+- Greyscale (0: normal color, 1: produce a greyscale display)
+|||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
+|||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
+|||| +---- 1: Show background
+|||+------ 1: Show sprites
+||+------- Emphasize red (green on PAL/Dendy)
+|+-------- Emphasize green (red on PAL/Dendy)
++--------- Emphasize blue
+</pre>
+<h4><span class="mw-headline" id="Render_Control">Render Control</span></h4>
+<ul><li>Bits 3 and 4 enable the rendering of background and sprites, respectively.</li>
+<li>Bits 1 and 2 enable rendering of the background and sprites in the 
+leftmost 8 pixel columns. Setting these bits to 0 will mask these 
+columns, which is often useful in horizontal scrolling situations, to 
+allow sprites to be partially shown from the left side instead of 
+disappearing, and to hide artifacts when scrolling with only one 
+horizontal nametable available (due to using a vertical arrangement, or a
+ cartridge board such as <a href="https://www.nesdev.org/wiki/ANROM" class="mw-redirect" title="ANROM">ANROM</a>).</li>
+<li>A value of $1E (%00011110) enables all rendering, with no color 
+effects. A value of $00 (%00000000) disables all rendering. It is 
+usually best practice to write this register only during vblank, to 
+prevent partial-frame visual artifacts.</li>
+<li>If either of bits 3 or 4 is enabled, at any time outside of the 
+vblank interval the PPU will be making continual use to the PPU address 
+and data bus to fetch tiles to render, as well as internally fetching 
+sprite data from the OAM. To access and modify PPU memory reliably 
+outside of vblank (via <b>$2007</b>), <i>both</i> of these bits must be set to 0 to disable rendering and prevent conflicts.</li>
+<li>Disabling rendering (clear both bits 3 and 4) during a visible part 
+of the frame can be problematic. It can cause a corruption of the sprite
+ state, which will display incorrect sprite data on the next frame. 
+(See: <a href="https://www.nesdev.org/wiki/Errata#OAM_and_Sprites" title="Errata">Errata</a>) It is, however, perfectly fine to mask sprites but leave the background on (set bit 3, clear bit 4) at any time in the frame.</li>
+<li>Sprite 0 hit does not trigger in any area where the background or sprites are hidden.</li></ul>
+<h4><span class="mw-headline" id="Color_Control">Color Control</span></h4>
+<ul><li>Bit 0 controls a greyscale mode, which causes the palette to use
+ only the colors from the grey column: $00, $10, $20, $30. This is 
+implemented as a bitwise AND with $30 on any value read from PPU 
+$3F00-$3FFF, both on the display and through <a href="#PPUDATA">PPUDATA</a>.
+ Writes to the palette through PPUDATA are not affected. Also note that 
+black colours like $0F will be replaced by a non-black grey $00.</li>
+<li>Bits 5, 6 and 7 control a color "emphasis" or "tint" effect. See <a href="https://www.nesdev.org/wiki/Colour_emphasis" title="Colour emphasis">Colour emphasis</a>
+ for details. Note that the emphasis bits are applied independently of 
+bit 0, so they will still tint the color of the grey image.</li></ul>
+<h3><span id="Status_.28.242002.29_.3C_read"></span><span class="mw-headline" id="Status_($2002)_&lt;_read"><span id="PPUSTATUS"><span id="Reg2002">Status ($2002) &lt; read</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>PPUSTATUS</b></li>
+<li>Description: PPU status register</li>
+<li>Access: read</li></ul>
+<p>This register reflects the state of various functions inside the PPU.
+It is often used for determining timing.
+<span id="Sprite_0">To determine when the PPU has reached a given pixel of the screen, put an opaque (non-transparent) pixel of sprite 0 there.</span>
+</p><p><br>
+</p>
+<table class="metadata plainlinks mbox mbox-warning" style="">
+<tbody><tr>
+<td class="mbox-image"><div style="width: 52px;">
+  <img alt="" src="PPU%20registers%20-%20NESdev%20Wiki_files/Ambox_content.png" decoding="async" width="40" height="40"></div></td>
+<td class="mbox-text" style=""> <font size="+1">Do not read this address
+ to wait for exactly one vertical redraw! On NTSC it will sometimes give
+ false negatives, and on Dendy on some reboots it will always give false
+ negatives.</font>
+<hr>
+<p>Additionally, on the <a href="https://www.nesdev.org/w/index.php?title=PlayChoice_10&amp;action=edit&amp;redlink=1" class="new" title="PlayChoice 10 (page does not exist)">PlayChoice 10</a>, the Z80 supervisor will reject the game if the game leaves NMIs disabled for too long.
+</p>
+Instead, use <a href="https://www.nesdev.org/wiki/NMI_thread" title="NMI thread">NMI</a> for timing. </td>
+
+</tr>
+</tbody></table>
+<pre>7  bit  0
+---- ----
+VSO. ....
+|||| ||||
+|||+-++++- <a href="https://www.nesdev.org/wiki/Open_bus_behavior#PPU_open_bus" title="Open bus behavior">PPU open bus</a>. Returns stale PPU bus contents.
+||+------- Sprite overflow. The intent was for this flag to be set
+||         whenever more than eight sprites appear on a scanline, but a
+||         hardware bug causes the actual behavior to be more complicated
+||         and generate false positives as well as false negatives; see
+||         <a href="https://www.nesdev.org/wiki/PPU_sprite_evaluation" title="PPU sprite evaluation">PPU sprite evaluation</a>. This flag is set during sprite
+||         evaluation and cleared at dot 1 (the second dot) of the
+||         pre-render line.
+|+-------- <a href="https://www.nesdev.org/wiki/PPU_OAM#Sprite_zero_hits" title="PPU OAM">Sprite 0 Hit</a>.  Set when a nonzero pixel of sprite 0 overlaps
+|          a nonzero background pixel; cleared at dot 1 of the pre-render
+|          line.  Used for raster timing.
++--------- Vertical blank has started (0: not in vblank; 1: in vblank).
+           Set at dot 1 of line 241 (the line *after* the post-render
+           line); cleared after reading $2002 and at dot 1 of the
+           pre-render line.
+</pre>
+<h4><span class="mw-headline" id="Notes">Notes</span></h4>
+<ul><li>Reading the status register will clear bit 7 mentioned above and also the address latch used by <a href="#PPUSCROLL">PPUSCROLL</a> and <a href="#PPUADDR">PPUADDR</a>. It does not clear the sprite 0 hit or overflow bit.</li>
+<li>Once the sprite 0 hit flag is set, it will not be cleared until the 
+end of the next vertical blank.  If attempting to use this flag for 
+raster timing, it is important to ensure that the sprite 0 hit check 
+happens outside of vertical blank, otherwise the CPU will "leak" through
+ and the check will fail.  The easiest way to do this is to place an 
+earlier check for bit 6 = 0, which will wait for the pre-render scanline
+ to begin.</li>
+<li>If using sprite 0 hit to make a bottom scroll bar below a vertically
+ scrolling or freely scrolling playfield, be careful to ensure that the 
+tile in the playfield behind sprite 0 is opaque.</li>
+<li>Sprite 0 hit is not detected at x=255, nor is it detected at x=0 through 7 if the background or sprites are hidden in this area.</li>
+<li>See: <a href="https://www.nesdev.org/wiki/PPU_rendering" title="PPU rendering">PPU rendering</a> for more information on the timing of setting and clearing the flags.</li>
+<li>Some <a href="https://www.nesdev.org/wiki/Vs._System" title="Vs. System">Vs. System</a> PPUs return a constant value in bits 4–0 that the game checks.</li>
+<li><b>Race Condition Warning:</b> Reading PPUSTATUS within two cycles 
+of the start of vertical blank will return 0 in bit 7 but clear the 
+latch anyway, causing NMI to not occur that frame. See <a href="https://www.nesdev.org/wiki/NMI" title="NMI">NMI</a> and <a href="https://www.nesdev.org/wiki/PPU_frame_timing" title="PPU frame timing">PPU_frame_timing</a> for details.</li></ul>
+<h3><span id="OAM_address_.28.242003.29_.3E_write"></span><span class="mw-headline" id="OAM_address_($2003)_&gt;_write"><span id="OAMADDR"><span id="Reg2003">OAM address ($2003) &gt; write</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>OAMADDR</b></li>
+<li>Description: OAM address port</li>
+<li>Access: write</li></ul>
+<p>Write the address of <a href="https://www.nesdev.org/wiki/PPU_OAM" title="PPU OAM">OAM</a> you want to access here.  Most games just write $00 here and then use <a href="#OAMDMA">OAMDMA</a>. (DMA is implemented in the 2A03/7 chip and works by repeatedly writing to <a href="#OAMDATA">OAMDATA</a>)
+</p>
+<h4><span class="mw-headline" id="Values_during_rendering">Values during rendering</span></h4>
+<p>OAMADDR is set to 0 during each of ticks 257–320 (the sprite tile 
+loading interval) of the pre-render and visible scanlines. This also 
+means that at the end of a normal complete rendered frame, OAMADDR will 
+always have returned to 0.
+</p><p>If rendering is enabled mid-scanline<sup id="cite_ref-OAMADDR_Clarification_3-0" class="reference"><a href="#cite_note-OAMADDR_Clarification-3">[3]</a></sup>,
+ there are further consequences of an OAMADDR that was not set to 0 
+before OAM sprite evaluation begins at tick 65 of the visible scanline. 
+The value of OAMADDR at this tick determines the starting address for 
+sprite evaluation for this scanline, which can cause the sprite at 
+OAMADDR to be treated as it was sprite 0, both for <a href="https://www.nesdev.org/wiki/Sprite-0_hit" class="mw-redirect" title="Sprite-0 hit">sprite-0 hit</a>
+ and priority. If OAMADDR is unaligned and does not point to the Y 
+position (first byte) of an OAM entry, then whatever it points to (tile 
+index, attribute, or X coordinate) will be reinterpreted as a Y 
+position, and the following bytes will be similarly reinterpreted. No 
+more sprites will be found once the end of OAM is reached, effectively 
+hiding any sprites before the starting OAMADDR.
+</p>
+<h4><span class="mw-headline" id="OAMADDR_precautions">OAMADDR precautions</span></h4>
+<p>On the 2C02G, writes to OAMADDR corrupt OAM. The exact corruption 
+isn't fully described, but this usually seems to copy sprites 8 and 9 
+(address $20) over the 8-byte row at the target address. The source 
+address for this copy seems to come from the previous value on the CPU 
+BUS (most often $20 from the $2003 operand).<sup id="cite_ref-OAMADDR_Clarification_3-1" class="reference"><a href="#cite_note-OAMADDR_Clarification-3">[3]</a></sup><sup id="cite_ref-OAMglitch_4-0" class="reference"><a href="#cite_note-OAMglitch-4">[4]</a></sup>
+ There may be other possible behaviors as well. This can then be worked 
+around by writing all 256 bytes of OAM, though due to the limited time 
+before <a href="https://www.nesdev.org/wiki/PPU_OAM#Dynamic_RAM_decay" title="PPU OAM">OAM decay</a> will begin this should normally be done through OAMDMA.
+</p><p>It is also the case that if OAMADDR is not less than eight when rendering starts, the eight bytes starting at <tt>OAMADDR &amp; 0xF8</tt>
+ are copied to the first eight bytes of OAM; it seems likely that this 
+is related. On the Dendy, the latter bug is required for 2C02 
+compatibility.
+</p><p>It is known that in the 2C03, 2C04, 2C05<sup id="cite_ref-noOAMglitch_5-0" class="reference"><a href="#cite_note-noOAMglitch-5">[5]</a></sup>, and 2C07, OAMADDR works as intended. It is not known whether this bug is present in all revisions of the 2C02.
+</p>
+<h3><span id="OAM_data_.28.242004.29_.3C.3E_read.2Fwrite"></span><span class="mw-headline" id="OAM_data_($2004)_&lt;&gt;_read/write"><span id="OAMDATA"><span id="Reg2004">OAM data ($2004) &lt;&gt; read/write</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>OAMDATA</b></li>
+<li>Description: OAM data port</li>
+<li>Access: read, write</li></ul>
+<p>Write OAM data here. Writes will increment <a href="#OAMADDR">OAMADDR</a> after the write; reads do not. Reads during vertical or forced blanking return the value from OAM at that address.
+</p><p><b>Do not write directly to this register in most cases.</b> 
+Because changes to OAM should normally be made only during vblank, 
+writing through OAMDATA is only effective for partial updates, as it is 
+too slow to update all of OAM within one vblank interval, and as 
+described above, partial writes cause corruption. Most games will use 
+the DMA feature through <a href="#OAMDMA">OAMDMA</a> instead.
+</p>
+<ul><li>Reading OAMDATA while the PPU is rendering will expose internal OAM accesses during sprite evaluation and loading; <i>Micro Machines</i> does this.</li>
+<li>Writes to OAMDATA during rendering (on the pre-render line and the 
+visible lines 0–239, provided either sprite or background rendering is 
+enabled) do not modify values in OAM, but do perform a glitchy increment
+ of <a href="#OAMADDR">OAMADDR</a>, bumping only the high 6 bits (i.e., it bumps the <i>[n]</i> value in <a href="https://www.nesdev.org/wiki/PPU_sprite_evaluation" title="PPU sprite evaluation">PPU sprite evaluation</a>
+ – it's plausible that it could bump the low bits instead depending on 
+the current status of sprite evaluation). This extends to DMA transfers 
+via <a href="#OAMDMA">OAMDMA</a>, since that uses writes to $2004. For emulation purposes, it is probably best to completely ignore writes during rendering.</li>
+<li>It used to be thought that reading from this register wasn't reliable<sup id="cite_ref-6" class="reference"><a href="#cite_note-6">[6]</a></sup>, however more recent evidence seems to suggest that this is solely due to corruption by <a href="#OAMADDR">OAMADDR</a> writes.</li>
+<li>In the oldest instantiations of the PPU, as found on earlier Famicoms and NESes, this register is not readable<sup id="cite_ref-7" class="reference"><a href="#cite_note-7">[7]</a></sup>. The readability was added on the RP2C02G, found on most NESes and later Famicoms.<sup id="cite_ref-8" class="reference"><a href="#cite_note-8">[8]</a></sup></li>
+<li>In the 2C07, sprite evaluation can <i>never</i> be fully disabled, and will always start 20 scanlines after the start of vblank<sup id="cite_ref-9" class="reference"><a href="#cite_note-9">[9]</a></sup>
+ (same as when the prerender scanline would have been on the 2C02). As 
+such, any updates to OAM should be done within the first 20 scanlines 
+after the 2C07 signals vertical blanking.</li></ul>
+<h3><span id="Scroll_.28.242005.29_.3E.3E_write_x2"></span><span class="mw-headline" id="Scroll_($2005)_&gt;&gt;_write_x2"><span id="PPUSCROLL"><span id="Reg2005">Scroll ($2005) &gt;&gt; write x2</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>PPUSCROLL</b></li>
+<li>Description: PPU scrolling position register</li>
+<li>Access: write twice</li></ul>
+<p>This register is used to change the <a href="https://www.nesdev.org/wiki/PPU_scrolling" title="PPU scrolling">scroll position</a>, telling the PPU which pixel of the nametable selected through <a href="#PPUCTRL">PPUCTRL</a>
+ should be at the top left corner of the rendered screen. PPUSCROLL 
+takes two writes: the first is the X scroll and the second is the Y 
+scroll. Whether this is the first or second write is tracked internally 
+by the <a href="#Internal_registers">w register</a>, which is shared with <a href="#PPUADDR">PPUADDR</a>.
+ Typically, this register is written to during vertical blanking to make
+ the next frame start rendering from the desired location, but it can 
+also be modified during rendering in order to split the screen. Changes 
+made to the vertical scroll during rendering will only take effect on 
+the next frame. Together with the nametable bits in PPUCTRL, the scroll 
+can be thought of as 9 bits per component, and PPUCTRL must be updated 
+along with PPUSCROLL to fully specify the scroll position.
+</p>
+<table class="metadata plainlinks mbox mbox-warning" style="">
+<tbody><tr>
+<td class="mbox-image"><div style="width: 52px;">
+  <img alt="" src="PPU%20registers%20-%20NESdev%20Wiki_files/Ambox_content.png" decoding="async" width="40" height="40"></div></td>
+<td class="mbox-text" style=""> <font size="+1">The PPU scroll registers <a href="https://www.nesdev.org/wiki/PPU_scrolling#PPU_internal_registers" title="PPU scrolling">share internal state</a> with the PPU address registers. Because of this, PPUSCROLL and the nametable bits in PPUCTRL should be written to <i>after</i> any writes to PPUADDR. </font></td>
+</tr>
+</tbody></table>
+<p>After reading <a href="#PPUSTATUS">PPUSTATUS</a> to clear <a href="#Internal_registers">w (the write latch)</a>, write the horizontal and vertical scroll offsets to PPUSCROLL just before turning on the screen:
+</p>
+<pre>&nbsp;; Set the high bit of X and Y scroll.
+ lda ppuctrl_value
+ ora current_nametable
+ sta PPUCTRL
+
+&nbsp;; Set the low 8 bits of X and Y scroll.
+ bit PPUSTATUS
+ lda cam_position_x
+ sta PPUSCROLL
+ lda cam_position_y
+ sta PPUSCROLL
+</pre>
+<p>Horizontal offsets range from 0 to 255. "Normal" vertical offsets 
+range from 0 to 239, while values of 240 to 255 cause the attributes 
+data at the end of the current nametable to be used incorrectly as tile 
+data. The PPU normally skips from 239 to 0 of the next nametable 
+automatically, so these "invalid" scroll positions only occur if 
+explicitly written.
+</p><p>By changing the scroll values here across several frames and 
+writing tiles to newly revealed areas of the nametables, one can achieve
+ the effect of a camera panning over a large background.
+</p>
+<h3><span id="Address_.28.242006.29_.3E.3E_write_x2"></span><span class="mw-headline" id="Address_($2006)_&gt;&gt;_write_x2"><span id="PPUADDR"><span id="Reg2006">Address ($2006) &gt;&gt; write x2</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>PPUADDR</b></li>
+<li>Description: PPU address register</li>
+<li>Access: write twice</li></ul>
+<p>Because the CPU and the PPU are on separate buses, neither has direct
+ access to the other's memory. The CPU writes to VRAM through a pair of 
+registers on the PPU by first loading an address into <a href="#PPUADDR">PPUADDR</a> and then it writing data repeatedly to <a href="#PPUDATA">PPUDATA</a>.
+ The 16-bit address is written to PPUADDR one byte at a time, upper byte
+ first. Whether this is the first or second write is tracked internally 
+by the <a href="#Internal_registers">w register</a>, which is shared with <a href="#PPUSCROLL">PPUSCROLL</a>.
+</p><p>After reading <a href="#PPUSTATUS">PPUSTATUS</a> to clear <a href="#Internal_registers">w (the write latch)</a>, write the 16-bit VRAM address to be accessed to this register, upper byte first.
+For example, to set the VRAM address to $2108:
+</p>
+<pre>  lda #$21
+  sta PPUADDR
+  lda #$08
+  sta PPUADDR
+</pre>
+<p>Valid addresses are $0000–$3FFF; higher addresses will be <a href="https://www.nesdev.org/wiki/Mirroring" title="Mirroring">mirrored</a> down.
+</p>
+<h4><span class="mw-headline" id="Note">Note</span></h4>
+<p>Access to <a href="#PPUSCROLL">PPUSCROLL</a> and <a href="#PPUADDR">PPUADDR</a>
+ during screen refresh produces interesting raster effects; the starting
+ position of each scanline can be set to any pixel position in nametable
+ memory. For more information, see <a href="https://www.nesdev.org/wiki/PPU_scrolling" title="PPU scrolling">PPU scrolling</a>.
+</p>
+<h4><span class="mw-headline" id="Palette_corruption">Palette corruption</span></h4>
+<p>In specific circumstances, entries of the PPU's palette can be 
+corrupted. It's unclear exactly how or why this happens, but all 
+revisions of the NTSC PPU seem to be at least somewhat susceptible.<sup id="cite_ref-10" class="reference"><a href="#cite_note-10">[10]</a></sup>
+</p><p>When done writing to palette memory, the workaround is to always
+</p>
+<ol><li>Update the address, if necessary, so that it's pointing at $3F00, $3F10, $3F20, or any other mirror.</li>
+<li>Only then change the address to point outside of palette memory.</li></ol>
+<p>A code fragment to implement this workaround is present in vast numbers of games:<sup id="cite_ref-11" class="reference"><a href="#cite_note-11">[11]</a></sup>
+</p>
+<pre>  lda #$3F
+  sta PPUADDR
+  lda #0
+  sta PPUADDR
+  sta PPUADDR
+  sta PPUADDR
+</pre>
+<h4><span class="mw-headline" id="Bus_conflict">Bus conflict</span></h4>
+<p>During raster effects, if the second write to PPUADDR happens at 
+specific times, at most one axis of scrolling will be set to the bitwise
+ AND of the written value and the current value. The only safe time to 
+finish the second write is during blanking; see <a href="https://www.nesdev.org/wiki/PPU_scrolling" title="PPU scrolling">PPU scrolling</a> for more specific timing. <a rel="nofollow" class="external autonumber" href="https://forums.nesdev.org/viewtopic.php?p=230391#p230391">[1]</a>
+</p>
+<h3><span id="Data_.28.242007.29_.3C.3E_read.2Fwrite"></span><span class="mw-headline" id="Data_($2007)_&lt;&gt;_read/write"><span id="PPUDATA"><span id="Reg2007">Data ($2007) &lt;&gt; read/write</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>PPUDATA</b></li>
+<li>Description: PPU data port</li>
+<li>Access: read, write</li></ul>
+<p>VRAM read/write data register. After access, the video memory address will increment by an amount determined by bit 2 of $2000.
+</p><p>When the screen is turned off by disabling the background/sprite rendering flag with the <a href="#PPUMASK">PPUMASK</a>
+ or during vertical blank, data can be read from or written to VRAM 
+through this port. Since accessing this register increments the VRAM 
+address, it should not be accessed outside vertical or forced blanking 
+because it will cause graphical glitches, and if writing, write to an 
+unpredictable address in VRAM. However, a handful of games are known to 
+read from PPUDATA during rendering, causing scroll position changes. See
+ <a href="https://www.nesdev.org/wiki/PPU_scrolling#$2007_reads_and_writes" title="PPU scrolling">PPU scrolling</a> and <a href="https://www.nesdev.org/wiki/Tricky-to-emulate_games" title="Tricky-to-emulate games">Tricky-to-emulate games</a>.
+</p><p>VRAM reading and writing shares the same internal address 
+register that rendering uses. Therefore, after loading data into video 
+memory, the program should reload the scroll position afterwards with <a href="#PPUSCROLL">PPUSCROLL</a> and <a href="#PPUCTRL">PPUCTRL</a> (bits 1-0) writes in order to avoid wrong scrolling.
+</p>
+<h4><span id="The_PPUDATA_read_buffer_.28post-fetch.29"></span><span class="mw-headline" id="The_PPUDATA_read_buffer_(post-fetch)">The PPUDATA read buffer (post-fetch)</span></h4>
+<p>Reading from PPUDATA does not directly return the value at the 
+current VRAM address, but instead returns the contents of an internal 
+read buffer. This read buffer is updated on every PPUDATA read, but only
+ <b>after</b> the previous contents have been returned to the CPU, 
+effectively delaying PPUDATA reads by one. This is because PPU bus reads
+ are too slow and cannot complete in time to service the CPU read. 
+Because of this, after the VRAM address has been set through PPUADDR, 
+one should first read PPUDATA to prime the read buffer (ignoring the 
+result) before then reading the desired data from it.
+</p><p>Note that the internal read buffer is updated <b>only</b> on 
+PPUDATA reads. It is not affected by other PPU processes such as 
+rendering, and it maintains its value indefinitely until the next read.
+</p>
+<h4><span class="mw-headline" id="Reading_palette_RAM">Reading palette RAM</span></h4>
+<p>Later PPUs added an unreliable feature for reading palette data from 
+$3F00-$3FFF. These reads work differently than standard VRAM reads, as 
+palette RAM is a separate memory space internal to the PPU that is 
+overlaid onto the PPU address space. The referenced 6-bit palette data 
+is returned immediately instead of going to the internal read buffer, 
+and hence no priming read is required. Simultaneously, the PPU also 
+performs a normal read from PPU memory at the specified address, 
+"underneath" the palette data, and the result of this read goes into the
+ read buffer as normal. The old contents of the read buffer are 
+discarded when reading palettes, but by changing the address to point 
+outside palette RAM and performing one read, the contents of this 
+shadowed memory (<a href="https://www.nesdev.org/wiki/PPU_memory_map" title="PPU memory map">usually mirrored nametables</a>)
+ can be accessed. On PPUs that do not support reading palette RAM, this 
+memory range behaves the same as the rest of PPU memory.
+</p><p>This feature is supported by the 2C02G, 2C02H, and PAL PPUs. The byte returned when reading palettes contains <a href="https://www.nesdev.org/wiki/Open_bus_behavior#PPU_open_bus" title="Open bus behavior">PPU open bus</a>
+ in the top 2 bits, and the value is returned after it is modified by 
+greyscale mode, which clears the bottom 4 bits if enabled. 
+Unfortunately, on some consoles, palette reads can be corrupted on one 
+of the 4 CPU/PPU alignments relative to the master clock. This 
+corruption depends on when the <a href="https://www.nesdev.org/wiki/PPU_pinout" title="PPU pinout">PPU /CS</a>
+ signal that indicates register access is deasserted, which varies by 
+console. Combined with this feature not being present in all PPUs, 
+developers should not rely on reading from palette RAM.
+</p>
+<h4><span class="mw-headline" id="Read_conflict_with_DPCM_samples">Read conflict with DPCM samples</span></h4>
+<p>If currently playing DPCM samples, there is a chance that an 
+interruption from the APU's sample fetch will cause an extra read cycle 
+if it happened at the same time as an instruction that reads $2007. This
+ will cause an extra increment and a byte to be skipped over, resulting 
+in the wrong data being read. See: <a href="https://www.nesdev.org/wiki/APU_DMC#Conflict_with_controller_and_PPU_read" title="APU DMC">APU DMC</a>
+</p>
+<h3><span id="OAM_DMA_.28.244014.29_.3E_write"></span><span class="mw-headline" id="OAM_DMA_($4014)_&gt;_write"><span id="Reg4014"><span id="OAMDMA">OAM DMA ($4014) &gt; write</span></span></span></h3>
+<hr>
+<ul><li>Common name: <b>OAMDMA</b></li>
+<li>Description: OAM DMA register (high byte)</li>
+<li>Access: write</li></ul>
+<p>This port is located on the CPU. Writing $XX will upload 256 bytes of
+ data from CPU page $XX00–$XXFF to the internal PPU OAM. This page is 
+typically located in internal RAM, commonly $0200–$02FF, but cartridge 
+RAM or ROM can be used as well.
+</p>
+<ul><li>The CPU is suspended during the transfer, which will take 513 or
+ 514 cycles after the $4014 write tick. (1 wait state cycle while 
+waiting for writes to complete, +1 if on a put cycle, then 256 
+alternating get/put cycles. See <a href="https://www.nesdev.org/wiki/DMA" title="DMA">DMA</a> for more information.)</li>
+<li>The OAM DMA is the only effective method for initializing all 256 
+bytes of OAM. Because of the decay of OAM's dynamic RAM when rendering 
+is disabled, the initialization should take place within vblank. Writes 
+through <a href="#OAMDATA">OAMDATA</a> are generally too slow for this task.</li>
+<li>The <a href="https://www.nesdev.org/wiki/DMA" title="DMA">DMA</a> transfer will begin at the current OAM write address. It is common practice to initialize it to 0 with a write to <a href="#OAMADDR">OAMADDR</a>
+ before the DMA transfer. Different starting addresses can be used for a
+ simple OAM cycling technique, to alleviate sprite priority conflicts by
+ flickering. If using this technique, after the DMA <a href="#OAMADDR">OAMADDR</a> should be set to 0 before the end of vblank to prevent potential OAM corruption (see <a href="https://www.nesdev.org/wiki/Errata" title="Errata">errata</a>). However, due to OAMADDR writes also having a "corruption" effect,<sup id="cite_ref-OAMglitch_4-1" class="reference"><a href="#cite_note-OAMglitch-4">[4]</a></sup> this technique is not recommended.</li></ul>
+<h2><span class="mw-headline" id="Internal_registers">Internal registers</span></h2>
+<p>The PPU also has 4 internal registers, described in detail on <a href="https://www.nesdev.org/wiki/PPU_scrolling#PPU_internal_registers" title="PPU scrolling">PPU scrolling</a>:
+</p>
+<ul><li><b>v</b>: During rendering, used for the scroll position. Outside of rendering, used as the current VRAM address.</li>
+<li><b>t</b>: During rendering, specifies the starting coarse-x scroll 
+for the next scanline and the starting y scroll for the screen. Outside 
+of rendering, holds the scroll or VRAM address before transferring it to
+ v.</li>
+<li><b>x</b>: The fine-x position of the current scroll, used during rendering alongside v.</li>
+<li><b>w</b>: Toggles on each write to either <a href="#PPUSCROLL">PPUSCROLL</a> or <a href="#PPUADDR">PPUADDR</a>, indicating whether this is the first or second write. Clears on reads of <a href="#PPUSTATUS">PPUSTATUS</a>. Sometimes called the 'write latch' or 'write toggle'.</li></ul>
+<h2><span class="mw-headline" id="References">References</span></h2>
+<div class="mw-references-wrap mw-references-columns"><ol class="references">
+<li id="cite_note-1"><span class="mw-cite-backlink"><a href="#cite_ref-1" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="http://sourceforge.net/p/fceultra/code/HEAD/tree/fceu/trunk/src/ppu.cpp#l183">ppu.cpp</a> by Bero and Xodnizel</span>
+</li>
+<li id="cite_note-2"><span class="mw-cite-backlink"><a href="#cite_ref-2" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=143801#p143801">Reply to "Riding the open bus"</a> by lidnariq</span>
+</li>
+<li id="cite_note-OAMADDR_Clarification-3"><span class="mw-cite-backlink">↑ <sup><a href="#cite_ref-OAMADDR_Clarification_3-0"><span class="cite-accessibility-label">Jump up to: </span>3.0</a></sup> <sup><a href="#cite_ref-OAMADDR_Clarification_3-1">3.1</a></sup></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=285674#p285674">OAMDATA $2003 corruption clarification?</a> - forum thread</span>
+</li>
+<li id="cite_note-OAMglitch-4"><span class="mw-cite-backlink">↑ <sup><a href="#cite_ref-OAMglitch_4-0"><span class="cite-accessibility-label">Jump up to: </span>4.0</a></sup> <sup><a href="#cite_ref-OAMglitch_4-1">4.1</a></sup></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?t=10189">Manual OAM write glitchyness</a> thread by blargg</span>
+</li>
+<li id="cite_note-noOAMglitch-5"><span class="mw-cite-backlink"><a href="#cite_ref-noOAMglitch_5-0" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=179676#p179676">Writes to $2003 appear to not cause OAM corruption</a> post by lidnariq</span>
+</li>
+<li id="cite_note-6"><span class="mw-cite-backlink"><a href="#cite_ref-6" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?t=6424">$2004 reading reliable?</a> thread by blargg</span>
+</li>
+<li id="cite_note-7"><span class="mw-cite-backlink"><a href="#cite_ref-7" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=62137#p62137">$2004 not readable on early revisions</a> reply by jsr</span>
+</li>
+<li id="cite_note-8"><span class="mw-cite-backlink"><a href="#cite_ref-8" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=150926#p150926">hardware revisions and $2004 reads</a> reply by Great Hierophant</span>
+</li>
+<li id="cite_note-9"><span class="mw-cite-backlink"><a href="#cite_ref-9" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?t=11041">2C07 PPU sprite evaluation notes</a> thread by thefox</span>
+</li>
+<li id="cite_note-10"><span class="mw-cite-backlink"><a href="#cite_ref-10" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?t=23209">Problem with palette discoloration when PPU is turned off during rendering</a> thread by N·K</span>
+</li>
+<li id="cite_note-11"><span class="mw-cite-backlink"><a href="#cite_ref-11" aria-label="Jump up" title="Jump up">↑</a></span> <span class="reference-text"><a rel="nofollow" class="external text" href="https://forums.nesdev.org/viewtopic.php?p=280899#p280899">Weird PPU writes</a> thread by Fiskbit</span>
+</li>
+</ol></div>
+<!-- 
+NewPP limit report
+Cached time: 20240927170446
+Cache expiry: 86400
+Reduced expiry: false
+Complications: [show‐toc]
+CPU time usage: 0.143 seconds
+Real time usage: 0.171 seconds
+Preprocessor visited node count: 502/1000000
+Post‐expand include size: 3786/2097152 bytes
+Template argument size: 1298/2097152 bytes
+Highest expansion depth: 8/100
+Expensive parser function count: 0/100
+Unstrip recursion depth: 0/20
+Unstrip post‐expand size: 4701/5000000 bytes
+-->
+<!--
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   46.174      1 -total
+ 38.78%   17.906      2 Template:Mbox
+ 33.42%   15.432      1 Template:Anchor
+ 20.68%    9.548      2 Template:Mbox/core
+-->
+
+<!-- Saved in parser cache with key nesdev_db-wiki_:pcache:idhash:970-0!canonical and timestamp 20240927170446 and revision id 21907.
+ -->
+</div>
+<div class="printfooter" data-nosnippet="">Retrieved from "<a dir="ltr" href="https://www.nesdev.org/w/index.php?title=PPU_registers&amp;oldid=21907">https://www.nesdev.org/w/index.php?title=PPU_registers&amp;oldid=21907</a>"</div></div>
+				<div id="catlinks" class="catlinks catlinks-allhidden" data-mw="interface"></div>
+				<!-- end content -->
+				<div class="visualClear"></div>
+			</div>
+		</div>
+		<div class="visualClear"></div>
+	</div>
+	<div id="column-one">
+		<h2>Navigation menu</h2>
+		<div role="navigation" class="portlet" id="p-cactions" aria-labelledby="p-cactions-label">
+			<h3 id="p-cactions-label">Page actions</h3>
+			<div class="pBody">
+				<ul>
+				<li id="ca-nstab-main" class="selected mw-list-item"><a href="https://www.nesdev.org/wiki/PPU_registers" title="View the content page [Alt+Shift+c]" accesskey="c">Page</a></li><li id="ca-talk" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Talk:PPU_registers" rel="discussion" title="Discussion about the content page [Alt+Shift+t]" accesskey="t">Discussion</a></li><li id="ca-view" class="selected mw-list-item"><a href="https://www.nesdev.org/wiki/PPU_registers">Read</a></li><li id="ca-viewsource" class="mw-list-item"><a href="https://www.nesdev.org/w/index.php?title=PPU_registers&amp;action=edit" title="This page is protected.
+You can view its source [Alt+Shift+e]" accesskey="e">View source</a></li><li id="ca-history" class="mw-list-item"><a href="https://www.nesdev.org/w/index.php?title=PPU_registers&amp;action=history" title="Past revisions of this page [Alt+Shift+h]" accesskey="h">History</a></li>
+				
+				</ul>
+			</div>
+		</div>
+		
+<div role="navigation" class="portlet mw-portlet mw-portlet-cactions-mobile" id="p-cactions-mobile" aria-labelledby="p-cactions-mobile-label">
+	<h3 id="p-cactions-mobile-label">Page actions</h3>
+	<div class="pBody">
+		<ul><li id="main-mobile" class="selected mw-list-item"><a href="https://www.nesdev.org/wiki/PPU_registers" title="Page">Page</a></li><li id="talk-mobile" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Talk:PPU_registers" title="Discussion">Discussion</a></li><li id="ca-more" class="mw-list-item"><a href="#p-cactions">More</a></li><li id="ca-tools" class="mw-list-item"><a href="#p-tb" title="Tools">Tools</a></li></ul>
+		
+	</div>
+</div>
+
+		<div role="navigation" class="portlet" id="p-personal" aria-labelledby="p-personal-label">
+			<h3 id="p-personal-label">Personal tools</h3>
+			<div class="pBody">
+				<ul>
+				<li id="pt-login" class="mw-list-item"><a href="https://www.nesdev.org/w/index.php?title=Special:UserLogin&amp;returnto=PPU+registers" title="You are encouraged to log in; however, it is not mandatory [Alt+Shift+o]" accesskey="o">Log in</a></li>
+				</ul>
+			</div>
+		</div>
+		<div class="portlet" id="p-logo" role="banner">
+			<a href="https://www.nesdev.org/wiki/Nesdev_Wiki" class="mw-wiki-logo"></a>
+		</div>
+		<div id="sidebar">
+		
+<div role="navigation" class="portlet mw-portlet mw-portlet-navigation" id="p-navigation" aria-labelledby="p-navigation-label">
+	<h3 id="p-navigation-label">Navigation</h3>
+	<div class="pBody">
+		<ul><li id="n-Wiki-main-page" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Nesdev_Wiki">Wiki main page</a></li><li id="n-NES-reference-guide" class="mw-list-item"><a href="https://www.nesdev.org/wiki/NES_reference_guide">NES reference guide</a></li><li id="n-Programming-guide" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Programming_guide">Programming guide</a></li><li id="n-Projects" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Projects">Projects</a></li><li id="n-NESdev-Forums" class="mw-list-item"><a href="http://forums.nesdev.org/" rel="nofollow">NESdev Forums</a></li><li id="n-NESdev-Discord" class="mw-list-item"><a href="https://discord.gg/JSG4kuF8EK" rel="nofollow">NESdev Discord</a></li><li id="n-recentchanges" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [Alt+Shift+r]" accesskey="r">Recent changes</a></li></ul>
+		
+	</div>
+</div>
+
+		<div role="search" class="portlet" id="p-search">
+			<h3 id="p-search-label"><label for="searchInput">Search</label></h3>
+			<div class="pBody" id="searchBody">
+				<form action="/w/index.php" id="searchform"><input type="hidden" value="Special:Search" name="title"><input type="search" name="search" placeholder="Search NESdev Wiki" aria-label="Search NESdev Wiki" autocapitalize="sentences" title="Search NESdev Wiki [Alt+Shift+f]" accesskey="f" id="searchInput"><input type="submit" name="go" value="Go" title="Go to a page with this exact name if it exists" class="searchButton" id="searchButton"> <input type="submit" name="fulltext" value="Search" title="Search the pages for this text" class="searchButton mw-fallbackSearchButton" id="mw-searchButton"></form>
+			</div>
+		</div>
+		
+<div role="navigation" class="portlet mw-portlet mw-portlet-tb" id="p-tb" aria-labelledby="p-tb-label">
+	<h3 id="p-tb-label">Tools</h3>
+	<div class="pBody">
+		<ul><li id="t-whatlinkshere" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Special:WhatLinksHere/PPU_registers" title="A list of all wiki pages that link here [Alt+Shift+j]" accesskey="j">What links here</a></li><li id="t-recentchangeslinked" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Special:RecentChangesLinked/PPU_registers" rel="nofollow" title="Recent changes in pages linked from this page [Alt+Shift+k]" accesskey="k">Related changes</a></li><li id="t-specialpages" class="mw-list-item"><a href="https://www.nesdev.org/wiki/Special:SpecialPages" title="A list of all special pages [Alt+Shift+q]" accesskey="q">Special pages</a></li><li id="t-print" class="mw-list-item"><a href="javascript:print();" rel="alternate" title="Printable version of this page [Alt+Shift+p]" accesskey="p">Printable version</a></li><li id="t-permalink" class="mw-list-item"><a href="https://www.nesdev.org/w/index.php?title=PPU_registers&amp;oldid=21907" title="Permanent link to this revision of this page">Permanent link</a></li><li id="t-info" class="mw-list-item"><a href="https://www.nesdev.org/w/index.php?title=PPU_registers&amp;action=info" title="More information about this page">Page information</a></li></ul>
+		
+	</div>
+</div>
+
+		
+		</div>
+		<a href="#sidebar" title="Jump to navigation" class="menu-toggle" id="sidebar-toggle"></a>
+		<a href="#p-personal" title="user tools" class="menu-toggle" id="p-personal-toggle"></a>
+		<a href="#globalWrapper" title="back to top" class="menu-toggle" id="globalWrapper-toggle"></a>
+	</div>
+	<!-- end of the left (by default at least) column -->
+	<div class="visualClear"></div>
+	<div id="footer" class="mw-footer" role="contentinfo">
+		<div id="f-poweredbyico" class="footer-icons">
+			<a href="https://www.mediawiki.org/"><img src="PPU%20registers%20-%20NESdev%20Wiki_files/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="PPU%20registers%20-%20NESdev%20Wiki_files/poweredby_mediawiki_132x47.png 1.5x, PPU%20registers%20-%20NESdev%20Wiki_files/poweredby_mediawiki_176x62.png 2x" width="88" height="31" loading="lazy"></a>
+		</div>
+		<ul id="f-list">
+			<li id="lastmod"> This page was last edited on 21 June 2024, at 04:23.</li>
+			<li id="privacy"><a href="https://www.nesdev.org/wiki/Nesdev_wiki:Privacy_policy">Privacy policy</a></li><li id="about"><a href="https://www.nesdev.org/wiki/Nesdev_wiki:About">About NESdev Wiki</a></li><li id="disclaimer"><a href="https://www.nesdev.org/wiki/Nesdev_wiki:General_disclaimer">Disclaimers</a></li>
+		</ul>
+	</div>
+</div>
+<script>(RLQ=window.RLQ||[]).push(function(){mw.config.set({"wgPageParseReport":{"limitreport":{"cputime":"0.143","walltime":"0.171","ppvisitednodes":{"value":502,"limit":1000000},"postexpandincludesize":{"value":3786,"limit":2097152},"templateargumentsize":{"value":1298,"limit":2097152},"expansiondepth":{"value":8,"limit":100},"expensivefunctioncount":{"value":0,"limit":100},"unstrip-depth":{"value":0,"limit":20},"unstrip-size":{"value":4701,"limit":5000000},"timingprofile":["100.00%   46.174      1 -total"," 38.78%   17.906      2 Template:Mbox"," 33.42%   15.432      1 Template:Anchor"," 20.68%    9.548      2 Template:Mbox/core"]},"cachereport":{"timestamp":"20240927170446","ttl":86400,"transientcontent":false}}});mw.config.set({"wgBackendResponseTime":98});});</script>
+
+</body></html>
